@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "binh-phuoc",
+  "stationName": "Bình Phước",
+  "drawId": "XSBP - 8K1-N26",
+  "date": "2026-08-01",
+  "specialPrize": "876950",
+  "prizes": {
+    "special": [
+      "876950"
+    ],
+    "first": [
+      "37429"
+    ],
+    "second": [
+      "74120"
+    ],
+    "third": [
+      "42312",
+      "03255"
+    ],
+    "fourth": [
+      "44882",
+      "57218",
+      "23791",
+      "45244",
+      "49771",
+      "25452",
+      "94091"
+    ],
+    "fifth": [
+      "8959"
+    ],
+    "sixth": [
+      "2725",
+      "8220",
+      "7537"
+    ],
+    "seventh": [
+      "812"
+    ],
+    "eighth": [
+      "41"
+    ]
+  },
+  "lottoPairs": [
+    "50",
+    "29",
+    "20",
+    "12",
+    "55",
+    "82",
+    "18",
+    "91",
+    "44",
+    "71",
+    "52",
+    "91",
+    "59",
+    "25",
+    "20",
+    "37",
+    "12",
+    "41"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/01-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

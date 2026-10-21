@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tra-vinh",
+  "stationName": "Trà Vinh",
+  "drawId": "XSTV - 35TV29",
+  "date": "2026-07-17",
+  "specialPrize": "561324",
+  "prizes": {
+    "special": [
+      "561324"
+    ],
+    "first": [
+      "55489"
+    ],
+    "second": [
+      "77085"
+    ],
+    "third": [
+      "58056",
+      "04366"
+    ],
+    "fourth": [
+      "04497",
+      "95725",
+      "31392",
+      "22442",
+      "48417",
+      "12573",
+      "25920"
+    ],
+    "fifth": [
+      "4738"
+    ],
+    "sixth": [
+      "3579",
+      "2899",
+      "9275"
+    ],
+    "seventh": [
+      "231"
+    ],
+    "eighth": [
+      "23"
+    ]
+  },
+  "lottoPairs": [
+    "24",
+    "89",
+    "85",
+    "56",
+    "66",
+    "97",
+    "25",
+    "92",
+    "42",
+    "17",
+    "73",
+    "20",
+    "38",
+    "79",
+    "99",
+    "75",
+    "31",
+    "23"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/17-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

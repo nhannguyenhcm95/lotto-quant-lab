@@ -1,0 +1,11 @@
+{
+  "runId": "run-20261019085907-b88563",
+  "runIndex": 1,
+  "status": "FAIL",
+  "startedAt": "2026-10-19T08:59:07.760Z",
+  "updatedAt": "2026-10-19T08:59:27.388Z",
+  "nodeVersion": "v24.14.1",
+  "platform": "win32",
+  "finishedAt": "2026-10-19T08:59:27.386Z",
+  "durationMs": 19626
+}

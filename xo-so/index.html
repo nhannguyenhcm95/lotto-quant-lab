@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOTTO-QUANT LAB | Nền Tảng Phân Tích & Dự Đoán Xổ Số Định Lượng</title>
+  <meta name="description" content="Nền tảng nghiên cứu định lượng dự đoán xổ số Vietlott và XSMN với 8 thuật toán xác suất thống kê, dashboard phân tích đa chiều và động cơ kiểm định hồi quy (Backtesting Engine).">
+  
+  <!-- Google Fonts Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css?v=5.5">
+  <link rel="stylesheet" href="css/components.css?v=5.5">
+  <link rel="stylesheet" href="css/chartist.min.css">
+  
+  <!-- Font Awesome Icons & Chart.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- 1. Header Ứng Dụng Chuẩn Mực & Khoa Học (Quant Editorial Header) -->
+    <header class="header-wrapper">
+      <div class="brand-section">
+        <div class="brand-icon-box">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="brand-titles">
+          <h1>
+            LOTTO-QUANT LAB
+            <span class="brand-badge">NGHIÊN CỨU ĐỊNH LƯỢNG</span>
+          </h1>
+          <div class="brand-subtitle">
+            Hệ Thống Phân Tích Xác Suất & Kiểm Định Hồi Quy XSMN & Vietlott
+          </div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <div class="live-status-pill">
+          <span class="pulse-dot"></span>
+          <span id="crawler-status-text">Đã đồng bộ kết quả Minh Ngọc</span>
+        </div>
+        <button id="btn-crawl-full" class="btn-sync" type="button" title="Tự động cào toàn bộ dữ liệu lịch sử XSMN & Vietlott từ Minh Ngọc và tái dự đoán 8 thuật toán">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span>Cào Toàn Bộ Dữ Liệu</span>
+        </button>
+        <button id="btn-sync-live" class="btn-sync" type="button" title="Bấm để cập nhật kết quả mới nhất từ Minh Ngọc">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Cập nhật</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. THANH ĐIỀU KHIỂN TRỰC DIỆN (CHỌN LOẠI VÉ & ĐÀI QUAY) -->
+    <section class="game-switcher-bar direct-control-bar">
+      <!-- 2 Tab lớn chọn loại hình -->
+      <div class="lottery-mode-tabs direct-mode-tabs">
+        <button id="mode-btn-xsmn" class="mode-tab active">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Xổ Số Miền Nam</span>
+        </button>
+        <button id="mode-btn-vietlott" class="mode-tab">
+          <i class="fa-solid fa-dice"></i>
+          <span>Xổ Số Vietlott</span>
+        </button>
+      </div>
+
+      <!-- Khu vực chọn đài XSMN trực diện -->
+      <div id="station-filter-wrapper" class="direct-filter-row">
+        <!-- Đài hôm nay dạng nút bấm nhanh -->
+        <div class="today-stations-quick-group">
+          <span class="today-pulse-label">
+            <span class="station-today-dot"></span>
+            <span id="today-station-text">Đài Hôm Nay:</span>
+          </span>
+          <div id="today-fast-pills" class="today-fast-pills">
+            <!-- Nạp động các đài hôm nay qua JS -->
+          </div>
+        </div>
+
+        <!-- Bộ chọn 21 Đài Miền Nam dạng dropdown -->
+        <div class="all-stations-dropdown-group">
+          <label for="station-select" class="dropdown-label"><i class="fa-solid fa-list-ul"></i> Chọn Đài Khác:</label>
+          <select id="station-select" class="custom-select direct-select">
+            <!-- Nạp động từ config.js -->
+          </select>
+        </div>
+
+        <!-- Huy hiệu Khối lượng dữ liệu thực tế -->
+        <div class="data-volume-badge-wrapper">
+          <span class="data-volume-badge" title="Cơ sở dữ liệu thực tế: 100% lịch sử Vietlott & 16-32 kỳ gần nhất 21 đài XSMN">
+            <i class="fa-solid fa-database"></i> <span id="total-draws-count-badge">16–32 kỳ/đài (21 Đài) • 100% Vietlott (3.339 kỳ)</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Khu vực chọn Vietlott trực diện -->
+      <div id="vietlott-filter-wrapper" class="direct-filter-row" style="display: none;">
+        <div class="vietlott-quick-buttons">
+          <button id="quick-btn-mega" class="vietlott-game-btn active" data-game="mega-6-45" type="button">
+            <span class="v-btn-badge mega"><i class="fa-solid fa-circle-dot"></i> Mega 6/45</span>
+            <span class="v-btn-jackpot" id="v-quick-mega-jackpot">Jackpot ~20.3 Tỷ ₫</span>
+          </button>
+          <button id="quick-btn-power" class="vietlott-game-btn" data-game="power-6-55" type="button">
+            <span class="v-btn-badge power"><i class="fa-solid fa-crown"></i> Power 6/55</span>
+            <span class="v-btn-jackpot" id="v-quick-power-jackpot">Jackpot ~156.7 Tỷ ₫</span>
+          </button>
+        </div>
+        <!-- Select ẩn để tương thích code logic cũ -->
+        <select id="vietlott-select" class="custom-select" style="display: none;">
+          <option value="mega-6-45" selected>Mega 6/45 (45 Bóng)</option>
+          <option value="power-6-55">Power 6/55 (55 Bóng + Bonus)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- 2.1. Thanh Chọn 21 Đài Miền Nam (Đã tích hợp vào dropdown và nút đài hôm nay, ẩn để giao diện gọn gàng) -->
+    <section id="xsmn-stations-bar" class="stations-quick-bar" style="display: none;">
+      <div class="stations-bar-header">
+        <div class="stations-bar-title">
+          <i class="fa-solid fa-map-location-dot" style="color: var(--accent);"></i>
+          <span>Toàn Bộ 21 Tỉnh / Đài Xổ Số Miền Nam:</span>
+        </div>
+      </div>
+      <div id="stations-pills-container" class="stations-pills-scroll">
+        <!-- 21 Đài được nạp động từ config.js -->
+      </div>
+    </section>
+
+    <!-- 3. Thanh Điều Hướng Tab Chính (Trực Quan, Dễ Hiểu) -->
+    <nav class="main-nav-tabs">
+      <button class="nav-tab-btn active" data-tab="live">
+        <i class="fa-solid fa-bullseye"></i>
+        <span>01 • Số Đẹp & Kết Quả</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="predict">
+        <i class="fa-solid fa-brain"></i>
+        <span>02 • Chi Tiết 8 Mô Hình</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="dashboard">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>03 • Thống Kê & Phân Tích</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="backtest">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>04 • Dò Vé Số</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="leaderboard">
+        <i class="fa-solid fa-trophy"></i>
+        <span>05 • Bảng Xếp Hạng</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="docs">
+        <i class="fa-solid fa-book-open"></i>
+        <span>06 • Kinh Nghiệm Soi Cầu</span>
+      </button>
+    </nav>
+
+    <!-- 4. Nội Dung Liền Mạch (Tất Cả Trong 1 Trang, Không Cần Bấm Chuyển Tab) -->
+    <main>
+      <!-- PHẦN 01: SỐ ĐẸP DỰ ĐOÁN & KẾT QUẢ MỞ THƯỞNG -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-bullseye"></i> PHẦN 01
+          </span>
+          <h2 class="section-heading">Số Đẹp Dự Đoán & Kết Quả Mở Thưởng Trực Tiếp</h2>
+        </div>
+        <p class="section-subheading">Hợp nhất thuật toán Ensemble, gợi ý Bạch Thủ, Song Thủ, Dàn Đề và bảng 18 giải XSMN / Vietlott chuẩn Minh Ngọc.</p>
+      </div>
+
+      <section id="panel-live" class="tab-view-panel active">
+        <div id="live-result-container">
+          <!-- Render bởi UIController.renderLiveResult -->
+        </div>
+      </section>
+
+      <!-- PHẦN 02: CHI TIẾT 8 MÔ HÌNH DỰ ĐOÁN AI & XÁC SUẤT -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-brain"></i> PHẦN 02
+          </span>
+          <h2 class="section-heading">Chi Tiết 8 Mô Hình Dự Đoán AI & Biểu Đồ Hội Tụ</h2>
+        </div>
+        <p class="section-subheading">Minh bạch thuật toán định lượng (Markov, Poisson, Monte Carlo, Entropy, Bạc Nhớ) và mật độ xác suất top 30 con số.</p>
+      </div>
+
+      <section id="panel-predict" class="tab-view-panel">
+        <div id="predictions-container">
+          <!-- Render bởi UIController.renderPredictions -->
+        </div>
+
+        <!-- Biểu đồ phân phối xác suất -->
+        <div class="quant-card" style="margin-top: 24px;">
+          <div class="card-header-bar">
+            <div class="card-title-group">
+              <h2>Biểu Đồ Phân Phối Xác Suất Hội Tụ Dự Báo</h2>
+              <span class="meta-info-badge">Top 30 con số tiềm năng nhất</span>
+            </div>
+            <!-- Chuyển đổi công nghệ biểu đồ: Chartist.dev SVG vs Chart.js Canvas -->
+            <div class="chart-engine-selector">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-right: 4px;"><i class="fa-solid fa-layer-group"></i> Engine:</span>
+              <button id="btn-chart-engine-chartist" class="engine-pill active" type="button" title="Chartist.dev: Biểu đồ SVG vector sắc nét vô hạn, siêu nhẹ và định dạng CSS">
+                <i class="fa-solid fa-bezier-curve"></i> Chartist SVG
+              </button>
+              <button id="btn-chart-engine-chartjs" class="engine-pill" type="button" title="Chart.js: Biểu đồ Canvas HTML5 truyền thống">
+                <i class="fa-solid fa-chart-column"></i> Chart.js Canvas
+              </button>
+            </div>
+          </div>
+
+          <!-- Chế độ 1: Chartist.dev SVG Vector -->
+          <div id="chartist-prob-view" class="chartist-quant-container" style="height: 320px; position: relative;">
+            <div id="prob-chartist-box" class="ct-chart ct-golden-section" style="height: 100%; width: 100%;"></div>
+          </div>
+
+          <!-- Chế độ 2: Chart.js Canvas (Luôn giữ nguyên canvas ID để tương thích bộ test) -->
+          <div id="chartjs-prob-view" style="height: 320px; position: relative; display: none;">
+            <canvas id="prob-chart-canvas"></canvas>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span><i class="fa-solid fa-circle-check" style="color: var(--accent);"></i> Cột Vàng Hổ Phách: Top ứng viên trọng tâm &bull; Cột Lam: Ứng viên mở rộng</span>
+            <span id="chart-engine-indicator" style="font-family: var(--font-mono); font-size: 11px; color: var(--accent);"><i class="fa-solid fa-bolt"></i> Chartist.dev (SVG Engine) Đang Hoạt Động</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHẦN 03: THỐNG KÊ ĐA CHIỀU & PHÂN TÍCH ĐIỂM RƠI -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-chart-pie"></i> PHẦN 03
+          </span>
+          <h2 class="section-heading">Thống Kê Đa Chiều, Điểm Rơi & Khai Phá Bạc Nhớ</h2>
+        </div>
+        <p class="section-subheading">Khảo sát nhịp rơi tự nhiên, ma trận 3 làn (Nóng - Chín Muồi - Gan Cực Đại) và các cặp đôi liên kết bền vững nhất.</p>
+      </div>
+
+      <section id="panel-dashboard" class="tab-view-panel">
+        <section class="kpi-summary-grid">
+          <!-- KPI 1: Dữ liệu sạch Minh Ngọc -->
+          <div class="kpi-stat-card kpi-blue">
+            <div class="kpi-header-row">
+              <span class="kpi-label">Tập Dữ Liệu Lịch Sử</span>
+              <i class="fa-solid fa-database kpi-icon"></i>
+            </div>
+            <div class="kpi-value-row">
+              <div id="kpi-draws-count" class="kpi-value tabular-numbers">180+ Kỳ</div>
+              <span class="kpi-badge badge-up"><i class="fa-solid fa-shield-check"></i> Xác thực</span>
+            </div>
+            <div class="kpi-footnote">
+              <span>Minh Ngọc chuẩn &bull; 0% Lookahead bias</span>
+            </div>
+          </div>
+
+          <!-- KPI 2: Mức đồng thuận giữa các mô hình Ensemble -->
+          <div class="kpi-stat-card kpi-gold">
+            <div class="kpi-header-row">
+              <span class="kpi-label">Mức Đồng Thuận Mô Hình</span>
+              <i class="fa-solid fa-brain kpi-icon"></i>
+            </div>
+            <div class="kpi-value-row">
+              <div id="kpi-confidence-val" class="kpi-value tabular-numbers" style="color: var(--accent);">---</div>
+              <span class="kpi-badge badge-gold"><i class="fa-solid fa-handshake"></i> Đồng thuận</span>
+            </div>
+            <div class="kpi-footnote">
+              <span id="kpi-consensus-sub" title="Mức đồng thuận giữa các mô hình; không phải xác suất trúng xổ số.">Tỷ lệ đồng thuận từ các mô hình • Không phải xác suất trúng</span>
+            </div>
+          </div>
+
+          <!-- KPI 3: Hiệu suất Backtest dẫn đầu -->
+          <div class="kpi-stat-card kpi-emerald">
+            <div class="kpi-header-row">
+              <span class="kpi-label">Tỷ Lệ Trúng Kiểm Định</span>
+              <i class="fa-solid fa-bullseye kpi-icon"></i>
+            </div>
+            <div class="kpi-value-row">
+              <div id="kpi-top-hitrate" class="kpi-value tabular-numbers" style="color: var(--success);">---</div>
+              <span class="kpi-badge badge-up"><i class="fa-solid fa-arrow-trend-up"></i> Top 1</span>
+            </div>
+            <div class="kpi-footnote">
+              <span id="kpi-top-algo-name">Đang kiểm định 20 kỳ...</span>
+            </div>
+          </div>
+
+          <!-- KPI 4: Giá trị Jackpot / Giải Đặc Biệt -->
+          <div class="kpi-stat-card kpi-purple">
+            <div class="kpi-header-row">
+              <span id="kpi-jackpot-label" class="kpi-label">Giải Thưởng Đặc Biệt</span>
+              <i class="fa-solid fa-trophy kpi-icon"></i>
+            </div>
+            <div class="kpi-value-row">
+              <div id="kpi-jackpot-val" class="kpi-value tabular-numbers" style="color: var(--accent); font-size: 20px;">---</div>
+            </div>
+            <div class="kpi-footnote">
+              <span id="kpi-jackpot-sub">Đang đồng bộ dữ liệu...</span>
+            </div>
+          </div>
+        </section>
+
+        <div id="dashboard-container">
+          <!-- Render bởi UIController.renderExecutiveDashboard -->
+        </div>
+      </section>
+
+      <!-- PHẦN 04: CÔNG CỤ DÒ VÉ SỐ & KIỂM ĐỊNH QUÁ KHỨ -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-magnifying-glass"></i> PHẦN 04
+          </span>
+          <h2 class="section-heading">Công Cụ Dò Vé Số & Kiểm Định Hồi Quy (Backtesting)</h2>
+        </div>
+        <p class="section-subheading">Dò lại bất kỳ ngày nào trong lịch sử để kiểm tra các con số dự đoán có nổ đúng thực tế hay không (0% Lookahead bias).</p>
+      </div>
+
+      <section id="panel-backtest" class="tab-view-panel">
+        <!-- Thanh điều khiển chọn ngày dò số -->
+        <div class="backtest-controller-bar">
+          <div class="backtest-inputs-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; width: 100%;">
+            <div class="input-label-group">
+              <label for="backtest-date-select"><i class="fa-solid fa-list-check" style="color: var(--accent);"></i> Các Kỳ Đã Nạp Trong Bộ Nhớ:</label>
+              <select id="backtest-date-select" class="custom-select" style="min-width: 210px;">
+                <!-- Nạp tự động các ngày đã có trong lịch sử -->
+              </select>
+            </div>
+            
+            <div style="font-weight: 700; color: var(--text-muted); font-size: 12px; align-self: center; padding-top: 14px;">HOẶC</div>
+
+            <div class="input-label-group">
+              <label for="backtest-custom-date"><i class="fa-solid fa-calendar-days" style="color: var(--accent-navy);"></i> Nhập Bất Kỳ Ngày Nào Trong Lịch Sử:</label>
+              <input type="date" id="backtest-custom-date" class="custom-select" min="2008-01-01" max="2026-12-31" style="min-width: 170px;">
+            </div>
+
+            <button id="btn-run-backtest" class="btn-primary" type="button" style="height: 42px;">
+              <i class="fa-solid fa-play"></i>
+              <span>Chạy Dò Số & Đối Chiếu</span>
+            </button>
+          </div>
+
+          <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 14px; line-height: 1.5; background: var(--bg-surface-2); border: 1px solid var(--line-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+            <i class="fa-solid fa-shield-halved" style="color: var(--success); margin-right: 4px;"></i>
+            <strong>Kho dữ liệu lịch sử & Đảm bảo học thuật:</strong> 
+            Bạn có thể chọn hoặc gõ bất kỳ ngày mở thưởng nào trong lịch sử (kể cả 2024, 2023, 2020,...), hệ thống sẽ tự động đối soát hoặc kết nối cào trực tiếp từ kho Minh Ngọc để lấy đầy đủ 18 giải về đối chiếu. Dữ liệu huấn luyện luôn được cắt nghiêm ngặt trước ngày dò để loại trừ 100% Lookahead Bias.
+          </div>
+        </div>
+
+        <div id="backtest-result-container">
+          <!-- Render bởi UIController.renderBacktestResult -->
+        </div>
+      </section>
+
+      <!-- PHẦN 05: BẢNG XẾP HẠNG THUẬT TOÁN -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-trophy"></i> PHẦN 05
+          </span>
+          <h2 class="section-heading">Bảng Xếp Hạng Độ Chính Xác Các Thuật Toán</h2>
+        </div>
+        <p class="section-subheading">Thống kê điểm số và tỷ lệ trúng thực chiến qua 20 kỳ quay gần nhất để bạn luôn chọn được mô hình dẫn đầu phong độ.</p>
+      </div>
+
+      <section id="panel-leaderboard" class="tab-view-panel">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+          <button id="btn-run-leaderboard" class="btn-sync">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Chạy Kiểm Định 20 Kỳ & Cập Nhật Bảng Xếp Hạng</span>
+          </button>
+        </div>
+        <div id="leaderboard-container">
+          <!-- Render bởi UIController.renderLeaderboard -->
+        </div>
+      </section>
+
+      <!-- PHẦN 06: CẨM NANG & KINH NGHIỆM SOI CẦU THỰC CHIẾN -->
+      <div class="page-section-header">
+        <div class="section-title-line">
+          <span class="section-num-pill">
+            <i class="fa-solid fa-book-open"></i> PHẦN 06
+          </span>
+          <h2 class="section-heading">Cẩm Nang & Chiến Lược Soi Cầu Thực Chiến</h2>
+        </div>
+        <p class="section-subheading">Nguyên tắc quản lý vốn 1-3%, quy tắc bắt nhịp cầu chín muồi và kinh nghiệm tuyệt đối không nuôi số gan.</p>
+      </div>
+
+      <section id="panel-docs" class="tab-view-panel">
+        <div class="guide-container">
+          
+          <!-- Thẻ Tiêu đề Hướng Dẫn -->
+          <div class="quant-card" style="margin-bottom: 0;">
+            <div class="eyebrow"><i class="fa-solid fa-compass"></i> Hướng Dẫn Dành Cho Người Dùng Phổ Thông</div>
+            <h2 style="font-family: var(--font-display); font-size: 24px; color: var(--text-primary); margin-bottom: 8px;">
+              Cẩm Nang & Chiến Lược Soi Cầu Thực Chiến Hiệu Quả
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 14.5px; line-height: 1.6; margin: 0;">
+              Tổng hợp những nguyên tắc cốt lõi giúp bạn phân bổ nguồn vốn hợp lý, nhận diện những con số có xác suất về cao nhất và tuyệt đối tránh xa các bẫy tâm lý thường gặp trong xổ số.
+            </p>
+          </div>
+
+          <!-- Lưới 4 Thẻ Quy Tắc Vàng -->
+          <div class="guide-grid-2">
+            <!-- Thẻ 1: Quản lý vốn -->
+            <div class="guide-card">
+              <div class="guide-card-icon">
+                <i class="fa-solid fa-coins"></i>
+              </div>
+              <h3>1. Quản Lý Vốn & Tâm Lý Kỷ Luật</h3>
+              <p>Quy tắc sống còn quyết định sự bền vững của bạn. Không bao giờ tham lam đặt cược quá mức:</p>
+              <ul>
+                <li><strong>Nguyên tắc 1-3%:</strong> Chỉ trích tối đa 1% đến 3% số vốn nhàn rỗi cho mỗi kỳ mở thưởng.</li>
+                <li><strong>Tuyệt đối không "Tất tay" (All-in):</strong> Không bao giờ dồn toàn bộ tiền vào 1 con số duy nhất dù kết quả dự đoán có cao đến đâu.</li>
+                <li><strong>Cắt lỗ đúng lúc:</strong> Nếu chuỗi cầu gãy quá 2 kỳ, hãy dừng lại 1 nhịp để hệ thống cân bằng lại dữ liệu.</li>
+              </ul>
+              <div class="guide-callout-gold">
+                💡 <strong>Lời khuyên:</strong> Hãy xem đây là một trò chơi thống kê có phương pháp, kiên trì và kỷ luật luôn chiến thắng sự bốc đồng.
+              </div>
+            </div>
+
+            <!-- Thẻ 2: Nhịp chín muồi -->
+            <div class="guide-card">
+              <div class="guide-card-icon">
+                <i class="fa-solid fa-bullseye"></i>
+              </div>
+              <h3>2. Nhận Biết Nhịp Cầu "Chín Muồi" Dễ Nổ</h3>
+              <p>Mỗi con số đều có một nhịp xuất hiện tự nhiên (chu kỳ trung bình):</p>
+              <ul>
+                <li><strong>Điểm rơi vàng:</strong> Một con số chưa về trong khoảng thời gian bằng 80% đến 120% chu kỳ trung bình của nó là thời điểm dễ nổ nhất.</li>
+                <li><strong>Nhịp bùng nổ:</strong> Những số có đà xuất hiện từ 3 lần trở lên trong 15 kỳ gần nhất thường tiếp tục có quán tính rơi thêm 1-2 kỳ nữa.</li>
+                <li><strong>Đón đầu đảo chiều:</strong> Sau chuỗi dài rơi lệch về một phía, xác suất rơi vào các con số ở nhịp cân bằng sẽ tăng đột biến.</li>
+              </ul>
+              <div class="guide-callout-emerald">
+                🎯 <strong>Mẹo hay:</strong> Ưu tiên chọn các con số nằm trong làn "Vùng Chín Muồi" tại Dashboard để có tỷ lệ trúng cao nhất.
+              </div>
+            </div>
+
+            <!-- Thẻ 3: Bạc nhớ cặp đôi -->
+            <div class="guide-card">
+              <div class="guide-card-icon">
+                <i class="fa-solid fa-link"></i>
+              </div>
+              <h3>3. Bí Quyết Bắt Cầu "Bạc Nhớ" Cặp Đôi</h3>
+              <p>Quy luật gắn kết kỳ lạ giữa các cặp số trong lịch sử quay số truyền thống:</p>
+              <ul>
+                <li><strong>Số đi kèm:</strong> Khi một con số quen thuộc xuất hiện ở giải Độc Đắc hoặc giải Nhất, thường có 1-2 con số vệ tinh sẽ về cùng kỳ hoặc kỳ kế tiếp.</li>
+                <li><strong>Chỉ số tương quan cao:</strong> Các cặp số có độ gắn kết cao hơn 1.5 lần so với ngẫu nhiên là lựa chọn tuyệt vời để ghép xiên hoặc song thủ lô.</li>
+                <li><strong>Bọc lót đảo số:</strong> Khi kết một con số (ví dụ 68), luôn cân nhắc lót nhẹ số đảo (86) để phòng ngừa lệch nhịp.</li>
+              </ul>
+              <div class="guide-callout-gold">
+                🔗 <strong>Ứng dụng:</strong> Xem bảng "Khai Phá Bạc Nhớ Đi Kèm" ở Dashboard để chọn cặp số hỗ trợ đắc lực nhất.
+              </div>
+            </div>
+
+            <!-- Thẻ 4: Tránh bẫy số gan -->
+            <div class="guide-card">
+              <div class="guide-card-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <h3>4. Cảnh Giác & Tuyệt Đối Tránh "Số Gan"</h3>
+              <p>Sai lầm lớn nhất của người chơi là mù quáng nuôi một con số đã quá lâu không về:</p>
+              <ul>
+                <li><strong>Hiện tượng bị giam:</strong> Khi một con số đã vắng mặt gấp 1.5 lần so với chu kỳ bình thường, nó đã rơi vào "vùng gan sâu" cực kỳ nguy hiểm.</li>
+                <li><strong>Không đoán đỉnh gan:</strong> Số gan có thể tiếp tục bị giam thêm 15 đến 20 kỳ nữa, việc cố chấp gấp thếp sẽ làm cạn kiệt nguồn vốn.</li>
+                <li><strong>Chỉ chơi khi đã nổ:</strong> Hãy kiên nhẫn chờ con số gan đó xuất hiện trở lại ít nhất 1 lần để phá vỡ băng giá, sau đó mới bắt đầu theo nhịp mới.</li>
+              </ul>
+              <div class="guide-callout-rose">
+                ⚠️ <strong>Cảnh báo:</strong> Tuyệt đối không nuôi các con số đang nằm trong danh sách "Cảnh Báo Gan Cực Đại"!
+              </div>
+            </div>
+          </div>
+
+          <!-- Khối Tóm Tắt Chiến Lược 3 Bước -->
+          <div class="quant-card" style="background: var(--bg-surface); border: 1px solid var(--border-accent);">
+            <div class="card-header-bar">
+              <div class="card-title-group">
+                <h3 style="color: var(--text-primary); font-size: 18px; margin: 0;"><i class="fa-solid fa-list-check" style="color: var(--accent); margin-right: 8px;"></i> Quy Trình 3 Bước Chọn Số Nhanh Mỗi Ngày</h3>
+              </div>
+              <span class="meta-info-badge" style="background: var(--bg-accent-soft); color: var(--accent); border-color: var(--border-accent);">Đơn giản • Kỷ luật</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; padding-top: 14px;">
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 6px;">BƯỚC 1</div>
+                <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Kiểm Tra Bảng Kết Quả & Dashboard</div>
+                <div style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Cuộn xem Phần 01 để nắm kết quả kỳ trước, sau đó xem Phần 03 biểu đồ phân tích để bắt kịp xu hướng đầu đuôi nào đang bùng nổ.</div>
+              </div>
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--accent-navy); margin-bottom: 6px;">BƯỚC 2</div>
+                <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Lọc Bộ Số Đồng Thuận Cao</div>
+                <div style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Xem Phần 02 (Trạm Dự Đoán), chọn con số có nhiều thuật toán cùng chỉ định (Consensus ≥ 80%), loại bỏ hoàn toàn các con số đang bị gan.</div>
+              </div>
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--success); margin-bottom: 6px;">BƯỚC 3</div>
+                <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Phân Bổ Vốn & Giữ Kỷ Luật</div>
+                <div style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Chọn đúng 1 con Bạch Thủ tâm đắc nhất và 1 cặp Song Thủ lót nhẹ. Chia đều số điểm chơi và không bao giờ vượt quá ngân sách định sẵn.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: 50px; text-align: center; border-top: 1px solid var(--line-subtle); padding-top: 24px; color: var(--text-muted); font-size: 13px;">
+      <p>LOTTO-QUANT LAB &copy; 2026 &bull; Nền Tảng Phân Tích Định Lượng & Dự Đoán Xổ Số &bull; Institutional Data Design</p>
+      <p style="margin-top: 4px; font-size: 11px;">Dữ liệu tham khảo từ minhngoc.net.vn &bull; Chỉ phục vụ mục đích nghiên cứu học thuật và thống kê khoa học</p>
+    </footer>
+
+  </div>
+
+  <!-- Modal Tự Động Cào Dữ Liệu Minh Ngọc & Tái Dự Đoán 8 Thuật Toán -->
+  <div id="crawl-modal-overlay" class="crawl-modal-overlay" style="display: none;">
+    <div class="crawl-modal-card">
+      <div class="crawl-modal-header">
+        <div class="crawl-modal-icon">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+        </div>
+        <div style="flex: 1;">
+          <h3 id="crawl-modal-title">TỰ ĐỘNG CÀO DỮ LIỆU TOÀN BỘ TỪ MINH NGỌC</h3>
+          <p class="crawl-modal-subtitle">Thu thập toàn bộ lịch sử XSMN & Vietlott, sau đó tái huấn luyện 8 mô hình dự đoán AI</p>
+        </div>
+        <button id="btn-close-crawl-modal" class="crawl-modal-close" type="button" style="display: none;">&times;</button>
+      </div>
+
+      <div class="crawl-progress-wrapper">
+        <div class="crawl-progress-bar-bg">
+          <div id="crawl-progress-bar-fill" class="crawl-progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="crawl-progress-stats">
+          <span id="crawl-progress-percent">0%</span>
+          <span id="crawl-progress-step-text">Khởi động...</span>
+        </div>
+      </div>
+
+      <div class="crawl-log-terminal">
+        <div class="crawl-terminal-header">
+          <span><i class="fa-solid fa-terminal"></i> Nhật Ký Tiến Trình Cào Dữ Liệu</span>
+          <span id="crawl-live-pulse" class="crawl-pulse-active"><span class="pulse-dot"></span> Đang cào trực tiếp</span>
+        </div>
+        <div id="crawl-terminal-logs" class="crawl-terminal-logs">
+          <!-- Log stream dynamically appended -->
+        </div>
+      </div>
+
+      <div id="crawl-modal-summary" class="crawl-modal-summary" style="display: none;">
+        <div class="summary-metric-row">
+          <div class="summary-metric-card">
+            <span class="sm-label">Kỳ Quay XSMN</span>
+            <span class="sm-value" id="sm-xsmn-count">352 Kỳ</span>
+            <span class="sm-sub">21 Đài Đầy Đủ</span>
+          </div>
+          <div class="summary-metric-card">
+            <span class="sm-label">Kỳ Quay Vietlott</span>
+            <span class="sm-value" id="sm-vietlott-count">108 Kỳ</span>
+            <span class="sm-sub">Mega 6/45 & Power 6/55</span>
+          </div>
+          <div class="summary-metric-card highlight">
+            <span class="sm-label">Mô Hình AI Tái Dự Đoán</span>
+            <span class="sm-value">8 / 8 THUẬT TOÁN</span>
+            <span class="sm-sub">Cập nhật 100% Số Đẹp</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="crawl-modal-footer">
+        <button id="btn-crawl-modal-action" class="btn-primary" type="button" style="display: none; width: 100%; justify-content: center; padding: 12px 20px; font-size: 15px;">
+          <i class="fa-solid fa-check-double"></i> Xem Ngay Kết Quả Số Đẹp Đã Tái Dự Đoán
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Script -->
+  <script type="module" src="js/app.js?v=6.1"></script>
+</body>
+</html>

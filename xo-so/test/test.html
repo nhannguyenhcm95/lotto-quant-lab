@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Lotto-Quant Automated Test Runner</title>
+  <style>
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }
+    h1 { color: #58a6ff; }
+    .pass { color: #3fb950; }
+    .fail { color: #f85149; font-weight: bold; }
+    .info { color: #8b949e; }
+    .summary { font-size: 18px; margin-top: 20px; padding: 10px; border: 1px solid #30363d; border-radius: 6px; }
+    #log { white-space: pre-wrap; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Lotto-Quant Test Suite</h1>
+  <div id="log">Đang chạy kiểm thử...</div>
+  <div id="summary" class="summary"></div>
+
+  <script type="module">
+    import { LOTTO_CONFIG } from '../js/config.js';
+    import { PoissonAlgorithm } from '../js/algorithms/poisson.js';
+    import { MarkovAlgorithm } from '../js/algorithms/markov.js';
+    import { MonteCarloAlgorithm } from '../js/algorithms/monte-carlo.js';
+    import { FrequencyGapAlgorithm } from '../js/algorithms/frequency-gap.js';
+    import { MovingAverageAlgorithm } from '../js/algorithms/moving-average.js';
+    import { ClusteringAlgorithm } from '../js/algorithms/clustering.js';
+    import { AssociationRulesAlgorithm } from '../js/algorithms/association-rules.js';
+    import { EnsembleAlgorithm } from '../js/algorithms/ensemble.js';
+    import { BacktestEngine } from '../js/backtest-engine.js';
+
+    let passedCount = 0;
+    let failedCount = 0;
+    const logEl = document.getElementById('log');
+    const summaryEl = document.getElementById('summary');
+    logEl.innerHTML = '';
+
+    function print(text, cls = '') {
+      const span = document.createElement('span');
+      if (cls) span.className = cls;
+      span.textContent = text + '\n';
+      logEl.appendChild(span);
+      console.log(text);
+    }
+
+    function assert(condition, testName) {
+      if (condition) {
+        print(`  [PASS] ${testName}`, 'pass');
+        passedCount++;
+      } else {
+        print(`  [FAIL] ${testName}`, 'fail');
+        failedCount++;
+      }
+    }
+
+    async function runSuite() {
+      print('========================================================', 'info');
+      print('   LOTTO-QUANT LAB: KHỞI CHẠY KIỂM THỬ HỆ THỐNG', 'info');
+      print('========================================================\n', 'info');
+
+      // TEST 1: Cấu hình hệ thống
+      print('1. Kiểm tra Cấu hình (config.js):', 'info');
+      assert(LOTTO_CONFIG.ALGORITHMS.length === 8, 'Khai báo đầy đủ 8 thuật toán định lượng');
+      assert(LOTTO_CONFIG.ALL_STATIONS.length >= 21, 'Khai báo đầy đủ các đài XSMN');
+      assert(LOTTO_CONFIG.VIETLOTT_GAMES['mega-6-45'] !== undefined, 'Cấu hình Mega 6/45 hợp lệ');
+      assert(LOTTO_CONFIG.VIETLOTT_GAMES['power-6-55'] !== undefined, 'Cấu hình Power 6/55 hợp lệ');
+
+      // TEST 2: Bộ dữ liệu hạt giống thực tế (historical-seed.json)
+      print('\n2. Kiểm tra Dữ liệu Thực Tế Minh Ngọc (historical-seed.json):', 'info');
+      const seedRes = await fetch('../data/historical-seed.json');
+      assert(seedRes.ok, 'File historical-seed.json tải thành công (HTTP 200)');
+      const seedData = await seedRes.json();
+      assert(seedData.xsmn && seedData.xsmn.length >= 20, `Có ${seedData.xsmn ? seedData.xsmn.length : 0} kỳ quay đài XSMN thực tế`);
+      assert(seedData.vietlott && seedData.vietlott['mega-6-45'].length >= 5, 'Có đầy đủ kỳ quay Mega 6/45 thực tế');
+      assert(seedData.vietlott && seedData.vietlott['power-6-55'].length >= 5, 'Có đầy đủ kỳ quay Power 6/55 thực tế');
+
+      const latestMega = seedData.vietlott['mega-6-45'][0];
+      assert(latestMega.drawId === '#01575', `Kỳ Mega 6/45 mới nhất là #01575 (Thực tế: ${latestMega.drawId})`);
+      assert(latestMega.date === '2026-10-14', `Ngày quay Mega 6/45 là 14/10/2026 (Thực tế: ${latestMega.date})`);
+      const expectedMegaBalls = [6, 16, 19, 21, 34, 43];
+      const isBallsMatch = JSON.stringify(latestMega.winningNumbers) === JSON.stringify(expectedMegaBalls);
+      assert(isBallsMatch, `Dãy số Mega 6/45 chuẩn xác: ${latestMega.winningNumbers.join(', ')}`);
+      assert(latestMega.jackpotEst.includes('20,329,744,500'), `Giá trị Jackpot khớp: ${latestMega.jackpotEst}`);
+
+      // TEST 3: Kiểm thử 8 Thuật toán trên XSMN thực tế
+      print('\n3. Kiểm thử 8 Thuật toán Dự đoán (XSMN thực tế):', 'info');
+      const xsmnHistory = seedData.xsmn;
+      const algos = [
+        PoissonAlgorithm,
+        MarkovAlgorithm,
+        MonteCarloAlgorithm,
+        FrequencyGapAlgorithm,
+        MovingAverageAlgorithm,
+        ClusteringAlgorithm,
+        AssociationRulesAlgorithm,
+        EnsembleAlgorithm
+      ];
+
+      algos.forEach(algo => {
+        const res = algo.predict(xsmnHistory, { isVietlott: false, totalBalls: 99, topN: 5 });
+        assert(res.predictions && res.predictions.length === 5, `${algo.name}: Sinh đủ 5 số dự đoán`);
+        assert(res.scores && Object.keys(res.scores).length > 0, `${algo.name}: Có ma trận điểm xác suất`);
+        assert(typeof res.explanation === 'string' && res.explanation.length > 10, `${algo.name}: Có thuyết minh giải thuật`);
+      });
+
+      // TEST 4: Kiểm thử Thuật toán trên Vietlott thực tế
+      print('\n4. Kiểm thử Thuật toán Dự đoán (Vietlott Mega 6/45 thực tế):', 'info');
+      const megaHistory = seedData.vietlott['mega-6-45'];
+      const vietlottRes = EnsembleAlgorithm.predict(megaHistory, { isVietlott: true, totalBalls: 45, topN: 6 });
+      assert(vietlottRes.predictions && vietlottRes.predictions.length === 6, 'Ensemble Vietlott sinh đủ 6 bóng số');
+      assert(vietlottRes.metrics && vietlottRes.metrics.confidenceScore, 'Ensemble Vietlott có chỉ số độ tin cậy');
+
+      // TEST 5: Động cơ Dò Kết Quả (Backtest Engine)
+      print('\n5. Kiểm thử Động cơ Dò Kết Quả & Đánh Giá Thực Nghiệm:', 'info');
+      const testDate = megaHistory[1] ? megaHistory[1].date : '2026-10-11';
+      const backtestRes = BacktestEngine.runSingleDateBacktest(megaHistory, testDate, {
+        isVietlott: true,
+        stationOrGame: 'mega-6-45',
+        totalBalls: 45,
+        topN: 6
+      });
+
+      assert(backtestRes.success === true, `Dò kết quả ngày ${testDate} thành công`);
+      assert(backtestRes.trainingDataCount < megaHistory.length, 'Đã loại trừ Lookahead Bias (chỉ dùng dữ liệu trước ngày dò)');
+      assert(backtestRes.algoResults && backtestRes.algoResults.length === 8, 'Đối chiếu kết quả cho cả 8 thuật toán');
+
+      // TEST 6: Bảng Xếp Hạng Hàng Loạt (Batch Backtest)
+      print('\n6. Kiểm thử Bảng Xếp Hạng Hiệu Suất (Batch Leaderboard):', 'info');
+      const batchRes = BacktestEngine.runBatchBacktest(megaHistory, {
+        isVietlott: true,
+        stationOrGame: 'mega-6-45',
+        totalBalls: 45,
+        topN: 6
+      }, 5);
+
+      assert(batchRes.success === true, 'Chạy kiểm định hàng loạt thành công');
+      assert(batchRes.leaderboard && batchRes.leaderboard.length === 8, 'Bảng xếp hạng đầy đủ 8 thuật toán');
+
+      // SUMMARY
+      print('\n========================================================', 'info');
+      const sumText = `KẾT QUẢ TỔNG HỢP: ${passedCount} PASS, ${failedCount} FAIL`;
+      print(sumText, failedCount === 0 ? 'pass' : 'fail');
+      print('========================================================', 'info');
+      summaryEl.textContent = sumText;
+      summaryEl.className = failedCount === 0 ? 'summary pass' : 'summary fail';
+    }
+
+    runSuite();
+  </script>
+</body>
+</html>

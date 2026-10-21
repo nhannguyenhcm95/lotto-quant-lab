@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-10-19T09:02:28.861Z",
+  "generator": "scripts/generate-fix10-artifacts.js",
+  "nodeVersion": "v24.14.1",
+  "platform": "win32",
+  "status": "RELEASE_READY",
+  "artifacts": {
+    "issue-ledger.md": {
+      "path": "reports\\fix10\\issue-ledger.md",
+      "sha256": "9B14AAD16CC2D9C017A03B9F327F0EA6DA7A94E4A468D16AE1D8D9EAEAB0864C"
+    },
+    "verification-report.md": {
+      "path": "reports\\fix10\\verification-report.md",
+      "sha256": "07151DD2B0F8A9712185D2746B2F8A6652EE5A0CCD3476913DA3898987B0CA28"
+    },
+    "algorithm-metrics.csv": {
+      "path": "reports\\fix10\\algorithm-metrics.csv",
+      "sha256": "8614A0246E38A602910294BC29ECE88725844F50A0B5B13825547D42DA455E4A"
+    },
+    "baseline-comparison.csv": {
+      "path": "reports\\fix10\\baseline-comparison.csv",
+      "sha256": "125FB38046DB56DD2767241339EB522FABDFFC7EDCA7FE889FE82D8A67F10449"
+    }
+  },
+  "codeSha256": {
+    "input-normalizer.js": "6B929570B5BF2C362BD5C08D0D0FDD5104DE613988B97124CA406FBF554E5D18",
+    "moving-average.js": "16ED6F40A0E329CEB26752FD1000D1F4109C460D7A40E9FCCD60D14897E2917C",
+    "ensemble.js": "4D8042BA1E5C103F9B826A05DACF06DDB6DA150A682B986A21127EC6C3FDFC7F",
+    "frequency-gap.js": "C79A653391BC7BDEB8B553AC75AE432138D6F0B0922145DD0BFF99BA953A172B",
+    "monte-carlo.js": "1BF4D18670F778DC43003C81B317DAD141737F8F5A30AA853453D64DEFA8126C",
+    "clustering.js": "9B6D4413F075FF0DF910016F131AB775948AD0E0DFC525F36001C94122002ACA",
+    "association-rules.js": "1AE2B682341E9D80E1133F2DA78B2AD0B3DFE2C94124921CC96CBA85EB3607C5",
+    "poisson.js": "D97405A94DAE6DEB9E9B68B9634FDD76DCE10A0B893932CAB66E259C534E9F9C",
+    "markov.js": "372E2CACB1999A8EA330945D5E43CE9D110B3677426E6D6BC76334C2F4ADC38D",
+    "test-fix10-reproduce.js": "0A94FB5040E426C2FB0237A145A91CCA662BB5611F578B2C0868934E4339F1F9"
+  },
+  "testSuitesPassed": [
+    "test/test-fix10-reproduce.js (38/38 PASS)",
+    "test/test-input-normalizer.js (20/20 PASS)",
+    "test/test-unit.js (60/60 PASS)",
+    "test/test-algorithm-reference.js (33/33 PASS)",
+    "test/test-integration.js (33/33 PASS)",
+    "test/test-e2e.js (36/36 PASS)",
+    "scripts/audit-history.js --strict (25136/25136 PASS)"
+  ]
+}

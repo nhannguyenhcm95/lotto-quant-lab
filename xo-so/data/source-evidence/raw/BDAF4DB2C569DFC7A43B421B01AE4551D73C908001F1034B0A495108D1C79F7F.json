@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "long-an",
+  "stationName": "Long An",
+  "drawId": "XSLA - 6K4",
+  "date": "2026-06-27",
+  "specialPrize": "218731",
+  "prizes": {
+    "special": [
+      "218731"
+    ],
+    "first": [
+      "49583"
+    ],
+    "second": [
+      "78517"
+    ],
+    "third": [
+      "67326",
+      "92338"
+    ],
+    "fourth": [
+      "53319",
+      "63802",
+      "23436",
+      "89687",
+      "27718",
+      "87582",
+      "80612"
+    ],
+    "fifth": [
+      "9878"
+    ],
+    "sixth": [
+      "2122",
+      "4408",
+      "0424"
+    ],
+    "seventh": [
+      "849"
+    ],
+    "eighth": [
+      "17"
+    ]
+  },
+  "lottoPairs": [
+    "31",
+    "83",
+    "17",
+    "26",
+    "38",
+    "19",
+    "02",
+    "36",
+    "87",
+    "18",
+    "82",
+    "12",
+    "78",
+    "22",
+    "08",
+    "24",
+    "49",
+    "17"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/27-06-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

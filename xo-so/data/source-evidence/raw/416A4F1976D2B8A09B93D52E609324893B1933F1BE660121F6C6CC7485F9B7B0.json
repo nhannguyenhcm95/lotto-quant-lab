@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "binh-thuan",
+  "stationName": "Bình Thuận",
+  "drawId": "XSBTH - 10K3",
+  "date": "2026-10-15",
+  "specialPrize": "785898",
+  "prizes": {
+    "special": [
+      "785898"
+    ],
+    "first": [
+      "84278"
+    ],
+    "second": [
+      "20139"
+    ],
+    "third": [
+      "31017",
+      "74460"
+    ],
+    "fourth": [
+      "20237",
+      "76995",
+      "02607",
+      "24767",
+      "12584",
+      "18702",
+      "74839"
+    ],
+    "fifth": [
+      "7593"
+    ],
+    "sixth": [
+      "5952",
+      "0510",
+      "0622"
+    ],
+    "seventh": [
+      "741"
+    ],
+    "eighth": [
+      "44"
+    ]
+  },
+  "lottoPairs": [
+    "98",
+    "78",
+    "39",
+    "17",
+    "60",
+    "37",
+    "95",
+    "07",
+    "67",
+    "84",
+    "02",
+    "39",
+    "93",
+    "52",
+    "10",
+    "22",
+    "41",
+    "44"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/15-10-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

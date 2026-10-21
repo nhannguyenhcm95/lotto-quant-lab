@@ -1,0 +1,12 @@
+{
+  "runId": "run-20261019090153-5d63e1",
+  "runIndex": 2,
+  "status": "PASS",
+  "startedAt": "2026-10-19T09:01:53.658Z",
+  "updatedAt": "2026-10-19T09:02:15.868Z",
+  "nodeVersion": "v24.14.1",
+  "platform": "win32",
+  "finishedAt": "2026-10-19T09:02:15.854Z",
+  "durationMs": 22196,
+  "manifestSha256": "7551DDEBA3202E5BFF1EE3E8ECE4AB688EA74A268202E0B267ED8C7B4F202F5E"
+}

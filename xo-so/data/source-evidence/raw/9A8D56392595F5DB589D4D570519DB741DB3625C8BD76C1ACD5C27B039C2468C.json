@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "kien-giang",
+  "stationName": "Kiên Giang",
+  "drawId": "XSKG - 8K3",
+  "date": "2026-08-16",
+  "specialPrize": "216578",
+  "prizes": {
+    "special": [
+      "216578"
+    ],
+    "first": [
+      "93153"
+    ],
+    "second": [
+      "93156"
+    ],
+    "third": [
+      "25365",
+      "36699"
+    ],
+    "fourth": [
+      "56396",
+      "80352",
+      "74435",
+      "74605",
+      "73323",
+      "06015",
+      "86957"
+    ],
+    "fifth": [
+      "0303"
+    ],
+    "sixth": [
+      "9935",
+      "7381",
+      "7689"
+    ],
+    "seventh": [
+      "370"
+    ],
+    "eighth": [
+      "13"
+    ]
+  },
+  "lottoPairs": [
+    "78",
+    "53",
+    "56",
+    "65",
+    "99",
+    "96",
+    "52",
+    "35",
+    "05",
+    "23",
+    "15",
+    "57",
+    "03",
+    "35",
+    "81",
+    "89",
+    "70",
+    "13"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/16-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

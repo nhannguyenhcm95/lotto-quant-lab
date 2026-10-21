@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "dong-nai",
+  "stationName": "Đồng Nai",
+  "drawId": "XSDN - 8K3",
+  "date": "2026-08-19",
+  "specialPrize": "289591",
+  "prizes": {
+    "special": [
+      "289591"
+    ],
+    "first": [
+      "45797"
+    ],
+    "second": [
+      "45217"
+    ],
+    "third": [
+      "61807",
+      "46430"
+    ],
+    "fourth": [
+      "78884",
+      "63216",
+      "89359",
+      "53739",
+      "51226",
+      "57413",
+      "64874"
+    ],
+    "fifth": [
+      "3409"
+    ],
+    "sixth": [
+      "2507",
+      "1048",
+      "5142"
+    ],
+    "seventh": [
+      "141"
+    ],
+    "eighth": [
+      "01"
+    ]
+  },
+  "lottoPairs": [
+    "91",
+    "97",
+    "17",
+    "07",
+    "30",
+    "84",
+    "16",
+    "59",
+    "39",
+    "26",
+    "13",
+    "74",
+    "09",
+    "07",
+    "48",
+    "42",
+    "41",
+    "01"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/19-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "long-an",
+  "stationName": "Long An",
+  "drawId": "XSLA - 8K1",
+  "date": "2026-08-01",
+  "specialPrize": "177081",
+  "prizes": {
+    "special": [
+      "177081"
+    ],
+    "first": [
+      "87073"
+    ],
+    "second": [
+      "48058"
+    ],
+    "third": [
+      "41984",
+      "82746"
+    ],
+    "fourth": [
+      "53401",
+      "30522",
+      "75875",
+      "24916",
+      "87379",
+      "11118",
+      "77150"
+    ],
+    "fifth": [
+      "0294"
+    ],
+    "sixth": [
+      "1525",
+      "7773",
+      "6284"
+    ],
+    "seventh": [
+      "610"
+    ],
+    "eighth": [
+      "41"
+    ]
+  },
+  "lottoPairs": [
+    "81",
+    "73",
+    "58",
+    "84",
+    "46",
+    "01",
+    "22",
+    "75",
+    "16",
+    "79",
+    "18",
+    "50",
+    "94",
+    "25",
+    "73",
+    "84",
+    "10",
+    "41"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/01-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

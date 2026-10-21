@@ -1,0 +1,10 @@
+# Netlify Redirects Rules for LOTTO-QUANT LAB
+# API Endpoints mapped to Netlify Serverless Functions
+/api/crawl-vietlott    /.netlify/functions/crawl-vietlott    200!
+/api/crawl-xsmn        /.netlify/functions/crawl-xsmn        200!
+/api/*                 /.netlify/functions/:splat            200
+
+# Legacy path redirects
+/xo-so                 /                                     301!
+/xo-so/                /                                     301!
+/xo-so/*               /:splat                               301!

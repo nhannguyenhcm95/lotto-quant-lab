@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tay-ninh",
+  "stationName": "Tây Ninh",
+  "drawId": "XSTN - 9K2",
+  "date": "2026-09-10",
+  "specialPrize": "910457",
+  "prizes": {
+    "special": [
+      "910457"
+    ],
+    "first": [
+      "47152"
+    ],
+    "second": [
+      "31387"
+    ],
+    "third": [
+      "54162",
+      "40090"
+    ],
+    "fourth": [
+      "65684",
+      "50000",
+      "58458",
+      "15677",
+      "00776",
+      "61931",
+      "79519"
+    ],
+    "fifth": [
+      "1281"
+    ],
+    "sixth": [
+      "3154",
+      "9559",
+      "1776"
+    ],
+    "seventh": [
+      "282"
+    ],
+    "eighth": [
+      "57"
+    ]
+  },
+  "lottoPairs": [
+    "57",
+    "52",
+    "87",
+    "62",
+    "90",
+    "84",
+    "00",
+    "58",
+    "77",
+    "76",
+    "31",
+    "19",
+    "81",
+    "54",
+    "59",
+    "76",
+    "82",
+    "57"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/10-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

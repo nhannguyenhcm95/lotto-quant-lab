@@ -1,0 +1,28 @@
+{
+  "manifestVersion": "2.0.0",
+  "generatedAt": "2026-10-19T04:19:44.877Z",
+  "description": "Source Evidence Store Schema 2.0.0 với raw bodies",
+  "evidenceFiles": {
+    "vietlott-mega-6-45": {
+      "path": "data/source-evidence/vietlott-mega-6-45.json",
+      "recordCount": 1576,
+      "sha256": "267448D20EFB4734B0B5C87205EAF11020F7EFAACCA72E98547536CCA6268DFD"
+    },
+    "vietlott-power-6-55": {
+      "path": "data/source-evidence/vietlott-power-6-55.json",
+      "recordCount": 1411,
+      "sha256": "17EFDFCFEAF61FE8BF3CAE8249BB39EA8A58AAB8EB44CB0B9C3DA0D919ABB88D"
+    },
+    "xsmn-21-stations": {
+      "path": "data/source-evidence/xsmn-21-stations.json",
+      "recordCount": 352,
+      "sha256": "CBA45688E15CACFC47286C00D47D9C2EF944BE1DB62833EA2E039A9BDEA688EF"
+    }
+  },
+  "rawBodies": {
+    "count": 3339,
+    "directory": "data/source-evidence/raw",
+    "totalSizeBytes": 1449110
+  },
+  "totalEvidenceRecords": 3339
+}

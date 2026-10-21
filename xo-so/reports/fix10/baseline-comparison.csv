@@ -1,0 +1,17 @@
+scope,algoId,algoName,sampleFolds,meanHitRate,baselineMeanHitRate,meanDifference,stdErrorDifference,ci95Lower,ci95Upper,pValueApprox,exceedsBaseline
+vietlott-mega-6-45,markov,"Chuỗi Markov Bậc 1 & Liên Kết Chuyển Dịch",30,15.57,13.4,2.16,2.352,-2.45,6.77,0.364,true
+vietlott-mega-6-45,clustering,"Phân cụm K-Means & Cấu trúc (K-Means Clustering)",30,15.01,13.4,1.6,2.587,-3.47,6.67,0.547,true
+vietlott-mega-6-45,ensemble,"Mô hình Tổng Hợp (Ensemble)",30,11.12,13.4,-2.28,2.012,-6.22,1.66,0.26,false
+vietlott-mega-6-45,poisson,"Phân phối Poisson & Tần suất Thực nghiệm",30,13.34,13.4,-0.06,2.334,-4.64,4.51,0.98,false
+vietlott-mega-6-45,monte-carlo,"Mô phỏng Monte Carlo (10k)",30,11.67,13.4,-1.73,2.303,-6.24,2.78,0.461,false
+vietlott-mega-6-45,frequency-gap,"Tần suất & Chu kỳ Lô Gan",30,14.46,13.4,1.05,2.008,-2.88,4.99,0.612,true
+vietlott-mega-6-45,moving-average,"EMA & Chu kỳ Thứ",30,11.12,13.4,-2.29,2.267,-6.73,2.16,0.318,false
+vietlott-mega-6-45,association-rules,"Khai phá Luật Bạc Nhớ",30,7.79,13.4,-5.62,1.854,-9.25,-1.98,0.002,false
+xsmn-tphcm,markov,"Chuỗi Markov Bậc 1 & Liên Kết Chuyển Dịch",30,14,16.03,-2.03,3.023,-7.95,3.9,0.513,false
+xsmn-tphcm,frequency-gap,"Tần suất & Chu kỳ Lô Gan",30,20.67,16.03,4.64,3.655,-2.52,11.8,0.206,true
+xsmn-tphcm,ensemble,"Mô hình Tổng Hợp (Ensemble)",30,20,16.03,3.97,3.737,-3.35,11.3,0.292,true
+xsmn-tphcm,poisson,"Phân phối Poisson & Tần suất Thực nghiệm",30,16,16.03,-0.03,3.195,-6.29,6.23,0.994,false
+xsmn-tphcm,monte-carlo,"Mô phỏng Monte Carlo (10k)",30,18,16.03,1.97,3.344,-4.58,8.53,0.567,true
+xsmn-tphcm,moving-average,"EMA & Chu kỳ Thứ",30,14.67,16.03,-1.36,2.977,-7.2,4.48,0.661,false
+xsmn-tphcm,clustering,"Phân cụm K-Means & Cấu trúc (K-Means Clustering)",30,14.67,16.03,-1.36,2.519,-6.3,3.58,0.601,false
+xsmn-tphcm,association-rules,"Khai phá Luật Bạc Nhớ",30,18,16.03,1.97,3.214,-4.33,8.27,0.55,true

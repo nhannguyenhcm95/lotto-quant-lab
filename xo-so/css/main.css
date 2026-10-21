@@ -1,0 +1,1121 @@
+/* ===================================================================
+   LOTTO-QUANT LAB: FRESH MODERN CLEAN LIGHT DESIGN SYSTEM
+   Phong cách Hiện Đại Tươi Sáng, Trực Diện & Thanh Lịch (Editorial Clean)
+   Tối ưu hóa khả năng đọc số liệu, tương phản sắc nét và thân thiện
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: light;
+
+  /* 1. HỆ THỐNG MÀU QUANT EDITORIAL (RESEARCH PUBLICATION GRADE) */
+  --bg-canvas: #F6F5F0;        /* Nền giấy ngà ấm nhẹ, chuyên nghiệp, không chói */
+  --bg-card: #FFFFFF;          /* Nền card trắng tinh tế, sắc nét */
+  --bg-card-elevated: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-muted: #EFECE6; /* Nền bảng phụ, strip header */
+  --bg-subtle: #F0EDE6;        /* Khối con, chip nhẹ */
+  --bg-hover: #F8F7F3;
+
+  /* Nền kính mờ sáng tối giản */
+  --card-glass: rgba(255, 255, 255, 0.94);
+  --card-glass-elevated: rgba(255, 255, 255, 0.98);
+
+  /* Màu chữ Sắc Nét, Tương Phản Chuẩn WCAG AAA */
+  --text-primary: #1C1F1B;     /* Đen than chì trầm - Độ đọc tuyệt đối */
+  --text-secondary: #5C625A;   /* Xám rêu ấm - Nhãn & mô tả */
+  --text-muted: #7E847C;       /* Metadata, timestamp */
+  --text-gold: #9A6B24;        /* Vàng đồng trầm học thuật */
+
+  /* Điểm nhấn thương hiệu chủ đạo (Single Primary Accent) */
+  --accent: #9A6B24;           /* Vàng đồng trầm quý phái */
+  --accent-soft: #F4EEDF;      /* Nền nhấn dịu mắt */
+  --accent-hover: #82581A;
+  --accent-border: #D8C7A5;
+
+  /* Màu ngữ nghĩa trạng thái (Semantic Only - Không dùng làm màu trang trí) */
+  --success: #1E6B52;          /* Xanh ngọc lục bảo thẫm */
+  --success-soft: #E8F4F0;
+  --warning: #945312;          /* Nâu hổ phách */
+  --warning-soft: #FBF0E4;
+  --danger: #9E3834;           /* Đỏ ruby thẫm */
+  --danger-soft: #FCEEEC;
+  --info: #2B5770;             /* Xanh lam trầm */
+  --info-soft: #EBF2F6;
+
+  /* Đường phân cách sợi tóc thanh lịch (Minimal 1px Borders) */
+  --line-subtle: #E2DFD8;
+  --line-medium: #CDC9C0;
+  --line-strong: #9E998E;
+  --line-gold: rgba(154, 107, 36, 0.35);
+  --line-gold-bright: #9A6B24;
+
+  /* Backward Compatibility Aliases */
+  --gold-50: #FFFDF8;
+  --gold-100: #F4EEDF;
+  --gold-300: #D8C7A5;
+  --gold-400: #9A6B24;
+  --gold-500: #82581A;
+  --gold-600: #6B4712;
+
+  --blue-50: #EBF2F6;
+  --blue-100: #D7E5ED;
+  --blue-500: #2B5770;
+  --blue-600: #1F3F52;
+
+  --emerald-50: #E8F4F0;
+  --emerald-100: #D1E9E1;
+  --emerald-400: #288467;
+  --emerald-500: #1E6B52;
+  --emerald-600: #16533F;
+
+  --rose-50: #FCEEEC;
+  --rose-100: #F7D7D5;
+  --rose-500: #9E3834;
+  --rose-600: #822C28;
+
+  --purple-50: #F3EEF8;
+  --purple-500: #684882;
+
+  /* 2. TYPOGRAPHY SYSTEM */
+  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Consolas', monospace;
+
+  /* 3. ĐỔ BÓNG MỊN MÀNG TIẾT CHẾ (EDITORIAL SUBTLE SHADOWS) */
+  --sh-card: 0 1px 3px rgba(28, 31, 27, 0.05), 0 1px 2px rgba(28, 31, 27, 0.03);
+  --sh-elevated: 0 6px 16px -2px rgba(28, 31, 27, 0.07), 0 2px 6px -1px rgba(28, 31, 27, 0.03);
+  --sh-gold-glow: 0 0 0 1px rgba(154, 107, 36, 0.25), 0 4px 12px -2px rgba(154, 107, 36, 0.12);
+  --sh-gold-badge: 0 1px 3px rgba(154, 107, 36, 0.12);
+  --sh-emerald-glow: 0 0 0 1px rgba(30, 107, 82, 0.25), 0 4px 12px -2px rgba(30, 107, 82, 0.12);
+
+  /* 4. BO GÓC CHUẨN MỰC (DISCIPLINED RADII) */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-pill: 9999px;
+
+  /* Backward Compatibility Aliases for Components */
+  --ink-950: #FFFFFF;
+  --ink-900: #FFFFFF;
+  --ink-850: #F6F5F0;
+  --ink-800: #EFECE6;
+  --ink-750: #E2DFD8;
+  --ink-card-glass: rgba(255, 255, 255, 0.96);
+  --on-ink: #1C1F1B;
+  --on-ink-subtle: #5C625A;
+  --on-ink-muted: #7E847C;
+  --blue-400: #2B5770;
+  --indigo-400: #3B5A7A;
+
+  /* Chuyển động tương tác chuẩn */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur-normal: 240ms;
+}
+
+/* Reset & Nền tảng */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  background-color: var(--bg-canvas);
+  background-image: 
+    radial-gradient(ellipse 800px 500px at 85% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 700px 450px at 15% 55%, rgba(37, 99, 235, 0.04) 0%, transparent 65%),
+    radial-gradient(#CBD5E1 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 26px 26px;
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular nums cho tất cả số liệu */
+.tabular-numbers, 
+td, th, 
+.kpi-value, 
+.lotto-ball, 
+.lotto-chip, 
+.badge-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Container chính */
+.app-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 32px 80px 32px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 10px 60px 10px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ===================================================================
+   HEADER ỨNG DỤNG (QUANT EDITORIAL HEADER)
+   =================================================================== */
+.header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-md);
+  margin-bottom: 20px;
+  box-shadow: var(--sh-card);
+  position: relative;
+}
+
+.header-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--accent);
+  transition: background-color var(--dur-fast), border-color var(--dur-fast);
+}
+
+.brand-icon-box:hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+}
+
+.brand-titles h1 {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.brand-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--line-subtle);
+  text-transform: uppercase;
+}
+
+.brand-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.1px;
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--success);
+  display: inline-block;
+}
+
+.btn-sync {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--line-medium);
+  padding: 7px 15px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all var(--dur-fast) var(--ease-out);
+  box-shadow: 0 1px 2px rgba(28, 31, 27, 0.04);
+}
+
+.btn-sync:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-sync:active {
+  transform: translateY(1px);
+}
+
+/* ===================================================================
+   TOP EXECUTIVE KPI STATS BAR (QUANT EDITORIAL METRICS)
+   =================================================================== */
+.kpi-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 1024px) {
+  .kpi-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+}
+
+.kpi-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  box-shadow: var(--sh-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.kpi-stat-card:hover {
+  border-color: var(--line-medium);
+  box-shadow: var(--sh-elevated);
+}
+
+/* Thẻ nổi bật chính (Consensus / Điểm tựa hội tụ) */
+.kpi-stat-card.kpi-gold {
+  border-color: var(--accent-border);
+  background: linear-gradient(180deg, #FFFDF9 0%, #FFFFFF 100%);
+}
+
+.kpi-stat-card.kpi-gold::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.kpi-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.kpi-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.kpi-icon {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.kpi-value {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+}
+
+.kpi-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.kpi-badge.badge-up {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(30, 107, 82, 0.2);
+}
+
+.kpi-badge.badge-gold {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+
+.kpi-footnote {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ===================================================================
+   THANH CHUYỂN ĐỔI CHẾ ĐỘ XỔ SỐ & BỘ LỌC TRỰC DIỆN (DIRECT SELECTOR BAR)
+   =================================================================== */
+.game-switcher-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-md);
+  margin-bottom: 24px;
+  box-shadow: var(--sh-card);
+}
+
+.direct-mode-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--bg-subtle);
+  padding: 5px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-subtle);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mode-tab {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: all var(--dur-normal) var(--ease-out);
+}
+
+.mode-tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mode-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.mode-tab.active {
+  background: var(--bg-surface);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  box-shadow: 0 1px 4px rgba(28, 31, 27, 0.06);
+}
+
+#mode-btn-xsmn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-surface);
+}
+
+#mode-btn-vietlott.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-surface);
+}
+
+.direct-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.today-stations-quick-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.today-pulse-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.station-today-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--success);
+  display: inline-block;
+}
+
+.today-fast-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.today-fast-pill-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  color: var(--text-secondary);
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--dur-fast) var(--ease-out);
+  box-shadow: 0 1px 2px rgba(28, 31, 27, 0.03);
+}
+
+.today-fast-pill-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--line-medium);
+}
+
+.today-fast-pill-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(154, 107, 36, 0.15);
+}
+
+.today-fast-pill-btn.active::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  display: inline-block;
+}
+
+.all-stations-dropdown-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.direct-select {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--line-medium);
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+  min-width: 170px;
+}
+
+.direct-select:focus {
+  border-color: var(--accent);
+}
+
+/* Nút chọn nhanh Vietlott to rõ ràng */
+.vietlott-quick-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.vietlott-game-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--dur-fast) var(--ease-out);
+  box-shadow: var(--sh-card);
+}
+
+.vietlott-game-btn:hover {
+  border-color: var(--line-medium);
+  background: var(--bg-hover);
+}
+
+.vietlott-game-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(154, 107, 36, 0.12);
+}
+
+.v-btn-badge {
+  font-size: 13.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-primary);
+}
+
+.v-btn-jackpot {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.custom-select {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--line-subtle);
+  padding: 7px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+}
+
+.custom-select:focus {
+  border-color: var(--accent);
+}
+
+/* ===================================================================
+   TÍNH NĂNG SINGLE-PAGE LIỀN MẠCH: 
+   =================================================================== */
+.main-nav-tabs {
+  display: none !important;
+}
+
+/* Tất cả panel hiển thị tuần tự như các section trên 1 trang duy nhất */
+.tab-view-panel {
+  display: block !important;
+  animation: none !important;
+  margin-bottom: 36px;
+}
+
+/* ===================================================================
+   TIÊU ĐỀ PHÂN ĐOẠN TRANG CUỘN LIỀN MẠCH (QUANT EDITORIAL SECTION HEADERS)
+   =================================================================== */
+.page-section-header {
+  margin: 32px 0 16px 0;
+  padding: 0 4px;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+.page-section-header.header-gold,
+.page-section-header.header-emerald,
+.page-section-header.header-purple {
+  border-left-color: var(--accent);
+}
+
+.section-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.section-num-pill {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--line-subtle);
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section-heading {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.section-subheading {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Eyebrow tag phong cách tươi sáng */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--gold-600);
+  margin-bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Nút chính (CTA) tươi sáng */
+.btn-primary {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF;
+  border: 1px solid #D97706;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--dur-normal) var(--ease-out);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
+}
+
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ===================================================================
+   MOBILE-FIRST RESPONSIVE OPTIMIZATIONS (IOS & ANDROID TERMINAL POLISH)
+   =================================================================== */
+@media (max-width: 768px) {
+  .app-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 10px 60px 10px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .header-wrapper,
+  .game-switcher-bar,
+  .main-nav-tabs,
+  .tab-view-panel,
+  .quant-card,
+  .hero-prediction-card,
+  .results-card-container,
+  footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  footer p {
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .header-wrapper {
+    padding: 14px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .brand-section {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .brand-icon-box {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .brand-titles h1 {
+    font-size: 19px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .brand-badge {
+    font-size: 9.5px;
+    padding: 2px 6px;
+  }
+
+  .brand-subtitle {
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  .status-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .live-status-pill {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 95px) !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 5px 8px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #crawler-status-text {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    display: block !important;
+  }
+
+  .btn-sync {
+    flex-shrink: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+    white-space: nowrap !important;
+  }
+
+  /* 4 Thẻ KPI: 2x2 Lưới Nhỏ Gọn */
+  .kpi-stat-card {
+    padding: 10px 12px;
+    border-radius: var(--r-sm);
+  }
+
+  .kpi-stat-card .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .kpi-stat-card .kpi-icon {
+    font-size: 12px;
+  }
+
+  .kpi-stat-card .kpi-value {
+    font-size: 18px !important;
+  }
+
+  .kpi-stat-card .kpi-badge {
+    font-size: 9.5px;
+    padding: 1px 5px;
+  }
+
+  .kpi-stat-card .kpi-footnote {
+    display: none;
+  }
+
+  /* Selector Bar: XSMN / Vietlott */
+  .game-switcher-bar {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .lottery-mode-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .mode-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .filter-controls {
+    width: 100%;
+  }
+
+  #station-filter-wrapper, #vietlott-filter-wrapper {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .custom-select {
+    flex: 1;
+    max-width: 65%;
+    font-size: 12.5px;
+    padding: 6px 10px;
+  }
+
+  /* 21 Đài Miền Nam: Lướt Ngang 1 Dòng Mượt Mà */
+  .stations-quick-bar {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+
+  .stations-bar-header {
+    margin-bottom: 8px;
+  }
+
+  .stations-bar-title span {
+    font-size: 11.5px;
+  }
+
+  #today-station-highlight {
+    font-size: 11px !important;
+  }
+
+  .stations-pills-scroll {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+
+  .stations-pills-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .station-pill-btn {
+    white-space: nowrap !important;
+    flex-shrink: 0;
+    padding: 5px 10px;
+    font-size: 11.5px;
+  }
+
+  /* Navigation Tabs: Đã chuyển sang Single-Page cuộn liền mạch, ẩn hoàn toàn trên mobile */
+  .main-nav-tabs {
+    display: none !important;
+  }
+
+  /* Tiêu đề phân đoạn bài báo trên Mobile */
+  .page-section-header {
+    margin: 28px 0 12px 0;
+    padding-left: 10px;
+    border-left-width: 3.5px;
+  }
+
+  .section-title-line {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .section-num-pill {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .section-heading {
+    font-size: 17px;
+    line-height: 1.35;
+    letter-spacing: 0;
+  }
+
+  .section-subheading {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .direct-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .today-stations-quick-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .today-fast-pills {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .today-fast-pills::-webkit-scrollbar { display: none; }
+
+  .all-stations-dropdown-group {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .all-stations-dropdown-group label {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .all-stations-dropdown-group select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .direct-mode-tabs {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+    padding: 3px !important;
+  }
+
+  .mode-tab {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+    gap: 5px !important;
+  }
+
+  .vietlott-quick-buttons {
+    gap: 8px !important;
+  }
+
+  .vietlott-game-btn {
+    padding: 8px 10px !important;
+  }
+
+  .v-btn-badge {
+    font-size: 12px !important;
+  }
+
+  .v-btn-jackpot {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+  }
+}

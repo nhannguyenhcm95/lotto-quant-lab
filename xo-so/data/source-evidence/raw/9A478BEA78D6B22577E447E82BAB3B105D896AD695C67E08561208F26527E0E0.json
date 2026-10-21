@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tra-vinh",
+  "stationName": "Trà Vinh",
+  "drawId": "XSTV - 35TV34",
+  "date": "2026-08-21",
+  "specialPrize": "366282",
+  "prizes": {
+    "special": [
+      "366282"
+    ],
+    "first": [
+      "67604"
+    ],
+    "second": [
+      "94660"
+    ],
+    "third": [
+      "49252",
+      "63964"
+    ],
+    "fourth": [
+      "42239",
+      "24701",
+      "32997",
+      "41646",
+      "56478",
+      "92603",
+      "68546"
+    ],
+    "fifth": [
+      "1759"
+    ],
+    "sixth": [
+      "0897",
+      "5547",
+      "1916"
+    ],
+    "seventh": [
+      "158"
+    ],
+    "eighth": [
+      "57"
+    ]
+  },
+  "lottoPairs": [
+    "82",
+    "04",
+    "60",
+    "52",
+    "64",
+    "39",
+    "01",
+    "97",
+    "46",
+    "78",
+    "03",
+    "46",
+    "59",
+    "97",
+    "47",
+    "16",
+    "58",
+    "57"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/21-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

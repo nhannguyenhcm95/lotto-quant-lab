@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tphcm",
+  "stationName": "TP. HCM",
+  "drawId": "XSHCM - 8E7",
+  "date": "2026-08-29",
+  "specialPrize": "690406",
+  "prizes": {
+    "special": [
+      "690406"
+    ],
+    "first": [
+      "02962"
+    ],
+    "second": [
+      "25390"
+    ],
+    "third": [
+      "48158",
+      "19662"
+    ],
+    "fourth": [
+      "53458",
+      "39121",
+      "77842",
+      "24668",
+      "49325",
+      "84071",
+      "67013"
+    ],
+    "fifth": [
+      "7381"
+    ],
+    "sixth": [
+      "3321",
+      "9601",
+      "3114"
+    ],
+    "seventh": [
+      "311"
+    ],
+    "eighth": [
+      "00"
+    ]
+  },
+  "lottoPairs": [
+    "06",
+    "62",
+    "90",
+    "58",
+    "62",
+    "58",
+    "21",
+    "42",
+    "68",
+    "25",
+    "71",
+    "13",
+    "81",
+    "21",
+    "01",
+    "14",
+    "11",
+    "00"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/29-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

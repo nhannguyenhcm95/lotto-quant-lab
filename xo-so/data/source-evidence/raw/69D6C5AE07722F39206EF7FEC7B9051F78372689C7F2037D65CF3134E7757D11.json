@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "soc-trang",
+  "stationName": "Sóc Trăng",
+  "drawId": "XSST - K4T9",
+  "date": "2026-09-23",
+  "specialPrize": "523291",
+  "prizes": {
+    "special": [
+      "523291"
+    ],
+    "first": [
+      "61832"
+    ],
+    "second": [
+      "84117"
+    ],
+    "third": [
+      "01301",
+      "62146"
+    ],
+    "fourth": [
+      "62307",
+      "91798",
+      "09559",
+      "43811",
+      "23682",
+      "52990",
+      "45011"
+    ],
+    "fifth": [
+      "7242"
+    ],
+    "sixth": [
+      "7699",
+      "8469",
+      "4721"
+    ],
+    "seventh": [
+      "744"
+    ],
+    "eighth": [
+      "66"
+    ]
+  },
+  "lottoPairs": [
+    "91",
+    "32",
+    "17",
+    "01",
+    "46",
+    "07",
+    "98",
+    "59",
+    "11",
+    "82",
+    "90",
+    "11",
+    "42",
+    "99",
+    "69",
+    "21",
+    "44",
+    "66"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/23-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

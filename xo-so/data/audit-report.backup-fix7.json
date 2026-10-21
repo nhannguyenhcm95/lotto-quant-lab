@@ -1,0 +1,53 @@
+{
+  "auditedAt": "2026-10-17T09:03:46.217Z",
+  "strictMode": true,
+  "manifestVersion": "3.0.0",
+  "referenceVersion": "1.0.0-canonical-fix6",
+  "scopes": {
+    "vietlott-mega-6-45": {
+      "expected": 1576,
+      "actual": 1576,
+      "verified": 1576,
+      "coverage": 100
+    },
+    "vietlott-power-6-55": {
+      "expected": 1411,
+      "actual": 1411,
+      "verified": 1411,
+      "coverage": 100
+    },
+    "xsmn-21-stations": {
+      "expected": 352,
+      "actual": 352,
+      "verified": 352,
+      "coverage": 100
+    }
+  },
+  "diagnostics": {
+    "missingDrawsList": [],
+    "schemaErrorsList": [],
+    "duplicateKeysList": [],
+    "inventedValuesList": [],
+    "fieldMismatchesList": [],
+    "missingReferenceList": []
+  },
+  "summary": {
+    "totalExpectedDraws": 3339,
+    "totalActualDraws": 3339,
+    "recordsCompared": 3339,
+    "totalVerifiedDraws": 3339,
+    "coveragePercent": 100,
+    "fieldsCompared": 24784,
+    "matchedFields": 24784,
+    "mismatchedFields": 0,
+    "requiredFieldSourceMatch": 100,
+    "unverifiedRecords": 0,
+    "missingReferenceRecords": 0,
+    "unresolvedMissingDraws": 0,
+    "unresolvedRequiredFields": 0,
+    "invalidCanonicalRecords": 0,
+    "duplicateUnresolvedKeys": 0,
+    "inventedOrDefaultedValues": 0,
+    "sourceEvidenceCoverage": 100
+  }
+}

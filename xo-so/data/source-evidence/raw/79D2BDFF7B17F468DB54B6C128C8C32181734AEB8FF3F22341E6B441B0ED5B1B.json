@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "ben-tre",
+  "stationName": "Bến Tre",
+  "drawId": "XSBTR - K33-T08",
+  "date": "2026-08-18",
+  "specialPrize": "599422",
+  "prizes": {
+    "special": [
+      "599422"
+    ],
+    "first": [
+      "69907"
+    ],
+    "second": [
+      "54884"
+    ],
+    "third": [
+      "95781",
+      "64263"
+    ],
+    "fourth": [
+      "81987",
+      "46740",
+      "93834",
+      "44276",
+      "52868",
+      "67967",
+      "83534"
+    ],
+    "fifth": [
+      "3020"
+    ],
+    "sixth": [
+      "1752",
+      "4825",
+      "6810"
+    ],
+    "seventh": [
+      "298"
+    ],
+    "eighth": [
+      "82"
+    ]
+  },
+  "lottoPairs": [
+    "22",
+    "07",
+    "84",
+    "81",
+    "63",
+    "87",
+    "40",
+    "34",
+    "76",
+    "68",
+    "67",
+    "34",
+    "20",
+    "52",
+    "25",
+    "10",
+    "98",
+    "82"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/18-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

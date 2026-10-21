@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "dong-thap",
+  "stationName": "Đồng Tháp",
+  "drawId": "XSDT - V33",
+  "date": "2026-08-17",
+  "specialPrize": "553908",
+  "prizes": {
+    "special": [
+      "553908"
+    ],
+    "first": [
+      "97285"
+    ],
+    "second": [
+      "24031"
+    ],
+    "third": [
+      "18524",
+      "27163"
+    ],
+    "fourth": [
+      "35818",
+      "67504",
+      "55923",
+      "72122",
+      "67680",
+      "81286",
+      "96970"
+    ],
+    "fifth": [
+      "2850"
+    ],
+    "sixth": [
+      "8035",
+      "1607",
+      "4752"
+    ],
+    "seventh": [
+      "217"
+    ],
+    "eighth": [
+      "71"
+    ]
+  },
+  "lottoPairs": [
+    "08",
+    "85",
+    "31",
+    "24",
+    "63",
+    "18",
+    "04",
+    "23",
+    "22",
+    "80",
+    "86",
+    "70",
+    "50",
+    "35",
+    "07",
+    "52",
+    "17",
+    "71"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/17-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

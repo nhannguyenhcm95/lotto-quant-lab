@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "vinh-long",
+  "stationName": "Vĩnh Long",
+  "drawId": "XSVL - 47VL41",
+  "date": "2026-10-09",
+  "specialPrize": "120550",
+  "prizes": {
+    "special": [
+      "120550"
+    ],
+    "first": [
+      "64433"
+    ],
+    "second": [
+      "29631"
+    ],
+    "third": [
+      "18952",
+      "49213"
+    ],
+    "fourth": [
+      "94894",
+      "87109",
+      "67108",
+      "30092",
+      "96914",
+      "11271",
+      "89850"
+    ],
+    "fifth": [
+      "9201"
+    ],
+    "sixth": [
+      "4459",
+      "9958",
+      "6602"
+    ],
+    "seventh": [
+      "816"
+    ],
+    "eighth": [
+      "28"
+    ]
+  },
+  "lottoPairs": [
+    "50",
+    "33",
+    "31",
+    "52",
+    "13",
+    "94",
+    "09",
+    "08",
+    "92",
+    "14",
+    "71",
+    "50",
+    "01",
+    "59",
+    "58",
+    "02",
+    "16",
+    "28"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/09-10-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

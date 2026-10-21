@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "ca-mau",
+  "stationName": "Cà Mau",
+  "drawId": "XSCM - 26-T10K2",
+  "date": "2026-10-12",
+  "specialPrize": "683310",
+  "prizes": {
+    "special": [
+      "683310"
+    ],
+    "first": [
+      "28250"
+    ],
+    "second": [
+      "60885"
+    ],
+    "third": [
+      "51071",
+      "30777"
+    ],
+    "fourth": [
+      "68184",
+      "17856",
+      "89984",
+      "91666",
+      "41068",
+      "74016",
+      "59548"
+    ],
+    "fifth": [
+      "4465"
+    ],
+    "sixth": [
+      "6867",
+      "6251",
+      "8256"
+    ],
+    "seventh": [
+      "327"
+    ],
+    "eighth": [
+      "91"
+    ]
+  },
+  "lottoPairs": [
+    "10",
+    "50",
+    "85",
+    "71",
+    "77",
+    "84",
+    "56",
+    "84",
+    "66",
+    "68",
+    "16",
+    "48",
+    "65",
+    "67",
+    "51",
+    "56",
+    "27",
+    "91"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/12-10-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

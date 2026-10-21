@@ -1,0 +1,326 @@
+{
+  "runId": "run-20261019022406-ed60b1",
+  "runIndex": 2,
+  "startTime": "2026-10-19T02:24:06.230Z",
+  "endTime": "2026-10-19T02:26:14.932Z",
+  "durationMs": 128702,
+  "overallStatus": "PASS",
+  "nodeVersion": "v24.14.1",
+  "platform": "win32",
+  "baselineHashes": {
+    "seedHash": "E7C72626EB00206965AECD7207FC30A11B025E9428BC9FA296D407ED4C56DAD6",
+    "auditHash": "C168320AE1A4458EDB81DE5D8EC669A9062CE1295663FB0CF8BDE978BAE8210F",
+    "scopeHash": "DB9579FBBAA4896BED202A95C30D30660EAD9AECFCCD0786603A231321FAA0E6",
+    "refHash": "2C45E7BC384DA15C5E2B7AFE0FE9C5493F0075D31A91FF5632801C55CD051905",
+    "configHash": "7F25BF0FDD12D0E5C1DB3125D191FC2E8F6F4691DB9F6B1F860B1FFC0D5FA6D2"
+  },
+  "gates": [
+    {
+      "gateId": "A",
+      "name": "Gate A: Canonical Reference Independence",
+      "status": "PASS",
+      "durationMs": 339,
+      "logFile": "logs/gate-a.log",
+      "logSha256": "EEB83C38298A3C1F78093B9A519E507B7FAF2FCF641B2DB182761E0234E48A40",
+      "assertions": [
+        {
+          "name": "Bộ kiểm thử độc lập Gate A (test-gate-a-reference.js) đạt 100%",
+          "pass": true
+        },
+        {
+          "name": "Tệp data/canonical-reference.json tồn tại",
+          "pass": true
+        },
+        {
+          "name": "Canonical Reference chứa đủ 3.339 bản ghi (Thực tế: 3339)",
+          "pass": true
+        },
+        {
+          "name": "Canonical Reference được xây dựng từ source-evidence độc lập",
+          "pass": true
+        },
+        {
+          "name": "Kho bằng chứng data/source-evidence tồn tại",
+          "pass": true
+        },
+        {
+          "name": "Kho bằng chứng chứa đủ 3.339 bản ghi nguồn độc lập (Thực tế: 3339)",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "B",
+      "name": "Gate B: Value-Level Audit & 11 Mutations",
+      "status": "PASS",
+      "durationMs": 1062,
+      "logFile": "logs/gate-b.log",
+      "logSha256": "EEEE94B37DB89E57C67814EDCB35D61F5BCDB0D6586631A641644812C68C0027",
+      "assertions": [
+        {
+          "name": "Kiểm toán dữ liệu canonical: 100% đạt chuẩn chất lượng",
+          "pass": true
+        },
+        {
+          "name": "Tổng số phép đối chiếu giá trị thực tế >= 24.784 (Thực tế: 25136)",
+          "pass": true
+        },
+        {
+          "name": "Số phép đối chiếu khớp đạt 100% (25136/25136)",
+          "pass": true
+        },
+        {
+          "name": "Số trường lệch giá trị (mismatchedComparisons) là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Số trường chưa xác minh (unverifiedComparisons) là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Số kỳ thiếu chưa xử lý (missingExpectedDraws) là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Số xung đột nguồn chưa xử lý (sourceConflictCount) là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Số bản ghi lỗi schema là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Số bản ghi trùng lặp khóa là đúng 0",
+          "pass": true
+        },
+        {
+          "name": "Không có giá trị tự chế/bịa đặt nào (0 bản ghi)",
+          "pass": true
+        },
+        {
+          "name": "Bộ kiểm thử 11 Mutations (test-audit-mutations.js) đạt 100%",
+          "pass": true
+        },
+        {
+          "name": "Bảng đối chiếu chứa đủ 3.339 bản ghi thực tế (Thực tế: 3339)",
+          "pass": true
+        },
+        {
+          "name": "Tệp reports/fix7/data-reconciliation.csv tồn tại trên đĩa",
+          "pass": true
+        },
+        {
+          "name": "CSV có đúng 3.340 dòng (1 header + 3.339 records, thực tế: 3340)",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "C",
+      "name": "Gate C: Ingestion Safety & Schema Validation",
+      "status": "PASS",
+      "durationMs": 18,
+      "logFile": "logs/gate-c.log",
+      "logSha256": "71CF53CA6CA506F6EBFE52E5CC34AEA11DF85B7995EA42FF731E526C3A849D30",
+      "assertions": [
+        {
+          "name": "Bộ kiểm thử Ingestion Safety (test-gate-c-ingestion.js) đạt 100%",
+          "pass": true
+        },
+        {
+          "name": "crawl-all-history.js tích hợp write guard bắt buộc flag --allow-canonical-write",
+          "pass": true
+        },
+        {
+          "name": "build-real-seed.js tích hợp write guard bắt buộc flag --allow-canonical-write",
+          "pass": true
+        },
+        {
+          "name": "data-service.js sạch 100%, không chứa Math.random() fallback giả",
+          "pass": true
+        },
+        {
+          "name": "data-service.js không chứa mock data",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "D",
+      "name": "Gate D: Immutable Logs & Artifact Integrity",
+      "status": "PASS",
+      "durationMs": 36,
+      "logFile": "logs/gate-d.log",
+      "logSha256": "D955903D61CBDECC5E17ECAAC13C68086C5D7FA90BE368955E4122CB95CC3690",
+      "assertions": [
+        {
+          "name": "Bộ kiểm thử Artifact Mutations (test-artifact-mutations.js) đạt 100%",
+          "pass": true
+        },
+        {
+          "name": "Artifact Isolation: historical-seed.json KHÔNG ĐỔI sau tất cả các bài test",
+          "pass": true
+        },
+        {
+          "name": "Artifact Isolation: audit-report.json KHÔNG ĐỔI sau tất cả các bài test",
+          "pass": true
+        },
+        {
+          "name": "Artifact Isolation: history-scope.json KHÔNG ĐỔI sau tất cả các bài test",
+          "pass": true
+        },
+        {
+          "name": "Artifact Isolation: canonical-reference.json KHÔNG ĐỔI sau tất cả các bài test",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "E",
+      "name": "Gate E: Independent Expected-Value Algorithm Tests",
+      "status": "PASS",
+      "durationMs": 35,
+      "logFile": "logs/gate-e.log",
+      "logSha256": "FB1D1B3AD094547B561B686DF5F7A593604703324F98180787C745DB78D323FE",
+      "assertions": [
+        {
+          "name": "Independent Algorithm Reference Tests: 100% đạt (66 PASS, 0 FAIL)",
+          "pass": true
+        },
+        {
+          "name": "Số lượng assertions toán học độc lập đạt chuẩn >= 33 (Thực tế: 66)",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "F",
+      "name": "Gate F: Model Performance, Anti-Leakage & Random Baseline",
+      "status": "PASS",
+      "durationMs": 39,
+      "logFile": "logs/gate-f.log",
+      "logSha256": "D1DF03371AB4C6EF0EFDE89D31B1F1B9B07DA12A5A19121EE71F3ACECABC4E22",
+      "assertions": [
+        {
+          "name": "Anti-Leakage Sentinel: Chèn kỳ tương lai cực đoan KHÔNG làm thay đổi kết quả dự đoán quá khứ",
+          "pass": true
+        },
+        {
+          "name": "Random Baseline trung bình không NaN (Thực tế: 0.805 số trúng/kỳ)",
+          "pass": true
+        },
+        {
+          "name": "Random Baseline nằm trong dải xác suất lý thuyết [0.5, 1.1] (Thực tế: 0.805)",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "G",
+      "name": "Gate G: Cache Content-Hash Dependency & Invalidation",
+      "status": "PASS",
+      "durationMs": 18,
+      "logFile": "logs/gate-g.log",
+      "logSha256": "7148F96E32AA5E5F86D404E4629A7ED9974C7084494C80FC17B957D567AD9124",
+      "assertions": [
+        {
+          "name": "Cùng tập lịch sử cho ra cùng historyFingerprint ổn định",
+          "pass": true
+        },
+        {
+          "name": "Thay đổi 1 quả bóng lịch sử làm historyFingerprint THAY ĐỔI NGAY LẬP TỨC (Cache Invalidation Verified)",
+          "pass": true
+        },
+        {
+          "name": "Cache key tự động phân tách khi nâng cấp version thuật toán",
+          "pass": true
+        },
+        {
+          "name": "Khi history rỗng, thuật toán trả về status insufficient-data, không cache số giả",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "H",
+      "name": "Gate H: Browser E2E Interaction, Viewports & Responsive",
+      "status": "PASS",
+      "durationMs": 126753,
+      "logFile": "logs/gate-h.log",
+      "logSha256": "3F0252C517AC29D9C6A5435A6FABA727110A73CFDF0E6ADDD7B5E9216FA8F283",
+      "assertions": [
+        {
+          "name": "HTTP Server lắng nghe thành công trên cổng 8925",
+          "pass": true
+        },
+        {
+          "name": "Health check: GET /index.html phản hồi HTTP 200",
+          "pass": true
+        },
+        {
+          "name": "Nội dung trang chứa thương hiệu LOTTO-QUANT LAB",
+          "pass": true
+        },
+        {
+          "name": "Tệp ảnh chụp tồn tại: reports/fix7/runs/run-20261019022406-ed60b1/screenshots/desktop-1440x900.png",
+          "pass": true
+        },
+        {
+          "name": "Screenshot desktop (1440x900) có kích thước hợp lệ (267.8 KB)",
+          "pass": true
+        },
+        {
+          "name": "Tệp ảnh chụp tồn tại: reports/fix7/runs/run-20261019022406-ed60b1/screenshots/tablet-768x1024.png",
+          "pass": true
+        },
+        {
+          "name": "Screenshot tablet (768x1024) có kích thước hợp lệ (205.6 KB)",
+          "pass": true
+        },
+        {
+          "name": "Tệp ảnh chụp tồn tại: reports/fix7/runs/run-20261019022406-ed60b1/screenshots/mobile-360x800.png",
+          "pass": true
+        },
+        {
+          "name": "Screenshot mobile (360x800) có kích thước hợp lệ (128.6 KB)",
+          "pass": true
+        },
+        {
+          "name": "CSS có cơ chế kiểm soát chống tràn ngang (overflow-x/max-width)",
+          "pass": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "gateId": "I",
+      "name": "Gate I: Strict Runner Self-Tests (Failure Injection)",
+      "status": "PASS",
+      "durationMs": 363,
+      "logFile": "logs/gate-i.log",
+      "logSha256": "BC4DB7E3D7311CDD98F4F97B23F322E840CB639041692F3C1F738DA22F63314C",
+      "assertions": [
+        {
+          "name": "Runner Self-Test 1: Khi Gate B fail, runner trả về false ngay lập tức",
+          "pass": true
+        },
+        {
+          "name": "Runner Self-Test 2: Gate C có trạng thái NOT_RUN khi Gate B bị lỗi (Fail-Closed bảo toàn)",
+          "pass": true
+        },
+        {
+          "name": "Runner Self-Test 3: Dữ liệu canonical không bị ô nhiễm trong quá trình self-test",
+          "pass": true
+        }
+      ],
+      "error": null
+    }
+  ]
+}

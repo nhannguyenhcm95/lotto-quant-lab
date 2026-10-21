@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "bac-lieu",
+  "stationName": "Bạc Liêu",
+  "drawId": "XSBL - T8-K1",
+  "date": "2026-08-04",
+  "specialPrize": "268193",
+  "prizes": {
+    "special": [
+      "268193"
+    ],
+    "first": [
+      "65493"
+    ],
+    "second": [
+      "21094"
+    ],
+    "third": [
+      "55754",
+      "31286"
+    ],
+    "fourth": [
+      "19390",
+      "53547",
+      "63756",
+      "31291",
+      "76230",
+      "49241",
+      "34248"
+    ],
+    "fifth": [
+      "3167"
+    ],
+    "sixth": [
+      "6665",
+      "4804",
+      "2083"
+    ],
+    "seventh": [
+      "479"
+    ],
+    "eighth": [
+      "27"
+    ]
+  },
+  "lottoPairs": [
+    "93",
+    "93",
+    "94",
+    "54",
+    "86",
+    "90",
+    "47",
+    "56",
+    "91",
+    "30",
+    "41",
+    "48",
+    "67",
+    "65",
+    "04",
+    "83",
+    "79",
+    "27"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/04-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "hau-giang",
+  "stationName": "Hậu Giang",
+  "drawId": "XSHG - K2T10",
+  "date": "2026-10-10",
+  "specialPrize": "900389",
+  "prizes": {
+    "special": [
+      "900389"
+    ],
+    "first": [
+      "83105"
+    ],
+    "second": [
+      "73432"
+    ],
+    "third": [
+      "65646",
+      "44345"
+    ],
+    "fourth": [
+      "80596",
+      "02077",
+      "41832",
+      "36255",
+      "23609",
+      "14080",
+      "75950"
+    ],
+    "fifth": [
+      "3737"
+    ],
+    "sixth": [
+      "9192",
+      "3217",
+      "1075"
+    ],
+    "seventh": [
+      "469"
+    ],
+    "eighth": [
+      "53"
+    ]
+  },
+  "lottoPairs": [
+    "89",
+    "05",
+    "32",
+    "46",
+    "45",
+    "96",
+    "77",
+    "32",
+    "55",
+    "09",
+    "80",
+    "50",
+    "37",
+    "92",
+    "17",
+    "75",
+    "69",
+    "53"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/10-10-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

@@ -1,0 +1,80 @@
+{
+  "auditedAt": "2026-10-17T06:37:20.089Z",
+  "strictMode": true,
+  "manifestVersion": "3.0.0",
+  "scopes": {
+    "vietlott-mega-6-45": {
+      "expected": 1576,
+      "actual": 1576,
+      "verified": 1576,
+      "missingDraws": 0,
+      "invalidRecords": 0,
+      "duplicateKeys": 0,
+      "coverage": 100,
+      "fieldsChecked": 11032,
+      "fieldsMatched": 11032,
+      "fieldMatchRate": 100
+    },
+    "vietlott-power-6-55": {
+      "expected": 1411,
+      "actual": 1411,
+      "verified": 1410,
+      "missingDraws": 0,
+      "invalidRecords": 1,
+      "duplicateKeys": 0,
+      "coverage": 99.9,
+      "fieldsChecked": 11288,
+      "fieldsMatched": 11286,
+      "fieldMatchRate": 100
+    },
+    "xsmn-21-stations": {
+      "expected": 352,
+      "actual": 352,
+      "verified": 352,
+      "missingDraws": 0,
+      "invalidRecords": 0,
+      "duplicateKeys": 0,
+      "coverage": 100,
+      "fieldsChecked": 2464,
+      "fieldsMatched": 2464,
+      "fieldMatchRate": 100
+    }
+  },
+  "diagnostics": {
+    "missingDrawsList": [],
+    "schemaErrorsList": [
+      {
+        "game": "power-6-55",
+        "drawId": "#01411",
+        "error": "Số đặc biệt không hợp lệ"
+      },
+      {
+        "game": "power-6-55",
+        "drawId": "#01411",
+        "missingField": "bonusNumber"
+      },
+      {
+        "game": "power-6-55",
+        "drawId": "#01411",
+        "missingField": "sourceUrl"
+      }
+    ],
+    "duplicateKeysList": [],
+    "inventedValuesList": []
+  },
+  "summary": {
+    "totalExpectedDraws": 3339,
+    "totalActualDraws": 3339,
+    "totalVerifiedDraws": 3338,
+    "coveragePercent": 100,
+    "totalRequiredFieldsChecked": 24784,
+    "totalRequiredFieldsMatched": 24782,
+    "requiredFieldSourceMatch": 100,
+    "unresolvedMissingDraws": 0,
+    "unresolvedRequiredFields": 2,
+    "unresolvedSourceConflicts": 0,
+    "invalidCanonicalRecords": 1,
+    "duplicateUnresolvedKeys": 0,
+    "inventedOrDefaultedValues": 0
+  }
+}

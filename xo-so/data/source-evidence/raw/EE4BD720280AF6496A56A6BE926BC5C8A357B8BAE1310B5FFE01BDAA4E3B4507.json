@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tra-vinh",
+  "stationName": "Trà Vinh",
+  "drawId": "XSTV - 35TV28",
+  "date": "2026-07-10",
+  "specialPrize": "325002",
+  "prizes": {
+    "special": [
+      "325002"
+    ],
+    "first": [
+      "44392"
+    ],
+    "second": [
+      "78976"
+    ],
+    "third": [
+      "27148",
+      "60269"
+    ],
+    "fourth": [
+      "59086",
+      "07496",
+      "83400",
+      "23409",
+      "59974",
+      "72448",
+      "78305"
+    ],
+    "fifth": [
+      "6982"
+    ],
+    "sixth": [
+      "8085",
+      "7124",
+      "5351"
+    ],
+    "seventh": [
+      "900"
+    ],
+    "eighth": [
+      "51"
+    ]
+  },
+  "lottoPairs": [
+    "02",
+    "92",
+    "76",
+    "48",
+    "69",
+    "86",
+    "96",
+    "00",
+    "09",
+    "74",
+    "48",
+    "05",
+    "82",
+    "85",
+    "24",
+    "51",
+    "00",
+    "51"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/10-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

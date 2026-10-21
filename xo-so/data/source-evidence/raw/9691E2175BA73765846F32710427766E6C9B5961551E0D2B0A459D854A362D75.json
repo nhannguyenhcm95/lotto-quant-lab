@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "can-tho",
+  "stationName": "Cần Thơ",
+  "drawId": "XSCT - K2T9",
+  "date": "2026-09-09",
+  "specialPrize": "637211",
+  "prizes": {
+    "special": [
+      "637211"
+    ],
+    "first": [
+      "74235"
+    ],
+    "second": [
+      "02695"
+    ],
+    "third": [
+      "34554",
+      "85892"
+    ],
+    "fourth": [
+      "86504",
+      "87119",
+      "75856",
+      "11028",
+      "57999",
+      "74623",
+      "75263"
+    ],
+    "fifth": [
+      "9121"
+    ],
+    "sixth": [
+      "0265",
+      "4174",
+      "0809"
+    ],
+    "seventh": [
+      "936"
+    ],
+    "eighth": [
+      "31"
+    ]
+  },
+  "lottoPairs": [
+    "11",
+    "35",
+    "95",
+    "54",
+    "92",
+    "04",
+    "19",
+    "56",
+    "28",
+    "99",
+    "23",
+    "63",
+    "21",
+    "65",
+    "74",
+    "09",
+    "36",
+    "31"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/09-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

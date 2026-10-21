@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "dong-nai",
+  "stationName": "Đồng Nai",
+  "drawId": "XSDN - 7K3",
+  "date": "2026-07-15",
+  "specialPrize": "008402",
+  "prizes": {
+    "special": [
+      "008402"
+    ],
+    "first": [
+      "71200"
+    ],
+    "second": [
+      "80517"
+    ],
+    "third": [
+      "34150",
+      "64151"
+    ],
+    "fourth": [
+      "55010",
+      "13786",
+      "58671",
+      "06858",
+      "56387",
+      "95574",
+      "21141"
+    ],
+    "fifth": [
+      "0406"
+    ],
+    "sixth": [
+      "7234",
+      "0593",
+      "5348"
+    ],
+    "seventh": [
+      "116"
+    ],
+    "eighth": [
+      "10"
+    ]
+  },
+  "lottoPairs": [
+    "02",
+    "00",
+    "17",
+    "50",
+    "51",
+    "10",
+    "86",
+    "71",
+    "58",
+    "87",
+    "74",
+    "41",
+    "06",
+    "34",
+    "93",
+    "48",
+    "16",
+    "10"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/15-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

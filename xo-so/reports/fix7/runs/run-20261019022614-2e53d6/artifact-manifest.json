@@ -1,0 +1,86 @@
+{
+  "runId": "run-20261019022614-2e53d6",
+  "runIndex": 3,
+  "generatedAt": "2026-10-19T02:28:18.877Z",
+  "totalArtifacts": 13,
+  "artifacts": [
+    {
+      "path": "logs/gate-a.log",
+      "description": "Immutable execution log for gate-a.log",
+      "sizeBytes": 782,
+      "sha256": "6A6CB1382FC6773E34E62918EF289BC9D4D233EE39861D5DD3ADE63C1ECC2813"
+    },
+    {
+      "path": "logs/gate-b.log",
+      "description": "Immutable execution log for gate-b.log",
+      "sizeBytes": 1549,
+      "sha256": "01363421D98979C05810F6570E455F7CD385355661092818213688487F9F0384"
+    },
+    {
+      "path": "logs/gate-c.log",
+      "description": "Immutable execution log for gate-c.log",
+      "sizeBytes": 711,
+      "sha256": "C84437B1E65F2D4816BC0D1228627EEAA5D9B7B8147D465C1D41A4FEB9F8C8BF"
+    },
+    {
+      "path": "logs/gate-d.log",
+      "description": "Immutable execution log for gate-d.log",
+      "sizeBytes": 778,
+      "sha256": "50C098ACBAE4F782617DAEFF3869AC40F287E6D339FC7435494C9A9FEFA3A3BA"
+    },
+    {
+      "path": "logs/gate-e.log",
+      "description": "Immutable execution log for gate-e.log",
+      "sizeBytes": 499,
+      "sha256": "F81062CB85DE435AF2D013B854D5F0DD7EC47FC8BF01ACA7E7E5BB4C640F8E48"
+    },
+    {
+      "path": "logs/gate-f.log",
+      "description": "Immutable execution log for gate-f.log",
+      "sizeBytes": 746,
+      "sha256": "E578D7F9D787CD43878DA6729AE469ADED0567AFCBFB2369FA8A3D875386FAE9"
+    },
+    {
+      "path": "logs/gate-g.log",
+      "description": "Immutable execution log for gate-g.log",
+      "sizeBytes": 623,
+      "sha256": "1998372D87ACCA627BF655F8EAF1F7B772C463BC2CE170EDCDDEC6AF2A653FEC"
+    },
+    {
+      "path": "logs/gate-h.log",
+      "description": "Immutable execution log for gate-h.log",
+      "sizeBytes": 1559,
+      "sha256": "C13121FFA6AB1D96E2443C3BD395071BA2E920DBA9338EB97FF559271F8A611B"
+    },
+    {
+      "path": "logs/gate-i.log",
+      "description": "Immutable execution log for gate-i.log",
+      "sizeBytes": 608,
+      "sha256": "3EB32CEC81CC20FA801EDB8178F79E32CDBD01AAB3FDB29EB205BA7A5C0B76A2"
+    },
+    {
+      "path": "screenshots/desktop-1440x900.png",
+      "description": "E2E Viewport Screenshot: desktop-1440x900.png",
+      "sizeBytes": 274510,
+      "sha256": "E04B8778855C7093375065753CF3A7EE75770677F33C03AC73AA073323835FE7"
+    },
+    {
+      "path": "screenshots/mobile-360x800.png",
+      "description": "E2E Viewport Screenshot: mobile-360x800.png",
+      "sizeBytes": 131770,
+      "sha256": "0F54948B7A817647D53989F6867A740F63703A9D95A5D6FF62056B8E95E55A95"
+    },
+    {
+      "path": "screenshots/tablet-768x1024.png",
+      "description": "E2E Viewport Screenshot: tablet-768x1024.png",
+      "sizeBytes": 210715,
+      "sha256": "CC03028BC9232309907168D74276337D0E2B39B524B75C367310797729026E71"
+    },
+    {
+      "path": "gate-results.json",
+      "description": "Quality Gate Execution Results",
+      "sizeBytes": 10964,
+      "sha256": "2B50A62BC9DEB0C200FBC2FC58603D674C05554B53BCA06BE5AA0703E7CDB051"
+    }
+  ]
+}

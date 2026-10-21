@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "vung-tau",
+  "stationName": "Vũng Tàu",
+  "drawId": "XSVT - 9A",
+  "date": "2026-09-01",
+  "specialPrize": "776477",
+  "prizes": {
+    "special": [
+      "776477"
+    ],
+    "first": [
+      "42247"
+    ],
+    "second": [
+      "03480"
+    ],
+    "third": [
+      "17568",
+      "10225"
+    ],
+    "fourth": [
+      "93055",
+      "28210",
+      "52857",
+      "12705",
+      "95763",
+      "81211",
+      "32817"
+    ],
+    "fifth": [
+      "0462"
+    ],
+    "sixth": [
+      "2851",
+      "4483",
+      "2809"
+    ],
+    "seventh": [
+      "258"
+    ],
+    "eighth": [
+      "23"
+    ]
+  },
+  "lottoPairs": [
+    "77",
+    "47",
+    "80",
+    "68",
+    "25",
+    "55",
+    "10",
+    "57",
+    "05",
+    "63",
+    "11",
+    "17",
+    "62",
+    "51",
+    "83",
+    "09",
+    "58",
+    "23"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/01-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

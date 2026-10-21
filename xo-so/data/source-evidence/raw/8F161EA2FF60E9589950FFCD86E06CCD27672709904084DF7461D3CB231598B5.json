@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "hau-giang",
+  "stationName": "Hậu Giang",
+  "drawId": "XSHG - K1T8",
+  "date": "2026-08-01",
+  "specialPrize": "678539",
+  "prizes": {
+    "special": [
+      "678539"
+    ],
+    "first": [
+      "31052"
+    ],
+    "second": [
+      "95005"
+    ],
+    "third": [
+      "07717",
+      "44222"
+    ],
+    "fourth": [
+      "82849",
+      "74386",
+      "42534",
+      "14523",
+      "29822",
+      "00741",
+      "98966"
+    ],
+    "fifth": [
+      "0343"
+    ],
+    "sixth": [
+      "8823",
+      "6241",
+      "7079"
+    ],
+    "seventh": [
+      "173"
+    ],
+    "eighth": [
+      "57"
+    ]
+  },
+  "lottoPairs": [
+    "39",
+    "52",
+    "05",
+    "17",
+    "22",
+    "49",
+    "86",
+    "34",
+    "23",
+    "22",
+    "41",
+    "66",
+    "43",
+    "23",
+    "41",
+    "79",
+    "73",
+    "57"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/01-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

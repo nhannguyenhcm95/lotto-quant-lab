@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "da-lat",
+  "stationName": "Đà Lạt",
+  "drawId": "XSDL - ĐL9K2",
+  "date": "2026-09-13",
+  "specialPrize": "724379",
+  "prizes": {
+    "special": [
+      "724379"
+    ],
+    "first": [
+      "55959"
+    ],
+    "second": [
+      "36339"
+    ],
+    "third": [
+      "29645",
+      "94465"
+    ],
+    "fourth": [
+      "85695",
+      "20017",
+      "89835",
+      "45431",
+      "48805",
+      "36643",
+      "41558"
+    ],
+    "fifth": [
+      "2025"
+    ],
+    "sixth": [
+      "9184",
+      "3999",
+      "3259"
+    ],
+    "seventh": [
+      "652"
+    ],
+    "eighth": [
+      "26"
+    ]
+  },
+  "lottoPairs": [
+    "79",
+    "59",
+    "39",
+    "45",
+    "65",
+    "95",
+    "17",
+    "35",
+    "31",
+    "05",
+    "43",
+    "58",
+    "25",
+    "84",
+    "99",
+    "59",
+    "52",
+    "26"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/13-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

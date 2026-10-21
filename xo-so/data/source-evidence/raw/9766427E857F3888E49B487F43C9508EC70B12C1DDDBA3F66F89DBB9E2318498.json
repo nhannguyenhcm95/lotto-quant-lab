@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "vinh-long",
+  "stationName": "Vĩnh Long",
+  "drawId": "XSVL - 47VL29",
+  "date": "2026-07-17",
+  "specialPrize": "899058",
+  "prizes": {
+    "special": [
+      "899058"
+    ],
+    "first": [
+      "18214"
+    ],
+    "second": [
+      "89620"
+    ],
+    "third": [
+      "60451",
+      "52254"
+    ],
+    "fourth": [
+      "98024",
+      "65171",
+      "48803",
+      "78929",
+      "49571",
+      "23305",
+      "71811"
+    ],
+    "fifth": [
+      "5767"
+    ],
+    "sixth": [
+      "7881",
+      "0607",
+      "8701"
+    ],
+    "seventh": [
+      "789"
+    ],
+    "eighth": [
+      "33"
+    ]
+  },
+  "lottoPairs": [
+    "58",
+    "14",
+    "20",
+    "51",
+    "54",
+    "24",
+    "71",
+    "03",
+    "29",
+    "71",
+    "05",
+    "11",
+    "67",
+    "81",
+    "07",
+    "01",
+    "89",
+    "33"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/17-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

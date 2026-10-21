@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "binh-duong",
+  "stationName": "Bình Dương",
+  "drawId": "XSBD - 07K31",
+  "date": "2026-07-31",
+  "specialPrize": "218535",
+  "prizes": {
+    "special": [
+      "218535"
+    ],
+    "first": [
+      "99614"
+    ],
+    "second": [
+      "97016"
+    ],
+    "third": [
+      "67360",
+      "35293"
+    ],
+    "fourth": [
+      "48282",
+      "87622",
+      "86209",
+      "59279",
+      "31279",
+      "57780",
+      "67804"
+    ],
+    "fifth": [
+      "3638"
+    ],
+    "sixth": [
+      "4733",
+      "8230",
+      "3128"
+    ],
+    "seventh": [
+      "084"
+    ],
+    "eighth": [
+      "31"
+    ]
+  },
+  "lottoPairs": [
+    "35",
+    "14",
+    "16",
+    "60",
+    "93",
+    "82",
+    "22",
+    "09",
+    "79",
+    "79",
+    "80",
+    "04",
+    "38",
+    "33",
+    "30",
+    "28",
+    "84",
+    "31"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/31-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

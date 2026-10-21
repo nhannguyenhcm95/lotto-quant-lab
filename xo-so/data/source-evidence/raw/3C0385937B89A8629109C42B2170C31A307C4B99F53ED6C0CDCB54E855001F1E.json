@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tien-giang",
+  "stationName": "Tiền Giang",
+  "drawId": "XSTG - TGC9",
+  "date": "2026-09-20",
+  "specialPrize": "248087",
+  "prizes": {
+    "special": [
+      "248087"
+    ],
+    "first": [
+      "92644"
+    ],
+    "second": [
+      "77874"
+    ],
+    "third": [
+      "24740",
+      "55580"
+    ],
+    "fourth": [
+      "94261",
+      "89843",
+      "63708",
+      "07347",
+      "05758",
+      "50324",
+      "28032"
+    ],
+    "fifth": [
+      "6839"
+    ],
+    "sixth": [
+      "8384",
+      "2964",
+      "7285"
+    ],
+    "seventh": [
+      "062"
+    ],
+    "eighth": [
+      "08"
+    ]
+  },
+  "lottoPairs": [
+    "87",
+    "44",
+    "74",
+    "40",
+    "80",
+    "61",
+    "43",
+    "08",
+    "47",
+    "58",
+    "24",
+    "32",
+    "39",
+    "84",
+    "64",
+    "85",
+    "62",
+    "08"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/20-09-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

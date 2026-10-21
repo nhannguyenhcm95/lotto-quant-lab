@@ -1,0 +1,17 @@
+scope,rank,algoId,algoName,foldsAttempted,foldsSucceeded,foldsFailed,meanFoldHitRate,microHitRate,meanOccurrencesPerDraw,bestHitRate,totalHits,baselineMean,differenceVsBaseline,exceedsBaseline
+vietlott-mega-6-45,1,markov,"Chuỗi Markov Bậc 1 & Liên Kết Chuyển Dịch",30,30,0,15.6,15.6,0.93,50,28,13.4,2.2,true
+vietlott-mega-6-45,2,clustering,"Phân cụm K-Means & Cấu trúc (K-Means Clustering)",30,30,0,15,15,0.9,50,27,13.4,1.6,true
+vietlott-mega-6-45,3,frequency-gap,"Tần suất & Chu kỳ Lô Gan",30,30,0,14.5,14.4,0.87,33.3,26,13.4,1.1,true
+vietlott-mega-6-45,4,poisson,"Phân phối Poisson & Tần suất Thực nghiệm",30,30,0,13.3,13.3,0.8,33.3,24,13.4,-0.1,false
+vietlott-mega-6-45,5,monte-carlo,"Mô phỏng Monte Carlo (10k)",30,30,0,11.7,11.7,0.7,33.3,21,13.4,-1.7,false
+vietlott-mega-6-45,6,ensemble,"Mô hình Tổng Hợp (Ensemble)",30,30,0,11.1,11.1,0.67,33.3,20,13.4,-2.3,false
+vietlott-mega-6-45,7,moving-average,"EMA & Chu kỳ Thứ",30,30,0,11.1,11.1,0.67,33.3,20,13.4,-2.3,false
+vietlott-mega-6-45,8,association-rules,"Khai phá Luật Bạc Nhớ",30,30,0,7.8,7.8,0.47,33.3,14,13.4,-5.6,false
+xsmn-tphcm,1,frequency-gap,"Tần suất & Chu kỳ Lô Gan",30,30,0,20.7,20.7,1.23,80,31,16,4.7,true
+xsmn-tphcm,2,ensemble,"Mô hình Tổng Hợp (Ensemble)",30,30,0,20,20,1.07,60,30,16,4,true
+xsmn-tphcm,3,association-rules,"Khai phá Luật Bạc Nhớ",30,30,0,18,18,1,60,27,16,2,true
+xsmn-tphcm,4,monte-carlo,"Mô phỏng Monte Carlo (10k)",30,30,0,18,18,0.97,60,27,16,2,true
+xsmn-tphcm,5,poisson,"Phân phối Poisson & Tần suất Thực nghiệm",30,30,0,16,16,0.87,60,24,16,0,false
+xsmn-tphcm,6,moving-average,"EMA & Chu kỳ Thứ",30,29,1,15.2,15.2,0.86,60,22,16,-0.8,false
+xsmn-tphcm,7,clustering,"Phân cụm K-Means & Cấu trúc (K-Means Clustering)",30,30,0,14.7,14.7,0.87,40,22,16,-1.3,false
+xsmn-tphcm,8,markov,"Chuỗi Markov Bậc 1 & Liên Kết Chuyển Dịch",30,30,0,14,14,0.77,60,21,16,-2,false

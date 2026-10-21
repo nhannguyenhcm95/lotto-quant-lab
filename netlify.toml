@@ -1,0 +1,87 @@
+# ========================================================
+# LOTTO-QUANT LAB - NETLIFY CONFIGURATION (ROOT REPO)
+# Tối ưu hóa chuẩn mực cho triển khai trên Netlify Cloud
+# ========================================================
+
+[build]
+  publish = "xo-so"
+  functions = "xo-so/netlify/functions"
+  command = "npm --prefix xo-so test"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--prefer-offline --no-audit"
+
+[functions]
+  node_bundler = "esbuild"
+  directory = "xo-so/netlify/functions"
+
+# 1. Chuyển hướng các API endpoint tới Netlify Serverless Functions
+[[redirects]]
+  from = "/api/crawl-vietlott"
+  to = "/.netlify/functions/crawl-vietlott"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/crawl-xsmn"
+  to = "/.netlify/functions/crawl-xsmn"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# 2. Xử lý chuẩn mực đường dẫn cũ /xo-so/ về trang chủ /
+[[redirects]]
+  from = "/xo-so"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/xo-so/"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/xo-so/*"
+  to = "/:splat"
+  status = 301
+  force = true
+
+# 3. Security Headers toàn diện & Caching Policy tối ưu
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), camera=(), microphone=(), payment=()"
+
+# HTML luôn kiểm tra phiên bản mới nhất để tránh lỗi cache cũ
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Dữ liệu JSON lịch sử xổ số cập nhật liên tục (cache ngắn 60s)
+[[headers]]
+  for = "/data/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=60, must-revalidate"
+
+# CSS và Javascript tối ưu hóa cache
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"

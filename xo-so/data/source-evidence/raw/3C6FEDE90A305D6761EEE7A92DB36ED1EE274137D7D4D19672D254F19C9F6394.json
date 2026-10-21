@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "an-giang",
+  "stationName": "An Giang",
+  "drawId": "XSAG - AG-8K3",
+  "date": "2026-08-20",
+  "specialPrize": "510332",
+  "prizes": {
+    "special": [
+      "510332"
+    ],
+    "first": [
+      "89516"
+    ],
+    "second": [
+      "44895"
+    ],
+    "third": [
+      "52640",
+      "02439"
+    ],
+    "fourth": [
+      "90111",
+      "32541",
+      "20491",
+      "71417",
+      "32217",
+      "57371",
+      "15096"
+    ],
+    "fifth": [
+      "1635"
+    ],
+    "sixth": [
+      "9670",
+      "9023",
+      "3404"
+    ],
+    "seventh": [
+      "516"
+    ],
+    "eighth": [
+      "54"
+    ]
+  },
+  "lottoPairs": [
+    "32",
+    "16",
+    "95",
+    "40",
+    "39",
+    "11",
+    "41",
+    "91",
+    "17",
+    "17",
+    "71",
+    "96",
+    "35",
+    "70",
+    "23",
+    "04",
+    "16",
+    "54"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/20-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

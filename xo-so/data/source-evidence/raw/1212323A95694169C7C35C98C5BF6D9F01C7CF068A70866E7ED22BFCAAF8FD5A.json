@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "binh-phuoc",
+  "stationName": "Bình Phước",
+  "drawId": "XSBP - 10K1-N26",
+  "date": "2026-10-03",
+  "specialPrize": "740065",
+  "prizes": {
+    "special": [
+      "740065"
+    ],
+    "first": [
+      "60169"
+    ],
+    "second": [
+      "99953"
+    ],
+    "third": [
+      "45155",
+      "68161"
+    ],
+    "fourth": [
+      "35267",
+      "18383",
+      "37730",
+      "69543",
+      "59420",
+      "35361",
+      "83504"
+    ],
+    "fifth": [
+      "7444"
+    ],
+    "sixth": [
+      "7544",
+      "0606",
+      "6071"
+    ],
+    "seventh": [
+      "741"
+    ],
+    "eighth": [
+      "49"
+    ]
+  },
+  "lottoPairs": [
+    "65",
+    "69",
+    "53",
+    "55",
+    "61",
+    "67",
+    "83",
+    "30",
+    "43",
+    "20",
+    "61",
+    "04",
+    "44",
+    "44",
+    "06",
+    "71",
+    "41",
+    "49"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/03-10-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

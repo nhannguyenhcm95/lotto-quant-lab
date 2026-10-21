@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "binh-duong",
+  "stationName": "Bình Dương",
+  "drawId": "XSBD - 08K35",
+  "date": "2026-08-28",
+  "specialPrize": "285158",
+  "prizes": {
+    "special": [
+      "285158"
+    ],
+    "first": [
+      "37614"
+    ],
+    "second": [
+      "69784"
+    ],
+    "third": [
+      "50685",
+      "00471"
+    ],
+    "fourth": [
+      "81224",
+      "28316",
+      "33904",
+      "53057",
+      "50242",
+      "51136",
+      "52419"
+    ],
+    "fifth": [
+      "0818"
+    ],
+    "sixth": [
+      "3637",
+      "6452",
+      "6936"
+    ],
+    "seventh": [
+      "802"
+    ],
+    "eighth": [
+      "20"
+    ]
+  },
+  "lottoPairs": [
+    "58",
+    "14",
+    "84",
+    "85",
+    "71",
+    "24",
+    "16",
+    "04",
+    "57",
+    "42",
+    "36",
+    "19",
+    "18",
+    "37",
+    "52",
+    "36",
+    "02",
+    "20"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/28-08-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tien-giang",
+  "stationName": "Tiền Giang",
+  "drawId": "XSTG - TG-A7",
+  "date": "2026-07-05",
+  "specialPrize": "673100",
+  "prizes": {
+    "special": [
+      "673100"
+    ],
+    "first": [
+      "49113"
+    ],
+    "second": [
+      "23461"
+    ],
+    "third": [
+      "93019",
+      "04348"
+    ],
+    "fourth": [
+      "30147",
+      "43945",
+      "03143",
+      "31796",
+      "21903",
+      "89699",
+      "03141"
+    ],
+    "fifth": [
+      "6100"
+    ],
+    "sixth": [
+      "6666",
+      "3761",
+      "9585"
+    ],
+    "seventh": [
+      "281"
+    ],
+    "eighth": [
+      "49"
+    ]
+  },
+  "lottoPairs": [
+    "00",
+    "13",
+    "61",
+    "19",
+    "48",
+    "47",
+    "45",
+    "43",
+    "96",
+    "03",
+    "99",
+    "41",
+    "00",
+    "66",
+    "61",
+    "85",
+    "81",
+    "49"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/05-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}

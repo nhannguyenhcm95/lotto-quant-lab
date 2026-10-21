@@ -1,0 +1,68 @@
+{
+  "scope": "xsmn-21-stations",
+  "stationId": "tay-ninh",
+  "stationName": "Tây Ninh",
+  "drawId": "XSTN - 7K5",
+  "date": "2026-07-30",
+  "specialPrize": "050416",
+  "prizes": {
+    "special": [
+      "050416"
+    ],
+    "first": [
+      "52985"
+    ],
+    "second": [
+      "46639"
+    ],
+    "third": [
+      "36065",
+      "85133"
+    ],
+    "fourth": [
+      "45354",
+      "34616",
+      "89405",
+      "52143",
+      "18406",
+      "08383",
+      "19690"
+    ],
+    "fifth": [
+      "0668"
+    ],
+    "sixth": [
+      "5912",
+      "4490",
+      "8220"
+    ],
+    "seventh": [
+      "890"
+    ],
+    "eighth": [
+      "70"
+    ]
+  },
+  "lottoPairs": [
+    "16",
+    "85",
+    "39",
+    "65",
+    "33",
+    "54",
+    "16",
+    "05",
+    "43",
+    "06",
+    "83",
+    "90",
+    "68",
+    "12",
+    "90",
+    "20",
+    "90",
+    "70"
+  ],
+  "sourceUrl": "https://www.minhngoc.net.vn/ket-qua-xo-so/mien-nam/30-07-2026.html",
+  "sourceName": "minhngoc.net.vn"
+}
