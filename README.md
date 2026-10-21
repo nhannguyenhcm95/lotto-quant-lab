@@ -27,8 +27,6 @@
 4. [Động Cơ Kiểm Định Hồi Quy (Walk-Forward Backtesting Engine)](#iv-động-cơ-kiểm-định-hồi-quy-walk-forward-backtesting-engine)
 5. [Tính Toàn Vẹn Dữ Liệu & Sơ Đồ Thực Thể Quan Hệ (ERD)](#v-tính-toàn-vẹn-dữ-liệu--sơ-đồ-thực-thể-quan-hệ-erd)
 6. [Kiến Trúc Kỹ Thuật & Hiệu Năng Vượt Trội](#vi-kiến-trúc-kỹ-thuật--hiệu-năng-vượt-trội)
-7. [Hướng Dẫn Cài Đặt & Triển Khai (Deployment)](#vii-hướng-dẫn-cài-đặt--triển-khai-deployment)
-8. [Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)](#viii-tuyên-bố-miễn-trừ-trách-nhiệm-disclaimer)
 
 ---
 
@@ -437,44 +435,3 @@ erDiagram
 * **Chart.js (Canvas Engine):** Tùy chọn chuyển đổi tức thì sang biểu đồ Canvas tương tác, cung cấp góc nhìn đa chiều cho chuyên gia dữ liệu.
 
 ---
-
-## VII. Hướng Dẫn Cài Đặt & Triển Khai (Deployment)
-
-### 1. Chạy Tại Máy Cục Bộ (Local Development)
-Yêu cầu: Node.js 18+ trở lên.
-
-```bash
-# Di chuyển vào thư mục ứng dụng
-cd xo-so
-
-# Chạy toàn bộ 60 bài Unit Test kiểm định thuật toán
-node test/test-unit.js
-
-# Chạy 33 bài Integration Test kiểm tra dữ liệu
-node test/test-integration.js
-
-# Khởi chạy máy chủ cục bộ bằng PowerShell script có sẵn
-powershell -ExecutionPolicy Bypass -File scripts/serve.ps1
-```
-Mở trình duyệt truy cập: `http://localhost:8088/`
-
----
-
-### 2. Triển Khai Lên Netlify Cloud (1-Click Deploy)
-Hệ thống đã cấu hình đầy đủ sẵn sàng:
-1. Đăng nhập [Netlify](https://app.netlify.com/) $\to$ **Add new site** $\to$ **Import an existing project**.
-2. Chọn repo GitHub: **`nhannguyenhcm95/lotto-quant-lab`**.
-3. Các thông số tự động:
-   * **Base directory:** *(để trống)*
-   * **Build command:** `echo 'Static site ready for deployment'`
-   * **Publish directory:** `xo-so`
-   * **Functions directory:** `xo-so/netlify/functions`
-4. Bấm **Deploy**. Trang web sẽ online toàn cầu với chứng chỉ SSL HTTPS miễn phí!
-
----
-
-## VIII. Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)
-
-1. **Mục đích Học thuật & Nghiên cứu:** **LOTTO-QUANT LAB** là dự án nghiên cứu khoa học thuần túy nhằm ứng dụng các phương pháp phân tích chuỗi thời gian, lý thuyết thông tin và học máy vào tập dữ liệu số học thực tế.
-2. **Không Khuyến Khích Cờ Bạc:** Dự án **tuyệt đối không** cổ xúy hoặc khuyến khích bất kỳ hình thức cá cược, lô đề bất hợp pháp nào. Người dùng cần tuân thủ nghiêm túc các quy định pháp luật của Nhà nước Việt Nam về việc mua vé số ích nước lợi nhà do các Công ty Xổ số Kiến thiết và Công ty Xổ số Điện toán Việt Nam (Vietlott) phát hành.
-3. **Rủi ro Tài chính:** Mọi gợi ý phân tích chỉ mang tính chất tham khảo định lượng. Tác giả không chịu trách nhiệm đối với bất kỳ quyết định tài chính cá nhân nào của người sử dụng.
