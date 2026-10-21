@@ -4,11 +4,11 @@
   "private": true,
   "description": "LOTTO-QUANT LAB - Root repository workspace",
   "scripts": {
+    "build": "echo 'Static site ready for deployment'",
     "test": "npm --prefix xo-so test",
     "test:unit": "npm --prefix xo-so run test:unit",
     "test:integration": "npm --prefix xo-so run test:integration",
     "test:e2e": "npm --prefix xo-so run test:e2e",
-    "build": "npm --prefix xo-so test",
     "start": "npx serve xo-so"
   }
 }

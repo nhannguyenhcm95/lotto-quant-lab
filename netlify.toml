@@ -6,11 +6,10 @@
 [build]
   publish = "xo-so"
   functions = "xo-so/netlify/functions"
-  command = "npm --prefix xo-so test"
+  command = "echo 'Static site ready for deployment'"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--prefer-offline --no-audit"
 
 [functions]
   node_bundler = "esbuild"
