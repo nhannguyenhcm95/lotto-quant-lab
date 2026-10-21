@@ -36,7 +36,15 @@ xo-so/scripts/generate-fix10-artifacts.js
 .vscode/
 .idea/
 scratch/
+skills/
+docs/
+docx/
+
+# Raw Crawl Evidence (Hàng nghìn file json thô từng kỳ quay)
+xo-so/data/source-evidence/
+source-evidence/
 
 # OS Files
 .DS_Store
 Thumbs.db
+
