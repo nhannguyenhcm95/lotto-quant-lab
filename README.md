@@ -478,8 +478,3 @@ Hệ thống đã cấu hình đầy đủ sẵn sàng:
 1. **Mục đích Học thuật & Nghiên cứu:** **LOTTO-QUANT LAB** là dự án nghiên cứu khoa học thuần túy nhằm ứng dụng các phương pháp phân tích chuỗi thời gian, lý thuyết thông tin và học máy vào tập dữ liệu số học thực tế.
 2. **Không Khuyến Khích Cờ Bạc:** Dự án **tuyệt đối không** cổ xúy hoặc khuyến khích bất kỳ hình thức cá cược, lô đề bất hợp pháp nào. Người dùng cần tuân thủ nghiêm túc các quy định pháp luật của Nhà nước Việt Nam về việc mua vé số ích nước lợi nhà do các Công ty Xổ số Kiến thiết và Công ty Xổ số Điện toán Việt Nam (Vietlott) phát hành.
 3. **Rủi ro Tài chính:** Mọi gợi ý phân tích chỉ mang tính chất tham khảo định lượng. Tác giả không chịu trách nhiệm đối với bất kỳ quyết định tài chính cá nhân nào của người sử dụng.
-
----
-
-**Phát triển bởi Đội ngũ Nghiên cứu Định lượng LOTTO-QUANT LAB.**  
-*Mã nguồn phát hành theo Giấy phép MIT.*
