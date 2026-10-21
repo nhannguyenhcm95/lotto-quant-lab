@@ -14,6 +14,22 @@ debug.log
 npm-debug.log*
 yarn-debug.log*
 
+# Conversation & Chat Histories (Không đẩy lên GitHub theo yêu cầu)
+chat_history.md
+noidung_trochuyen.md
+CONVERSATION_HISTORY.md
+agent.md
+planner-web.md
+xo-so/scripts/export-conversation-history.js
+
+# Internal Fix Logs & Audit Reports (Không đẩy lên GitHub theo yêu cầu)
+fix-*.md
+*.backup-fix*
+baseline-fix*.json
+xo-so/reports/
+reports/
+xo-so/scripts/generate-fix10-artifacts.js
+
 # AI Agent Context & System
 .agents/
 .gemini/
