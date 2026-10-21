@@ -5,14 +5,17 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/public/netlify-badge.svg)](https://sonaoday.netlify.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
-[![Engine](https://img.shields.io/badge/Algorithms-8%20Quant%20Models-blue.svg)](#ii-chi-tiết-8-thuật-toán-định-lượng--mô-hình-ai)
-[![Data Engine](https://img.shields.io/badge/Verified%20Draws-3%2C355%20Kỳ-emerald.svg)](#iv-tính-toàn-vẹn-dữ-liệu--phân-lập-đài)
+[![Engine](https://img.shields.io/badge/Algorithms-8%20Quant%20Models-blue.svg)](#iii-chi-tiết-8-thuật-toán-định-lượng--mô-hình-ai)
+[![Data Engine](https://img.shields.io/badge/Verified%20Draws-3%2C355%20Kỳ-emerald.svg)](#v-tính-toàn-vẹn-dữ-liệu--sơ-đồ-thực-thể-quan-hệ-erd)
+[![Visuals](https://img.shields.io/badge/Charts-Chartist.dev%20SVG-orange.svg)](#vi-kiến-trúc-kỹ-thuật--hiệu-năng-vượt-trội)
 
 ---
 
 ## 📑 Mục Lục
 1. [Tổng Quan & Triết Lý Khoa Học](#i-tổng-quan--triết-lý-khoa-học)
-2. [Chi Tiết 8 Thuật Toán Định Lượng & Mô Hình AI](#ii-chi-tiết-8-thuật-toán-định-lượng--mô-hình-ai)
+2. [Sơ Đồ Kiến Trúc Hệ Thống Tổng Thể](#ii-sơ-đồ-kiến-trúc-hệ-thống-tổng-thể)
+3. [Chi Tiết 8 Thuật Toán Định Lượng & Mô Hình AI](#iii-chi-tiết-8-thuật-toán-định-lượng--mô-hình-ai)
+   - [Lưu Đồ Quy Trình Dự Báo Định Lượng](#lưu-đồ-quy-trình-dự-báo-định-lượng)
    - [1. Mô Hình Tổng Hợp (Ensemble Consensus Model)](#1-mô-hình-tổng-hợp-ensemble-consensus-model)
    - [2. Chuỗi Markov Bậc 1 & Ma Trận Chuyển Dịch Trạng Thái](#2-chuỗi-markov-bậc-1--ma-trận-chuyển-dịch-trạng-thái)
    - [3. Phân Phối Poisson & Tần Suất Thực Nghiệm](#3-phân-phối-poisson--tần-suất-thực-nghiệm)
@@ -21,11 +24,11 @@
    - [6. Đường Trung Bình Trượt Lũy Thừa (EMA) & Chu Kỳ Thứ](#6-đường-trung-bình-trượt-lũy-thừa-ema--chu-kỳ-thứ)
    - [7. Khai Phá Luật Bạc Nhớ (Association Rules Mining)](#7-khai-phá-luật-bạc-nhớ-association-rules-mining)
    - [8. Phân Cụm K-Means & Đặc Trưng Cấu Trúc (K-Means Clustering)](#8-phân-cụm-k-means--đặc-trưng-cấu-trúc-k-means-clustering)
-3. [Động Cơ Kiểm Định Hồi Quy (Walk-Forward Backtesting Engine)](#iii-động-cơ-kiểm-định-hồi-quy-walk-forward-backtesting-engine)
-4. [Tính Toàn Vẹn Dữ Liệu & Phân Lập Đài (Data Integrity)](#iv-tính-toàn-vẹn-dữ-liệu--phân-lập-đài)
-5. [Kiến Trúc Kỹ Thuật & Tối Ưu Hóa Hiệu Năng](#v-kiến-trúc-kỹ-thuật--tối-ưu-hóa-hiệu-năng)
-6. [Hướng Dẫn Cài Đặt & Triển Khai (Deployment)](#vi-hướng-dẫn-cài-đặt--triển-khai-deployment)
-7. [Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)](#vii-tuyên-bố-miễn-trừ-trách-nhiệm-disclaimer)
+4. [Động Cơ Kiểm Định Hồi Quy (Walk-Forward Backtesting Engine)](#iv-động-cơ-kiểm-định-hồi-quy-walk-forward-backtesting-engine)
+5. [Tính Toàn Vẹn Dữ Liệu & Sơ Đồ Thực Thể Quan Hệ (ERD)](#v-tính-toàn-vẹn-dữ-liệu--sơ-đồ-thực-thể-quan-hệ-erd)
+6. [Kiến Trúc Kỹ Thuật & Hiệu Năng Vượt Trội](#vi-kiến-trúc-kỹ-thuật--hiệu-năng-vượt-trội)
+7. [Hướng Dẫn Cài Đặt & Triển Khai (Deployment)](#vii-hướng-dẫn-cài-đặt--triển-khai-deployment)
+8. [Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)](#viii-tuyên-bố-miễn-trừ-trách-nhiệm-disclaimer)
 
 ---
 
@@ -33,7 +36,7 @@
 
 **LOTTO-QUANT LAB** là nền tảng điện toán mã nguồn mở chuyên sâu về nghiên cứu xác suất thống kê cho dữ liệu xổ số truyền thống tại Việt Nam:
 * **Xổ Số Kiến Thiết Miền Nam (XSMN):** Toàn bộ 21 tỉnh thành (TP.HCM, Cần Thơ, Đồng Nai, Tây Ninh, An Giang,...), phân tích cấu trúc 18 giải và đuôi lô tô 2 số.
-* **Xổ Số Điện Toán Vietlott:** Ma trận ma trận 6/45 (Mega 6/45) và 6/55 (Power 6/55) cùng Jackpot tích lũy.
+* **Xổ Số Điện Toán Vietlott:** Ma trận 6/45 (Mega 6/45) và 6/55 (Power 6/55) cùng Jackpot tích lũy.
 
 ### 🛡️ Nguyên Tắc "Evidence Before Assertion" & Chống Ngụy Biện Con Bạc
 1. **Tôn trọng tính ngẫu nhiên độc lập:** Mỗi vòng quay của lồng cầu khí nén vật lý là một biến cố ngẫu nhiên độc lập về mặt cơ học. Các mô hình định lượng trong hệ thống **không** tuyên bố dự đoán chuẩn xác 100%, mà tập trung lượng hóa sự lệch pha thống kê thực nghiệm (Empirical Distribution Anomalies).
@@ -42,9 +45,107 @@
 
 ---
 
-## II. Chi Tiết 8 Thuật Toán Định Lượng & Mô Hình AI
+## II. Sơ Đồ Kiến Trúc Hệ Thống Tổng Thể
+
+Kiến trúc phân tầng chặt chẽ từ thu thập dữ liệu, làm sạch, mô hình hóa toán học đến trực quan hóa đa nền tảng:
+
+```mermaid
+flowchart TD
+    subgraph DataLayer["1. LỚP NGUỒN DỮ LIỆU & THU THẬP"]
+        MN["Minh Ngọc Live Engine (minhngoc.net.vn)"]
+        NF_Vietlott["Netlify Function: crawl-vietlott.js"]
+        NF_XSMN["Netlify Function: crawl-xsmn.js"]
+        Seed["Offline Verified Seed (3,355 Kỳ Quay)"]
+        MN --> NF_Vietlott
+        MN --> NF_XSMN
+        NF_Vietlott --> DS["DataService (Quản Trị Bộ Nhớ & Cache)"]
+        NF_XSMN --> DS
+        Seed --> DS
+    end
+
+    subgraph NormalizerLayer["2. LỚP CHUẨN HÓA & PHÂN LẬP AN TOÀN"]
+        DS --> IN["Input Normalizer (Xác thực Hợp đồng Dữ liệu)"]
+        IN --> SI["Station Scope Isolator (Phân lập 21 đài XSMN & Vietlott)"]
+        SI --> CV["Lookahead Bias Sentinel (Nghiêm ngặt t <= T)"]
+    end
+
+    subgraph QuantLayer["3. LỚP 7 THUẬT TOÁN ĐỊNH LƯỢNG ĐỘC LẬP"]
+        CV --> A1["1. Chuỗi Markov Bậc 1\n(Laplace Smoothing alpha=0.5)"]
+        CV --> A2["2. Phân phối Poisson\n(Exponential Decay Weighting)"]
+        CV --> A3["3. Monte Carlo 10,000 Runs\n(Mulberry32 PRNG & Sampling W/O Rep)"]
+        CV --> A4["4. Tần suất & Chu kỳ Lô Gan\n(Ripeness Index & Never-observed)"]
+        CV --> A5["5. EMA & Chu kỳ Thứ\n(Day-of-Week Seasonality Filter)"]
+        CV --> A6["6. Khai phá Luật Bạc Nhớ\n(Apriori Support, Confidence & Lift)"]
+        CV --> A7["7. Phân cụm K-Means\n(Cold, Moderate, Active Centroids)"]
+    end
+
+    subgraph EnsembleLayer["4. LỚP HỢP NHẤT ĐỒNG THUẬN (ENSEMBLE)"]
+        A1 & A2 & A3 & A4 & A5 & A6 & A7 --> PRA["Percentile-Rank Aggregator (Chuẩn hóa thang [0, 100])"]
+        PRA --> AW["Adaptive Weighted Voting (Markov 18%, Poisson 15%, MC 15%...)"]
+        AW --> Cons["Consensus Scoring & Top Candidate Ranking"]
+        AW --> PDT["Positional Digit Transition (Dự báo 6 Số Đặc Biệt & 3 Càng)"]
+    end
+
+    subgraph BacktestLayer["5. ĐỘNG CƠ KIỂM ĐỊNH HỒI QUY (WALK-FORWARD)"]
+        CV --> WF["Expanding Window Walk-Forward Runner"]
+        WF --> Base["100 Monte Carlo Random Baselines"]
+        Base --> StatEval["Hypothesis Testing & Significance Test"]
+    end
+
+    subgraph PresentationLayer["6. LỚP HIỂN THỊ & TRỰC QUAN HÓA"]
+        Cons & PDT & StatEval --> UI["UI Controller (Vanilla ES Modules)"]
+        UI --> SVG["Biểu đồ Chartist.dev (SVG Vector Engine)"]
+        UI --> Canvas["Biểu đồ Chart.js (HTML5 Canvas Engine)"]
+        UI --> Board["Bảng 18 Giải & Thống kê Đầu-Đuôi"]
+    end
+```
+
+---
+
+## III. Chi Tiết 8 Thuật Toán Định Lượng & Mô Hình AI
 
 Mỗi thuật toán trong hệ thống được thiết kế theo hợp đồng thống nhất: nhận tập lịch sử chuẩn hóa `sortedHistory` và trả về danh sách ứng viên `predictions`, ma trận điểm số `scores`, loại điểm `scoreType: "ranking-score"` cùng giải trình toán học minh bạch.
+
+### Lưu Đồ Quy Trình Dự Báo Định Lượng
+
+```mermaid
+flowchart TD
+    Start(["Khởi Động Phiên Dự Báo Định Lượng"]) --> SelectInput["Chọn Loại Vé & Đài Quay (VD: XSMN TP.HCM hoặc Mega 6/45)"]
+    SelectInput --> FetchHistory["Nạp Dữ Liệu Lịch Sử Từ DataService & Serverless Cache"]
+    
+    FetchHistory --> StrictFilter{"Kiểm Định Ngày Quay & Lookahead Bias Sentinel"}
+    StrictFilter -- "Phát hiện ngày t >= T+1" --> Truncate["Loại bỏ dữ liệu tương lai (Chỉ giữ t <= T)"]
+    StrictFilter -- "Dữ liệu t <= T hợp lệ" --> NormalizeData["InputNormalizer: Chuẩn hóa Canonical Array"]
+    Truncate --> NormalizeData
+
+    NormalizeData --> ForkAlgo["Phân Phối Dữ Liệu Song Song Đến 7 Thuật Toán"]
+
+    subgraph ParallelExecution["Xử Lý Định Lượng Độc Lập"]
+        ForkAlgo --> M1["Markov: Tính Xác Suất Chuyển Dịch P(j|i)"]
+        ForkAlgo --> M2["Poisson: Ước Lượng Cường Độ Lambda & Phân Rã Lũy Thừa"]
+        ForkAlgo --> M3["Monte Carlo: Sinh 10k Lần Rút Không Hoàn Lại (Mulberry32)"]
+        ForkAlgo --> M4["Lô Gan: Tính Khoảng Cách & Ripeness Index"]
+        ForkAlgo --> M5["EMA: Làm Mịn Xung Lượng & Lọc Mùa Vụ Thứ"]
+        ForkAlgo --> M6["Bạc Nhớ: Khai Phá Apriori Hướng Thuận Thời Gian"]
+        ForkAlgo --> M7["K-Means: Gom Cụm Không Gian Đặc Trưng 3D"]
+    end
+
+    M1 & M2 & M3 & M4 & M5 & M6 & M7 --> RankScale["Chuyển Đổi Điểm Thô Sang Percentile Rank [0, 100]"]
+    
+    RankScale --> WeightMatrix["Nhân Ma Trận Trọng Số Thích Ứng (Adaptive Weighting)"]
+    WeightMatrix --> AggregateScore["Tính Điểm Đồng Thuận Tổng Hợp S_ensemble"]
+    
+    AggregateScore --> TopPicks["Trích Xuất Top N Ứng Viên Hội Tụ Cao Nhất (Bạch Thủ, Song Thủ, Dàn Đề)"]
+    
+    NormalizeData --> DigitMatrix["Lập Ma Trận Chuyển Tiếp Chữ Số Từng Vị Trí"]
+    DigitMatrix --> SpecialPrize["Dự Báo 6 Chữ Số Giải Đặc Biệt & 3 Càng"]
+    
+    TopPicks & SpecialPrize --> RenderUI["UIController: Kết Xuất Thẻ Bài & Trực Quan Hóa"]
+    RenderUI --> DrawChartist["Render Biểu Đồ Phân Phối Hội Tụ Chartist.dev SVG"]
+    RenderUI --> DrawTable["Hiển Thị Bảng Kết Quả Kỳ Trước & Đầu-Đuôi"]
+    
+    DrawChartist & DrawTable --> Done(["Hoàn Tất & Sẵn Sàng Trải Nghiệm"])
+```
 
 ---
 
@@ -156,9 +257,41 @@ Mỗi thuật toán trong hệ thống được thiết kế theo hợp đồng 
 
 ---
 
-## III. Động Cơ Kiểm Định Hồi Quy (Walk-Forward Backtesting Engine)
+## IV. Động Cơ Kiểm Định Hồi Quy (Walk-Forward Backtesting Engine)
 
 Một hệ thống định lượng không có kiểm định hồi quy là một hệ thống thiếu tin cậy. **LOTTO-QUANT LAB** trang bị động cơ Backtest chuẩn mực:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Researcher as Nhà Nghiên Cứu
+    participant Engine as Backtest Engine
+    participant Isolator as Station Scope Isolator
+    participant Model as 8 Thuật Toán Quant
+    participant Baseline as 100 Replicate Monte Carlo
+    participant Reporter as Evaluator & Leaderboard
+
+    Researcher->>Engine: Yêu cầu chạy Walk-Forward Backtest (K folds, W kỳ)
+    Engine->>Isolator: Trích xuất lịch sử đơn đài (VD: chỉ TP.HCM, không lẫn đài khác)
+    Isolator-->>Engine: Tập lịch sử thuần nhất (Verified Historical Scope)
+
+    loop Với mỗi Fold k = 1 đến K
+        Note over Engine: Cửa sổ mở rộng: Dữ liệu huấn luyện [1 .. T_k]
+        Engine->>Model: Huấn luyện và dự đoán ứng viên kỳ T_k + 1
+        Model-->>Engine: Danh sách dự báo (Top 5 XSMN / Top 6 Vietlott)
+        
+        Engine->>Baseline: Sinh 100 bộ vé ngẫu nhiên độc lập (Seed khác nhau)
+        Baseline-->>Engine: Phân phối đối chuẩn ngẫu nhiên (Random Replicates)
+        
+        Engine->>Engine: Đối soát với kết quả thực tế mở thưởng kỳ T_k + 1
+        Engine->>Engine: Tính Model Hit Count vs 100 Baseline Mean Hit Count
+    end
+
+    Engine->>Reporter: Tổng hợp Micro Hit Rate, Mean Fold Hit Rate & Delta Lift
+    Reporter->>Reporter: Kiểm định ý nghĩa thống kê (Confidence Interval 95%)
+    Reporter-->>Researcher: Bảng Xếp Hạng Thuật Toán & Khuyến Cáo Rủi Ro
+```
+
 * **Cửa Sổ Mở Rộng (Expanding Window):**
   Huấn luyện mô hình từ kỳ đầu tiên đến kỳ $T$, dự báo kỳ $T+1$. Sau đó mở rộng tập huấn luyện thêm kỳ $T+1$ để dự báo kỳ $T+2$. Không bao giờ cắt xén âm thầm lịch sử.
 * **So Sánh Đối Chuẩn (Random Baseline 100 Replicates):**
@@ -170,7 +303,87 @@ Một hệ thống định lượng không có kiểm định hồi quy là mộ
 
 ---
 
-## IV. Tính Toàn Vẹn Dữ Liệu & Phân Lập Đài
+## V. Tính Toàn Vẹn Dữ Liệu & Sơ Đồ Thực Thể Quan Hệ (ERD)
+
+Mọi bản ghi kết quả đều được tổ chức có cấu trúc, quan hệ ràng buộc chặt chẽ và lưu trữ nguồn gốc xác thực (Data Provenance):
+
+```mermaid
+erDiagram
+    PROVINCE_STATION ||--o{ LOTTERY_DRAW : hosts
+    GAME_SPEC ||--o{ LOTTERY_DRAW : specifies
+    LOTTERY_DRAW ||--o{ LOTTO_PAIR : contains
+    LOTTERY_DRAW ||--o{ PREDICTION_RUN : trains_on
+    PREDICTION_RUN ||--|{ ALGORITHM_SCORE : generates
+    ALGORITHM_SCORE }|--|| CANDIDATE_NUMBER : rates
+    PREDICTION_RUN ||--o{ BACKTEST_FOLD : validates_in
+
+    PROVINCE_STATION {
+        string station_id PK "tphcm, dong-nai, can-tho..."
+        string name "Tên Tỉnh / Thành Phố"
+        string schedule_days "Thứ Hai, Thứ Bảy..."
+        string region "Miền Nam / Vietlott"
+    }
+
+    GAME_SPEC {
+        string game_type PK "xsmn, mega-6-45, power-6-55"
+        int total_balls "45, 55, hoặc 100 cặp"
+        int pick_balls "6 bóng hoặc 18 giải"
+        string frequency "Hàng ngày hoặc theo Thứ"
+    }
+
+    LOTTERY_DRAW {
+        string draw_id PK "Mã kỳ mở thưởng (#01450, 10D2...)"
+        date draw_date "Ngày mở thưởng (YYYY-MM-DD)"
+        string station_id FK "Mã đài mở thưởng"
+        string special_prize "Dãy 6 số giải Đặc Biệt"
+        string jackpot_value "Giá trị giải Jackpot (VNĐ)"
+        string verification_status "verified / audited"
+        string source_url "Nguồn gốc minh chứng Minh Ngọc"
+    }
+
+    LOTTO_PAIR {
+        int id PK "Khóa tự tăng"
+        string draw_id FK "Liên kết kỳ mở thưởng"
+        string pair_value "Cặp số 2 chữ số (00 - 99)"
+        string prize_rank "Đặc Biệt, Nhất, Nhì... Tám"
+        int position_index "Thứ tự bóng rút trong giải"
+    }
+
+    PREDICTION_RUN {
+        string run_id PK "UUID phiên dự báo"
+        date target_date "Ngày mục tiêu dự báo T+1"
+        string station_id FK "Đài mục tiêu"
+        datetime executed_at "Thời điểm thực thi"
+        int training_draws "Số kỳ huấn luyện (<= T)"
+    }
+
+    ALGORITHM_SCORE {
+        string score_id PK "Khóa định danh điểm"
+        string run_id FK "Liên kết phiên chạy"
+        string algorithm_id "markov, poisson, ensemble..."
+        string candidate_number FK "Số dự báo"
+        float raw_score "Điểm thô của thuật toán"
+        float percentile_rank "Thứ hạng phân vị [0, 100]"
+        int priority_rank "Thứ hạng ưu tiên (1 -> N)"
+    }
+
+    CANDIDATE_NUMBER {
+        string number_value PK "Giá trị bóng (01-45 hoặc 00-99)"
+        string parity "Chẵn / Lẻ"
+        string scale "Tài / Xỉu"
+        int digit_sum "Tổng chữ số"
+    }
+
+    BACKTEST_FOLD {
+        string fold_id PK "Định danh lượt kiểm định"
+        int fold_index "Chỉ số fold (1..K)"
+        date test_date "Kỳ kiểm định thực tế"
+        float model_hit_rate "Tỷ lệ trúng của mô hình"
+        float baseline_hit_rate "Tỷ lệ trúng ngẫu nhiên 100 baseline"
+        float delta_lift "Mức chênh lệch hiệu năng (+%)"
+        boolean exceeds_baseline "Cờ vượt ngưỡng ngẫu nhiên"
+    }
+```
 
 * **Quy mô Dữ liệu Xác thực:** 3.355 kỳ quay thực tế được lưu trữ có nguồn gốc rõ ràng (Data Provenance):
   * **1.576 kỳ** Mega 6/45 từ ngày đầu tiên (2016 đến nay).
@@ -181,7 +394,7 @@ Một hệ thống định lượng không có kiểm định hồi quy là mộ
 
 ---
 
-## V. Kiến Trúc Kỹ Thuật & Tối Ưu Hóa Hiệu Năng
+## VI. Kiến Trúc Kỹ Thuật & Hiệu Năng Vượt Trội
 
 ```
 ├── Web/
@@ -225,7 +438,7 @@ Một hệ thống định lượng không có kiểm định hồi quy là mộ
 
 ---
 
-## VI. Hướng Dẫn Cài Đặt & Triển Khai (Deployment)
+## VII. Hướng Dẫn Cài Đặt & Triển Khai (Deployment)
 
 ### 1. Chạy Tại Máy Cục Bộ (Local Development)
 Yêu cầu: Node.js 18+ trở lên.
@@ -260,7 +473,7 @@ Hệ thống đã cấu hình đầy đủ sẵn sàng:
 
 ---
 
-## VII. Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)
+## VIII. Tuyên Bố Miễn Trừ Trách Nhiệm (Disclaimer)
 
 1. **Mục đích Học thuật & Nghiên cứu:** **LOTTO-QUANT LAB** là dự án nghiên cứu khoa học thuần túy nhằm ứng dụng các phương pháp phân tích chuỗi thời gian, lý thuyết thông tin và học máy vào tập dữ liệu số học thực tế.
 2. **Không Khuyến Khích Cờ Bạc:** Dự án **tuyệt đối không** cổ xúy hoặc khuyến khích bất kỳ hình thức cá cược, lô đề bất hợp pháp nào. Người dùng cần tuân thủ nghiêm túc các quy định pháp luật của Nhà nước Việt Nam về việc mua vé số ích nước lợi nhà do các Công ty Xổ số Kiến thiết và Công ty Xổ số Điện toán Việt Nam (Vietlott) phát hành.
