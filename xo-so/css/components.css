@@ -849,6 +849,7 @@
   font-size: 13.5px;
   line-height: 1.6;
   margin-top: 14px;
+  max-width: 65ch;
 }
 
 .guide-callout-emerald {
@@ -861,6 +862,7 @@
   font-size: 13.5px;
   line-height: 1.6;
   margin-top: 14px;
+  max-width: 65ch;
 }
 
 .guide-callout-rose {
@@ -873,6 +875,7 @@
   font-size: 13.5px;
   line-height: 1.6;
   margin-top: 14px;
+  max-width: 65ch;
 }
 
 /* --- 10. DỰ ĐOÁN DÃY 6 SỐ GIẢI ĐẶC BIỆT (FLUID RESPONSIVE 100% NO-OVERFLOW) --- */
@@ -1807,7 +1810,7 @@
 
 .chartist-quant-container .ct-bar {
   stroke-linecap: round;
-  transition: stroke 0.2s, stroke-width 0.2s, opacity 0.2s;
+  transition: stroke 0.2s, opacity 0.2s;
 }
 
 .chartist-quant-container .ct-bar:hover {

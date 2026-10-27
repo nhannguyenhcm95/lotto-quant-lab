@@ -247,7 +247,7 @@ td, th,
 
 .brand-badge {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.2px;
   padding: 3px 9px;
@@ -414,7 +414,7 @@ td, th,
 }
 
 .kpi-badge {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 3px 7px;
   border-radius: var(--r-xs);
@@ -436,7 +436,7 @@ td, th,
 }
 
 .kpi-footnote {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -739,7 +739,7 @@ td, th,
 
 .section-num-pill {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: var(--r-xs);
@@ -766,7 +766,7 @@ td, th,
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.6;
-  max-width: 72ch;
+  max-width: 65ch;
 }
 
 /* Tag danh mục phong cách tinh gọn */
@@ -869,7 +869,7 @@ td, th,
   }
 
   .brand-badge {
-    font-size: 11.5px;
+    font-size: 12px;
     padding: 2px 7px;
   }
 
@@ -923,7 +923,7 @@ td, th,
   }
 
   .kpi-stat-card .kpi-label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.3px;
   }
 
@@ -936,8 +936,8 @@ td, th,
   }
 
   .kpi-stat-card .kpi-badge {
-    font-size: 9.5px;
-    padding: 1px 5px;
+    font-size: 11.5px;
+    padding: 2px 6px;
   }
 
   .kpi-stat-card .kpi-footnote {

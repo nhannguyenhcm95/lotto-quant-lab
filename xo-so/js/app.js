@@ -156,7 +156,7 @@ class LottoQuantApp {
         btn.innerHTML = `
           ${isToday ? '<span class="station-today-dot"></span>' : ''}
           <span>${st.name}</span>
-          ${isToday ? '<span style="font-size: 10px; background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); padding: 1px 5px; border-radius: 4px; font-weight: 700;">Hôm nay</span>' : ''}
+          ${isToday ? '<span style="font-size: 11.5px; background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Hôm nay</span>' : ''}
         `;
 
         btn.addEventListener('click', () => {

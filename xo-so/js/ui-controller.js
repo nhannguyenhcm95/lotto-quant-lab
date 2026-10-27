@@ -42,24 +42,24 @@ export const UIController = {
         heroPredictionHtml = `
           <div class="hero-prediction-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <span style="background: var(--accent); color: #FFF; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: var(--r-xs); text-transform: uppercase; letter-spacing: 0.3px;">
-                <i class="fa-solid fa-bullseye"></i> GỢI Ý MÔ HÌNH KỲ TỚI
+              <span style="background: var(--accent); color: #FFF; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: var(--r-xs); letter-spacing: 0.2px;">
+                <i class="fa-solid fa-bullseye"></i> Gợi ý mô hình kỳ tới
               </span>
               <span style="font-size: 12.5px; color: var(--text-primary); font-weight: 700;">
                 ${targetInfo ? `${targetInfo.gameOrStationName} • ${targetInfo.nextDayName}, ${targetInfo.nextDate}` : 'Kỳ Quay Tới'}
               </span>
             </div>
             <div style="text-align: center; margin: 10px 0 6px 0;">
-              <div style="font-size: 11.5px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.3px;">
-                BỘ 6 SỐ TỐI ƯU XÁC SUẤT VIETLOTT (MÔ HÌNH HỘI TỤ):
+              <div style="font-size: 12.5px; color: var(--accent); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.2px;">
+                Bộ 6 số tối ưu xác suất Vietlott (Mô hình hội tụ):
               </div>
               <div class="hero-pred-balls-row" style="justify-content: center; gap: 8px;">
                 ${vBalls}
               </div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line-subtle); padding-top: 10px;">
-              <span style="font-size: 12px; color: var(--text-secondary);">Phân tích hội tụ từ 7 mô hình toán học & xác suất định lượng</span>
-              <button class="btn-primary" onclick="document.getElementById('panel-predict')?.scrollIntoView({behavior:'smooth'})" style="font-size: 11.5px; padding: 5px 12px;">
+              <span style="font-size: 12.5px; color: var(--text-secondary);">Phân tích hội tụ từ 7 mô hình toán học & xác suất định lượng</span>
+              <button class="btn-primary" onclick="document.getElementById('panel-predict')?.scrollIntoView({behavior:'smooth'})" style="font-size: 12px; padding: 5px 12px;">
                 <i class="fa-solid fa-brain"></i> Xem 8 Thuật Toán ➔
               </button>
             </div>
@@ -123,8 +123,8 @@ export const UIController = {
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 12px; margin-top: 14px; border-top: 1px dashed var(--line-subtle); font-size: 12px;">
-              <span style="color: var(--text-secondary); font-size: 12px;">Gợi ý soi cầu định lượng dựa trên phân tích xác suất chuỗi 180 kỳ</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 12px; margin-top: 14px; border-top: 1px dashed var(--line-subtle); font-size: 12.5px;">
+              <span style="color: var(--text-secondary); font-size: 12.5px;">Gợi ý soi cầu định lượng dựa trên phân tích xác suất chuỗi 180 kỳ</span>
               <button class="btn-predict-explore" onclick="document.getElementById('panel-predict')?.scrollIntoView({behavior:'smooth'})">
                 <i class="fa-solid fa-brain"></i> Xem 8 Thuật Toán ➔
               </button>
@@ -159,7 +159,7 @@ export const UIController = {
           </div>
 
           <div style="background: var(--bg-subtle); padding: 22px 16px; border-radius: var(--r-md); text-align: center; margin-bottom: 16px; border: 1px solid var(--line-subtle);">
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Dãy Số Trúng Thưởng Chính Thức</div>
+            <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.3px; font-weight: 600;">Dãy Số Trúng Thưởng Chính Thức</div>
             <div class="ball-group" style="justify-content: center;">
               ${ballsHtml}
               ${bonusHtml}
@@ -374,7 +374,7 @@ export const UIController = {
               <div class="special-digit-ball ${p.isDuoi || p.isDau ? 'highlight-de' : (p.isCang ? 'highlight-cang' : '')}">
                 ${p.digit}
               </div>
-              <span style="font-size: 11.5px; font-weight: 700; white-space: nowrap; color: ${p.isDuoi || p.isDau ? 'var(--gold-600)' : (p.isCang ? 'var(--blue-500)' : 'var(--text-secondary)')}; text-align: center;">
+              <span style="font-size: 12px; font-weight: 700; white-space: nowrap; color: ${p.isDuoi || p.isDau ? 'var(--gold-600)' : (p.isCang ? 'var(--blue-500)' : 'var(--text-secondary)')}; text-align: center;">
                 ${shortLabels[idx] || p.label}
               </span>
             </div>
@@ -399,9 +399,9 @@ export const UIController = {
           <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-layer-group" style="color: var(--blue-400);"></i>
             <span>Dàn Lô Tô 2 Số Đề Xuất (Tham Khảo Đánh Bao Lô 18 Giải / Xiên)</span>
-            <span style="font-size: 10.5px; background: rgba(56, 189, 248, 0.12); color: var(--blue-400); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 7px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Tham Khảo</span>
+            <span style="font-size: 12px; background: rgba(56, 189, 248, 0.12); color: var(--blue-400); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 8px; border-radius: 4px; font-weight: 600;">Tham khảo</span>
           </div>
-          <div style="font-size: 12px; color: var(--text-muted);">
+          <div style="font-size: 12.5px; color: var(--text-secondary);">
             Dùng để so khớp 18 giải hoặc đá/xiên
           </div>
         </div>
@@ -743,19 +743,19 @@ export const UIController = {
     gapDetails.forEach(item => {
       const numStr = String(item.num).padStart(2, '0');
       if (item.ripeness >= 0.8 && item.ripeness <= 1.35) {
-        primeNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(${item.currentGap}k)</span>`);
+        primeNums.push(`${numStr} <span style="font-size:12px; opacity:0.9;">(${item.currentGap}k)</span>`);
       }
       if (item.hits15 >= 3) {
-        hotNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(${item.hits15}l)</span>`);
+        hotNums.push(`${numStr} <span style="font-size:12px; opacity:0.9;">(${item.hits15}l)</span>`);
       }
       if (item.currentGap >= 12 || item.ripeness > 1.4) {
-        coldNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(gan ${item.currentGap}k)</span>`);
+        coldNums.push(`${numStr} <span style="font-size:12px; opacity:0.9;">(gan ${item.currentGap}k)</span>`);
       }
     });
 
-    const primeChipsHtml = primeNums.slice(0, 10).map(s => `<span class="lotto-chip special-hit">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Đang cập nhật...</span>';
-    const hotChipsHtml = hotNums.slice(0, 10).map(s => `<span class="lotto-chip hit">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Đang cập nhật...</span>';
-    const coldChipsHtml = coldNums.slice(0, 8).map(s => `<span class="lotto-chip" style="color:var(--rose-400); border-color:rgba(244,63,94,0.3);">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Không có số vượt ngưỡng cực đại</span>';
+    const primeChipsHtml = primeNums.slice(0, 10).map(s => `<span class="lotto-chip special-hit">${s}</span>`).join('') || '<span style="color:var(--text-secondary);font-size:12.5px;">Đang cập nhật...</span>';
+    const hotChipsHtml = hotNums.slice(0, 10).map(s => `<span class="lotto-chip hit">${s}</span>`).join('') || '<span style="color:var(--text-secondary);font-size:12.5px;">Đang cập nhật...</span>';
+    const coldChipsHtml = coldNums.slice(0, 8).map(s => `<span class="lotto-chip" style="color:var(--rose-400); border-color:rgba(244,63,94,0.3);">${s}</span>`).join('') || '<span style="color:var(--text-secondary);font-size:12.5px;">Không có số vượt ngưỡng cực đại</span>';
 
     // Bạc nhớ HTML: Chuẩn hóa schema, loại bỏ hoàn toàn undefined, NaN
     const liftPairsHtml = (topPairs && topPairs.length > 0) ? topPairs.slice(0, 6).map(p => {
@@ -768,12 +768,12 @@ export const UIController = {
         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-subtle); border:1px solid var(--line-subtle); border-radius:var(--r-sm); margin-bottom:8px;">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="lotto-chip">${p.a}</span>
-            <i class="fa-solid fa-arrow-right" style="color:var(--gold-600); font-size:11px;"></i>
+            <i class="fa-solid fa-arrow-right" style="color:var(--gold-600); font-size:12px;"></i>
             <span class="lotto-chip special-hit">${p.b}</span>
           </div>
           <div style="text-align:right;">
             <span style="font-family:var(--font-mono); font-weight:700; color:var(--emerald-600); font-size:13px;">Gắn kết ${liftVal}x</span>
-            <div style="font-size:12px; color:var(--text-secondary);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
+            <div style="font-size:12.5px; color:var(--text-secondary);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
           </div>
         </div>
       `;
@@ -804,7 +804,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-star"></i> Bạch Thủ Tiềm Năng</span>
-              <span class="meta-info-badge" style="background:#FEF3C7; color:#78350F; border:1px solid #FCD34D; font-size:11.5px; font-weight:700;">Điểm Rơi Vàng</span>
+              <span class="meta-info-badge" style="background:#FEF3C7; color:#78350F; border:1px solid #FCD34D; font-size:12px; font-weight:700;">Điểm Rơi Vàng</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${bachThu}</span>
@@ -821,7 +821,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-link"></i> Song Thủ Bạc Nhớ</span>
-              <span class="meta-info-badge" style="background:#D1FAE5; color:#065F46; border:1px solid #A7F3D0; font-size:11.5px; font-weight:700;">Cùng Nổ</span>
+              <span class="meta-info-badge" style="background:#D1FAE5; color:#065F46; border:1px solid #A7F3D0; font-size:12px; font-weight:700;">Cùng Nổ</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball" style="padding:0 16px;">${songThu}</span>
@@ -837,7 +837,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh Báo Số Gan</span>
-              <span class="meta-info-badge" style="background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; font-size:11.5px; font-weight:700;">Không Nuôi</span>
+              <span class="meta-info-badge" style="background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; font-size:12px; font-weight:700;">Không Nuôi</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${soGan}</span>
@@ -954,17 +954,17 @@ export const UIController = {
           <div style="display:flex; flex-direction:column; gap:14px;">
             <div class="ripeness-lane lane-prime">
               <div class="lane-title"><i class="fa-solid fa-circle-check"></i> Vùng Chín Muồi (Dễ Nổ Nhất)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Các con số chuẩn nhịp chu kỳ trung bình:</div>
+              <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px;">Các con số chuẩn nhịp chu kỳ trung bình:</div>
               <div class="lane-chips-box">${primeChipsHtml}</div>
             </div>
             <div class="ripeness-lane lane-hot">
               <div class="lane-title"><i class="fa-solid fa-fire"></i> Nhịp Bùng Nổ (Đang Về Nhiều)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Các con số có đà xuất hiện liên tục:</div>
+              <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px;">Các con số có đà xuất hiện liên tục:</div>
               <div class="lane-chips-box">${hotChipsHtml}</div>
             </div>
             <div class="ripeness-lane lane-cold">
               <div class="lane-title"><i class="fa-solid fa-triangle-exclamation"></i> Vùng Nguy Hiểm (Gan Lâu Ngày)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Nguy cơ bị giam số dài ngày, tránh ôm:</div>
+              <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px;">Nguy cơ bị giam số dài ngày, tránh ôm:</div>
               <div class="lane-chips-box">${coldChipsHtml}</div>
             </div>
           </div>
