@@ -1,5 +1,5 @@
 {
-  "auditedAt": "2026-10-21T01:59:54.019Z",
+  "auditedAt": "2026-10-27T02:04:56.932Z",
   "strictMode": true,
   "manifestVersion": "3.0.0",
   "referenceVersion": "2.0.0-canonical-fix8",
@@ -13,8 +13,8 @@
     "vietlott-power-6-55": {
       "expected": 1411,
       "actual": 1411,
-      "verified": 1410,
-      "coverage": 99.9
+      "verified": 1411,
+      "coverage": 100
     },
     "xsmn-21-stations": {
       "expected": 352,
@@ -25,54 +25,34 @@
   },
   "diagnostics": {
     "missingDrawsList": [],
-    "schemaErrorsList": [
-      {
-        "game": "power-6-55",
-        "drawId": "#01411",
-        "error": "Số đặc biệt bonusNumber không hợp lệ"
-      }
-    ],
+    "schemaErrorsList": [],
     "duplicateKeysList": [],
     "inventedValuesList": [],
-    "fieldMismatchesList": [
-      {
-        "game": "power-6-55",
-        "drawId": "#01411",
-        "field": "bonusNumber",
-        "seedValue": null,
-        "refValue": 4
-      },
-      {
-        "game": "power-6-55",
-        "drawId": "#01411",
-        "field": "sourceUrl",
-        "refValue": "https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/655?id=01411&nocatche=1"
-      }
-    ],
+    "fieldMismatchesList": [],
     "missingReferenceList": []
   },
   "summary": {
     "totalExpectedDraws": 3339,
     "totalActualDraws": 3339,
     "recordsCompared": 3339,
-    "totalVerifiedDraws": 3338,
-    "coveragePercent": 99.9,
+    "totalVerifiedDraws": 3339,
+    "coveragePercent": 100,
     "fieldsCompared": 25136,
-    "matchedFields": 25134,
-    "mismatchedFields": 2,
-    "requiredFieldSourceMatch": 99.9,
-    "unverifiedRecords": 1,
+    "matchedFields": 25136,
+    "mismatchedFields": 0,
+    "requiredFieldSourceMatch": 100,
+    "unverifiedRecords": 0,
     "missingReferenceRecords": 0,
     "unresolvedMissingDraws": 0,
-    "unresolvedRequiredFields": 2,
-    "invalidCanonicalRecords": 1,
+    "unresolvedRequiredFields": 0,
+    "invalidCanonicalRecords": 0,
     "duplicateUnresolvedKeys": 0,
     "inventedOrDefaultedValues": 0,
-    "sourceEvidenceCoverage": 99.9,
+    "sourceEvidenceCoverage": 100,
     "totalRequiredComparisons": 25136,
-    "matchedComparisons": 25134,
-    "mismatchedComparisons": 2,
-    "unverifiedComparisons": 1,
+    "matchedComparisons": 25136,
+    "mismatchedComparisons": 0,
+    "unverifiedComparisons": 0,
     "missingEvidenceCount": 0,
     "sourceConflictCount": 0,
     "missingExpectedDraws": 0,

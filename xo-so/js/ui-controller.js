@@ -85,7 +85,7 @@ export const UIController = {
             <div class="hero-card-header">
               <div class="hero-card-sub-top">
                 <span class="hero-crown-badge">
-                  <i class="fa-solid fa-crown"></i> DỰ ĐOÁN KỲ TIẾP THEO
+                  <i class="fa-solid fa-crown"></i> Dự đoán kỳ tiếp theo
                 </span>
                 <span class="live-status-pill hero-live-pill">
                   <span class="pulse-dot"></span>Chưa quay
@@ -99,8 +99,8 @@ export const UIController = {
 
             <!-- 6 Quả bóng vàng Giải Đặc Biệt (Fluid 100% không rớt dòng) -->
             <div style="text-align: center; margin: 12px 0 16px 0;">
-              <div style="font-size: 12px; color: var(--gold-400); font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;">
-                ✦ DÃY 6 SỐ GIẢI ĐẶC BIỆT DỰ BÁO:
+              <div style="font-size: 12.5px; color: var(--gold-600); font-weight: 700; letter-spacing: 0.3px; margin-bottom: 8px;">
+                ✦ Dãy 6 số giải đặc biệt dự báo:
               </div>
               <div class="special-balls-container">
                 ${balls6}
@@ -110,15 +110,15 @@ export const UIController = {
             <!-- Cặp số VIP: Bạch Thủ Lô & Song Thủ Lô -->
             <div class="lucky-lotto-grid">
               <div class="lucky-card lucky-gold">
-                <span class="lucky-label"><i class="fa-solid fa-star"></i> BẠCH THỦ LÔ</span>
+                <span class="lucky-label"><i class="fa-solid fa-star"></i> Bạch thủ lô</span>
                 <span class="lucky-value">${preds[0] || '--'}</span>
               </div>
               <div class="lucky-card lucky-blue">
-                <span class="lucky-label"><i class="fa-solid fa-gem"></i> SONG THỦ LÔ</span>
+                <span class="lucky-label"><i class="fa-solid fa-gem"></i> Song thủ lô</span>
                 <span class="lucky-value">${preds[0] || '--'} - ${preds[1] || '--'}</span>
               </div>
               <div class="lucky-card lucky-emerald">
-                <span class="lucky-label"><i class="fa-solid fa-fire"></i> DÀN 5 LÔ ĐẸP</span>
+                <span class="lucky-label"><i class="fa-solid fa-fire"></i> Dàn 5 lô đẹp</span>
                 <span class="lucky-value dan">${preds.slice(0, 5).join(' · ')}</span>
               </div>
             </div>
@@ -328,32 +328,32 @@ export const UIController = {
       `;
 
     const targetBannerHtml = targetInfo ? `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding: 11px 16px; background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: var(--r-sm);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding: 11px 16px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--r-sm);">
         <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
-          <span style="background: linear-gradient(135deg, #2563EB, #1D4ED8); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase;">
-            <i class="fa-solid fa-bullseye" style="margin-right: 5px;"></i> DỰ ĐOÁN KỲ TIẾP THEO
+          <span style="background: #2563EB; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.2px;">
+            <i class="fa-solid fa-bullseye" style="margin-right: 5px;"></i> Dự đoán kỳ tiếp theo
           </span>
           <span style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">
             ${targetInfo.gameOrStationName} • Mở thưởng: <span style="color: var(--gold-600);">${targetInfo.nextDayName}, ${targetInfo.nextDate}</span> <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">(${targetInfo.nextDrawTime})</span>
           </span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
-          <span style="display: inline-flex; align-items: center; gap: 5px; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
-            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--emerald-500); box-shadow: 0 0 6px var(--emerald-400); display: inline-block;"></span>
+          <span style="display: inline-flex; align-items: center; gap: 5px; color: #065F46; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--emerald-500); display: inline-block;"></span>
             Chưa Mở Thưởng
           </span>
-          <span style="color: var(--text-muted);">(Học máy phân tích từ dữ liệu đến kỳ: ${targetInfo.latestDate})</span>
+          <span style="color: var(--text-secondary);">(Học máy phân tích từ dữ liệu đến kỳ: ${targetInfo.latestDate})</span>
         </div>
       </div>
     ` : '';
 
     const sp = ensembleResult.specialPrize;
     const specialPrizeHtml = sp ? `
-      <div style="background: #FFFDF5; border: 1.5px solid #FCD34D; border-radius: var(--r-md); padding: 20px; margin-top: 14px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.1);">
+      <div style="background: var(--bg-surface); border: 1px solid #FCD34D; border-radius: var(--r-md); padding: 18px 20px; margin-top: 14px; box-shadow: var(--sh-card);">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
-              <i class="fa-solid fa-trophy" style="margin-right: 4px;"></i> TRỌNG TÂM DỰ ĐOÁN
+            <span style="background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.2px;">
+              <i class="fa-solid fa-trophy" style="margin-right: 4px;"></i> Trọng tâm dự đoán
             </span>
             <h4 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">
               Dãy 6 Số Giải Đặc Biệt (Kỳ Quay Kế Tiếp)
@@ -374,7 +374,7 @@ export const UIController = {
               <div class="special-digit-ball ${p.isDuoi || p.isDau ? 'highlight-de' : (p.isCang ? 'highlight-cang' : '')}">
                 ${p.digit}
               </div>
-              <span style="font-size: 9px; font-weight: 700; white-space: nowrap; color: ${p.isDuoi || p.isDau ? 'var(--gold-600)' : (p.isCang ? 'var(--blue-500)' : 'var(--text-muted)')}; text-align: center;">
+              <span style="font-size: 11.5px; font-weight: 700; white-space: nowrap; color: ${p.isDuoi || p.isDau ? 'var(--gold-600)' : (p.isCang ? 'var(--blue-500)' : 'var(--text-secondary)')}; text-align: center;">
                 ${shortLabels[idx] || p.label}
               </span>
             </div>
@@ -384,7 +384,7 @@ export const UIController = {
 
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px dashed var(--line-subtle); font-size: 13px; color: var(--text-secondary);">
           <div>
-            ✦ Dãy 6 số dự thưởng: <code style="font-family: var(--font-mono); font-size: 17px; font-weight: 800; color: #B45309; letter-spacing: 2.5px; background: #FEF3C7; padding: 2px 8px; border-radius: 4px; border: 1px solid #FCD34D;">${sp.fullNumber}</code>
+            ✦ Dãy 6 số dự thưởng: <code style="font-family: var(--font-mono); font-size: 17px; font-weight: 800; color: #78350F; letter-spacing: 2.5px; background: #FEF3C7; padding: 2px 8px; border-radius: 4px; border: 1px solid #FCD34D;">${sp.fullNumber}</code>
           </div>
           <button id="btn-copy-special" onclick="navigator.clipboard.writeText('${sp.fullNumber}'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Đã chép!'; setTimeout(() => this.innerHTML='<i class=\\'fa-regular fa-copy\\'></i> Sao chép 6 số', 2000);" style="background: #FFFFFF; border: 1px solid var(--line-medium); color: var(--text-primary); padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <i class="fa-regular fa-copy"></i> Sao chép 6 số
@@ -743,13 +743,13 @@ export const UIController = {
     gapDetails.forEach(item => {
       const numStr = String(item.num).padStart(2, '0');
       if (item.ripeness >= 0.8 && item.ripeness <= 1.35) {
-        primeNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(${item.currentGap}k)</span>`);
+        primeNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(${item.currentGap}k)</span>`);
       }
       if (item.hits15 >= 3) {
-        hotNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(${item.hits15}l)</span>`);
+        hotNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(${item.hits15}l)</span>`);
       }
       if (item.currentGap >= 12 || item.ripeness > 1.4) {
-        coldNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(gan ${item.currentGap}k)</span>`);
+        coldNums.push(`${numStr} <span style="font-size:11.5px; opacity:0.9;">(gan ${item.currentGap}k)</span>`);
       }
     });
 
@@ -773,7 +773,7 @@ export const UIController = {
           </div>
           <div style="text-align:right;">
             <span style="font-family:var(--font-mono); font-weight:700; color:var(--emerald-600); font-size:13px;">Gắn kết ${liftVal}x</span>
-            <div style="font-size:10px; color:var(--text-muted);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
+            <div style="font-size:12px; color:var(--text-secondary);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
           </div>
         </div>
       `;
@@ -804,7 +804,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-star"></i> Bạch Thủ Tiềm Năng</span>
-              <span class="meta-info-badge" style="background:rgba(217,169,59,0.15); color:#FDE047; border:none;">Điểm Rơi Vàng</span>
+              <span class="meta-info-badge" style="background:#FEF3C7; color:#78350F; border:1px solid #FCD34D; font-size:11.5px; font-weight:700;">Điểm Rơi Vàng</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${bachThu}</span>
@@ -821,7 +821,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-link"></i> Song Thủ Bạc Nhớ</span>
-              <span class="meta-info-badge" style="background:rgba(16,185,129,0.15); color:#34D399; border:none;">Cùng Nổ</span>
+              <span class="meta-info-badge" style="background:#D1FAE5; color:#065F46; border:1px solid #A7F3D0; font-size:11.5px; font-weight:700;">Cùng Nổ</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball" style="padding:0 16px;">${songThu}</span>
@@ -837,7 +837,7 @@ export const UIController = {
           <div>
             <div class="rec-header">
               <span class="rec-title"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh Báo Số Gan</span>
-              <span class="meta-info-badge" style="background:rgba(244,63,94,0.15); color:#FB7185; border:none;">Không Nuôi</span>
+              <span class="meta-info-badge" style="background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; font-size:11.5px; font-weight:700;">Không Nuôi</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${soGan}</span>
@@ -1259,17 +1259,17 @@ export const UIController = {
       <div class="kpi-summary-grid" style="margin-bottom: 20px;">
         <div class="kpi-stat-card kpi-gold">
           <div class="kpi-header-row"><span class="kpi-label">Mô Hình Dẫn Đầu Kỳ Này</span><i class="fa-solid fa-crown kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="font-size:18px; color:var(--gold-300);">${summary.bestAlgo}</div></div>
+          <div class="kpi-value-row"><div class="kpi-value" style="font-size:18px; font-weight:800; color:var(--text-primary);">${summary.bestAlgo}</div></div>
           <div class="kpi-footnote">Hiệu quả cao nhất riêng kỳ ${result.targetDate}</div>
         </div>
         <div class="kpi-stat-card kpi-emerald">
           <div class="kpi-header-row"><span class="kpi-label">Tỷ Lệ Khớp Kỳ Này</span><i class="fa-solid fa-bullseye kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="color:var(--emerald-400);">${summary.bestHitRate}%</div></div>
+          <div class="kpi-value-row"><div class="kpi-value" style="color:#065F46;">${summary.bestHitRate}%</div></div>
           <div class="kpi-footnote">Tỷ lệ số dự đoán khớp kết quả mở thưởng</div>
         </div>
         <div class="kpi-stat-card kpi-blue">
           <div class="kpi-header-row"><span class="kpi-label">Tỷ Lệ Khớp Trung Bình</span><i class="fa-solid fa-chart-simple kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="color:var(--blue-400);">${summary.averageHitRate}%</div></div>
+          <div class="kpi-value-row"><div class="kpi-value" style="color:#1D4ED8;">${summary.averageHitRate}%</div></div>
           <div class="kpi-footnote">Tính trung bình trên 8 mô hình ở kỳ này</div>
         </div>
         <div class="kpi-stat-card kpi-purple">
@@ -1380,11 +1380,11 @@ export const UIController = {
       : 0;
 
     const top1SummaryHtml = `
-      <div class="top1-summary-banner" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05)); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: var(--r-md); padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);">
+      <div class="top1-summary-banner" style="background: var(--bg-subtle); border: 1px solid var(--line-medium); border-left: 4px solid #D97706; border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #FFF; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
-              <i class="fa-solid fa-crown" style="margin-right: 4px;"></i> TOP 1 LEADERBOARD
+            <span style="background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; font-weight: 700; font-size: 12px; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.2px;">
+              <i class="fa-solid fa-crown" style="margin-right: 4px;"></i> Top 1 bảng xếp hạng
             </span>
             <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">
               ${top1.name}
@@ -1398,7 +1398,7 @@ export const UIController = {
             <span style="color: var(--text-secondary);"><i class="fa-solid fa-clock-rotate-left"></i> Kiểm định: <strong>${batchResult.drawsTestedCount} kỳ quay thực tế</strong></span>
           </div>
         </div>
-        <div style="margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; border-top: 1px dashed rgba(245, 158, 11, 0.25); padding-top: 8px;">
+        <div style="margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; border-top: 1px dashed var(--line-subtle); padding-top: 8px;">
           ✦ Xếp hạng xác định dựa trên tỷ lệ trúng trung bình (Primary Metric) kiểm định ngoài mẫu (Walk-Forward Validation) chống rò rỉ thời gian 0%. Random baseline trung bình: <strong>${baselineHitRate}%</strong>.
         </div>
       </div>
@@ -1429,7 +1429,7 @@ export const UIController = {
           <td class="tabular-numbers" style="font-family: var(--font-mono); font-weight: 700; color: ${diffColor};">${diffSign}${item.baselineDiff}%</td>
           <td class="tabular-numbers" style="font-family: var(--font-mono); color: var(--gold-600);">${item.bestHitRate}%</td>
           <td class="tabular-numbers" style="font-family: var(--font-mono); color: var(--text-primary);">${item.totalHits} (${item.totalOccurrences} nháy)</td>
-          <td class="tabular-numbers" style="font-family: var(--font-sans); font-size: 12.5px;">${item.exceedsBaseline ? '<span style="color:var(--emerald-600); font-weight:700; background:#ECFDF5; padding:2px 8px; border-radius:4px; border:1px solid #A7F3D0;">✓ Vượt chuẩn</span>' : '<span style="color:var(--text-muted); background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">Ngang chuẩn</span>'}</td>
+          <td class="tabular-numbers" style="font-family: var(--font-sans); font-size: 12.5px;">${item.exceedsBaseline ? '<span style="color:var(--emerald-600); font-weight:700; background:#ECFDF5; padding:2px 8px; border-radius:4px; border:1px solid #A7F3D0;">✓ Vượt chuẩn</span>' : '<span style="color:var(--text-secondary); background:var(--bg-surface); border:1px solid var(--line-subtle); padding:2px 8px; border-radius:4px; font-weight:600;">Ngang chuẩn</span>'}</td>
         </tr>
       `;
     }).join('');
