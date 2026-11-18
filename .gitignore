@@ -59,4 +59,7 @@ xo-so/test/screenshots/
 xo-so/test/shot.ps1
 xo-so/scripts/capture-tab-screenshots.js
 
+# User Audit Feedback
+feedback/
+
 
