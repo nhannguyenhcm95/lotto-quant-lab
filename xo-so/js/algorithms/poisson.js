@@ -10,7 +10,15 @@
  *  4. Không gọi lambda là xác suất.
  */
 
-import { validateAndSortHistory, getDrawEventSet, getDrawEventCounts, getUniverse } from './input-normalizer.js';
+import {
+  validateAndSortHistory,
+  getDrawEventSet,
+  getDrawEventCounts,
+  getUniverse,
+  compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls
+} from './input-normalizer.js';
 
 export const PoissonAlgorithm = {
   id: "poisson",
@@ -51,8 +59,9 @@ export const PoissonAlgorithm = {
       };
     }
 
-    const isVietlott = options.isVietlott !== false;
-    const universe = getUniverse({ isVietlott, totalBalls: options.totalBalls });
+    const isVietlott = resolveIsVietlott(options, sortedHistory);
+    const totalBalls = resolveTotalBalls(options, sortedHistory, isVietlott);
+    const universe = getUniverse({ ...options, isVietlott, totalBalls }, sortedHistory);
     const topN = options.topN || (isVietlott ? 6 : 5);
     const pickBalls = isVietlott ? (options.pickBalls || 6) : 18;
 
@@ -70,13 +79,13 @@ export const PoissonAlgorithm = {
       const draw = sortedHistory[i];
       if (isVietlott) {
         // Vietlott: đếm presence (mỗi kỳ tối đa 1 lần)
-        const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls: options.totalBalls });
+        const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls });
         for (const num of eventSet) {
           counts.set(num, (counts.get(num) || 0) + 1);
         }
       } else {
         // XSMN: đếm multiplicity (số lần về trên 18 giải)
-        const eventCounts = getDrawEventCounts(draw, { isVietlott, totalBalls: options.totalBalls });
+        const eventCounts = getDrawEventCounts(draw, { isVietlott, totalBalls });
         eventCounts.forEach((c, num) => {
           counts.set(num, (counts.get(num) || 0) + c);
         });
@@ -101,13 +110,15 @@ export const PoissonAlgorithm = {
           observedHits: observed,
           empiricalRate: Math.round(empiricalRate * 1000) / 1000,
           smoothedRate: Math.round(smoothedRate * 1000) / 1000,
+          rawMetric: smoothedRate,
           score
         });
       } else {
-        // XSMN: Số lần xuất hiện kỳ vọng (Expected Occurrences per Draw)
+        // XSMN: Xác suất Poisson P(X >= 1) = 1 - e^(-lambda_smooth) trên thang [0, 100]
         const lambda = observed / nDraws;
         const smoothedLambda = (observed + kappa * priorP) / (nDraws + kappa);
-        const score = Math.round(smoothedLambda * 100) / 100;
+        const probAtLeastOne = 1 - Math.exp(-smoothedLambda);
+        const score = Math.round(probAtLeastOne * 1000) / 10;
         scores[num] = score;
 
         stats.push({
@@ -115,15 +126,18 @@ export const PoissonAlgorithm = {
           totalOccurrences: observed,
           lambda: Math.round(lambda * 1000) / 1000,
           expectedOccurrences: Math.round(smoothedLambda * 1000) / 1000,
+          probAtLeastOne: Math.round(probAtLeastOne * 1000) / 1000,
+          rawMetric: probAtLeastOne,
           score
         });
       }
     }
 
-    // Sắp xếp giảm dần theo điểm số
+    // Sắp xếp giảm dần theo điểm số, phá hòa bằng chỉ số thực chưa làm tròn rồi theo thứ tự số học chuẩn canonical
     stats.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      return String(a.num).localeCompare(String(b.num));
+      if (b.rawMetric !== a.rawMetric) return b.rawMetric - a.rawMetric;
+      return compareCanonical(a.num, b.num);
     });
 
     const topCandidates = stats.slice(0, topN).map(s => s.num);

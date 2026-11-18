@@ -8,7 +8,15 @@
  *  4. Tính sai số chuẩn Monte Carlo (SE) chính xác theo công thức thống kê.
  */
 
-import { validateAndSortHistory, getDrawEventSet, getDrawEventCounts, getUniverse } from './input-normalizer.js';
+import {
+  validateAndSortHistory,
+  getDrawEventSet,
+  getDrawEventCounts,
+  getUniverse,
+  compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls
+} from './input-normalizer.js';
 
 /**
  * Thuật toán băm chuỗi deterministic 32-bit (FNV-1a kết hợp avalanche mix)
@@ -132,8 +140,9 @@ export const MonteCarloAlgorithm = {
       };
     }
 
-    const isVietlott = options.isVietlott !== false;
-    const universe = getUniverse({ isVietlott, totalBalls: options.totalBalls });
+    const isVietlott = resolveIsVietlott(options, sortedHistory);
+    const totalBalls = resolveTotalBalls(options, sortedHistory, isVietlott);
+    const universe = getUniverse({ ...options, isVietlott, totalBalls }, sortedHistory);
     const topN = options.topN || (isVietlott ? 6 : 5);
     const numDrawBalls = isVietlott ? (options.pickBalls || 6) : 18;
 
@@ -166,12 +175,12 @@ export const MonteCarloAlgorithm = {
     for (let i = 0; i < nDraws; i++) {
       const draw = sortedHistory[i];
       if (isVietlott) {
-        const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls: options.totalBalls });
+        const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls });
         for (const num of eventSet) {
           rawCounts.set(num, (rawCounts.get(num) || 0) + 1);
         }
       } else {
-        const counts = getDrawEventCounts(draw, { isVietlott, totalBalls: options.totalBalls });
+        const counts = getDrawEventCounts(draw, { isVietlott, totalBalls });
         counts.forEach((c, num) => {
           rawCounts.set(num, (rawCounts.get(num) || 0) + c);
         } );
@@ -187,9 +196,11 @@ export const MonteCarloAlgorithm = {
     // 3. Thực hiện mô phỏng Monte Carlo
     const totalOccurrencesMap = new Map();
     const simsWithAnyHitMap = new Map();
+    const sumX2Map = new Map();
     for (const num of universe) {
       totalOccurrencesMap.set(num, 0);
       simsWithAnyHitMap.set(num, 0);
+      sumX2Map.set(num, 0);
     }
 
     if (isVietlott) {
@@ -221,19 +232,20 @@ export const MonteCarloAlgorithm = {
       };
 
       for (let sim = 0; sim < SIMULATIONS; sim++) {
-        const simSet = new Set();
+        const simCounts = new Map();
         for (let prize = 0; prize < numDrawBalls; prize++) {
           const ball = sampleOne();
           totalOccurrencesMap.set(ball, totalOccurrencesMap.get(ball) + 1);
-          simSet.add(ball);
+          simCounts.set(ball, (simCounts.get(ball) || 0) + 1);
         }
-        for (const b of simSet) {
+        for (const [b, count] of simCounts.entries()) {
           simsWithAnyHitMap.set(b, simsWithAnyHitMap.get(b) + 1);
+          sumX2Map.set(b, sumX2Map.get(b) + count * count);
         }
       }
     }
 
-    // 4. Tính toán Metrics và Scores (FIX10-08)
+    // 4. Tính toán Metrics và Scores (FIX10-08 & STAT-04)
     const scores = {};
     const probAtLeastOnceMap = {};
     const expectedOccurrencesMap = {};
@@ -247,8 +259,22 @@ export const MonteCarloAlgorithm = {
 
       const pAtLeastOnce = hitsAny / SIMULATIONS;
       const expOccurrences = totalOcc / SIMULATIONS;
-      const se = Math.sqrt((pAtLeastOnce * (1 - pAtLeastOnce)) / SIMULATIONS);
-      const sd = Math.sqrt((SIMULATIONS / (SIMULATIONS - 1)) * pAtLeastOnce * (1 - pAtLeastOnce));
+
+      let se = 0;
+      let sd = 0;
+      if (SIMULATIONS > 1) {
+        if (isVietlott) {
+          sd = Math.sqrt((SIMULATIONS / (SIMULATIONS - 1)) * pAtLeastOnce * (1 - pAtLeastOnce));
+          se = sd / Math.sqrt(SIMULATIONS);
+        } else {
+          // STAT-04: Phương sai mẫu rời rạc cho biến đếm multiplicity XSMN
+          const sumX = totalOcc;
+          const sumX2 = sumX2Map.get(num) || 0;
+          const sampleVar = Math.max(0, (sumX2 - (sumX * sumX) / SIMULATIONS) / (SIMULATIONS - 1));
+          sd = Math.sqrt(sampleVar);
+          se = sd / Math.sqrt(SIMULATIONS);
+        }
+      }
 
       probAtLeastOnceMap[num] = Math.round(pAtLeastOnce * 10000) / 10000;
       expectedOccurrencesMap[num] = Math.round(expOccurrences * 10000) / 10000;
@@ -270,11 +296,12 @@ export const MonteCarloAlgorithm = {
       });
     }
 
-    // Sắp xếp giảm dần theo điểm số
+    // Sắp xếp giảm dần theo điểm số, phá hòa bằng kỳ vọng thực rồi theo chuẩn canonical
     candidateList.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
+      if (b.expOccurrences !== a.expOccurrences) return b.expOccurrences - a.expOccurrences;
       if (b.pAtLeastOnce !== a.pAtLeastOnce) return b.pAtLeastOnce - a.pAtLeastOnce;
-      return String(a.num).localeCompare(String(b.num));
+      return compareCanonical(a.num, b.num);
     });
 
     const topCandidates = candidateList.slice(0, topN).map(c => c.num);

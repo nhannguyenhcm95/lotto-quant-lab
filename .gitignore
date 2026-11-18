@@ -48,3 +48,15 @@ source-evidence/
 .DS_Store
 Thumbs.db
 
+# AI Agent Packs & Temporary QA Screenshots (Không đẩy lên GitHub / Netlify)
+.qoder/
+Agent-new/
+senior_ui_ux_designer_agent_pack/
+ui_ux_agents_team/
+user-language-vietnamese.md
+screenshot_current_viewport.png
+xo-so/test/screenshots/
+xo-so/test/shot.ps1
+xo-so/scripts/capture-tab-screenshots.js
+
+

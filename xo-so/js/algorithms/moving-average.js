@@ -13,7 +13,10 @@ import {
   validateAndSortHistory, 
   strictUtcDayOfWeek, 
   getDrawEventSet, 
-  getUniverse 
+  getUniverse,
+  compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls
 } from './input-normalizer.js';
 
 export const MovingAverageAlgorithm = {
@@ -56,10 +59,11 @@ export const MovingAverageAlgorithm = {
       };
     }
 
-    const isVietlott = options.isVietlott !== false;
-    const universe = getUniverse({ isVietlott, totalBalls: options.totalBalls });
+    const isVietlott = resolveIsVietlott(options, sortedHistory);
+    const totalBalls = resolveTotalBalls(options, sortedHistory, isVietlott);
+    const universe = getUniverse({ ...options, isVietlott, totalBalls }, sortedHistory);
     const topN = options.topN || (isVietlott ? 6 : 5);
-    const stationOrGame = options.stationOrGame || (isVietlott ? 'mega-6-45' : 'tphcm');
+    const stationOrGame = options.stationOrGame || options.stationId || (isVietlott ? (universe.length === 55 ? 'power-6-55' : 'mega-6-45') : 'tphcm');
 
     // 1. Xác định thứ trong tuần của kỳ quay MỤC TIÊU chuẩn xác
     let targetDayOfWeek = 1;
@@ -106,7 +110,7 @@ export const MovingAverageAlgorithm = {
     // 3. Duyệt chuỗi thời gian từ cũ đến mới (t = nDraws-1 lùi về 0)
     for (let t = nDraws - 1; t >= 0; t--) {
       const draw = sortedHistory[t];
-      const eventSet = new Set(getDrawEventSet(draw, { isVietlott, totalBalls: options.totalBalls }));
+      const eventSet = new Set(getDrawEventSet(draw, { isVietlott, totalBalls }));
       const drawDay = strictUtcDayOfWeek(draw.date);
 
       for (const key of universe) {
@@ -137,25 +141,30 @@ export const MovingAverageAlgorithm = {
       const smoothedDayRate = (item.dayOfWeekHits + kappa * basePrior) / (item.dayOfWeekTotal + kappa);
 
       // Điểm tổng hợp xếp hạng: 70% mức EMA + 30% tỷ lệ theo thứ
-      const finalScore = Math.round((emaRate * 70 + smoothedDayRate * 30) * 100) / 100;
+      const rawFinalScore = emaRate * 70 + smoothedDayRate * 30;
+      const finalScore = Math.round(rawFinalScore * 100) / 100;
       scores[key] = finalScore;
 
       stats.push({
         num: key,
         emaRate: Math.round(emaRate * 1000) / 1000,
         emaSlope: Math.round(item.slope * 1000) / 1000,
+        rawSlope: item.slope,
         dayHits: item.dayOfWeekHits,
         dayTotal: item.dayOfWeekTotal,
         smoothedDayRate: Math.round(smoothedDayRate * 1000) / 1000,
+        rawFinalScore,
         finalScore
       });
     }
 
-    // Sắp xếp giảm dần theo finalScore, tie-break theo emaSlope
+    // Sắp xếp giảm dần theo finalScore, tie-break theo điểm thực, độ dốc EMA và chuẩn canonical
     stats.sort((a, b) => {
       if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+      if (b.rawFinalScore !== a.rawFinalScore) return b.rawFinalScore - a.rawFinalScore;
       if (b.emaSlope !== a.emaSlope) return b.emaSlope - a.emaSlope;
-      return String(a.num).localeCompare(String(b.num));
+      if (b.rawSlope !== a.rawSlope) return b.rawSlope - a.rawSlope;
+      return compareCanonical(a.num, b.num);
     });
 
     const topCandidates = stats.slice(0, topN).map(s => s.num);

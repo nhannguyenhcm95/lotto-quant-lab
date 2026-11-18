@@ -11,6 +11,7 @@
     "test:unit": "node test/test-unit.js",
     "test:integration": "node test/test-integration.js",
     "test:e2e": "node test/test-e2e.js",
+    "test:logs": "node test/test-logs-integrity.js",
     "audit:history": "node scripts/audit-history.js --strict",
     "audit:history:strict": "node scripts/audit-history.js --strict",
     "verify:artifacts": "node scripts/verify-artifacts.js",

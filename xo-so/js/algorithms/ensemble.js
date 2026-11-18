@@ -36,21 +36,16 @@ export const EnsembleAlgorithm = {
   },
 
   predict(historyData, options = {}) {
-    const isVietlott = Boolean(options.isVietlott);
-    const universe = InputNormalizer.getUniverse(options);
-    const topN = options.topN || (isVietlott ? 6 : 5);
-
-    // Chuẩn hóa và validate input contract
+    // Chuẩn hóa và validate input contract trước khi chạy các mô hình con
     let normHistory;
     try {
       normHistory = InputNormalizer.normalizeHistory(historyData, {
-        isVietlott,
-        totalBalls: options.totalBalls,
+        ...options,
         minDraws: 1
       });
     } catch (err) {
       return {
-        status: 'insufficient-data',
+        status: 'invalid-input',
         id: this.id,
         name: this.name,
         predictions: [],
@@ -63,13 +58,21 @@ export const EnsembleAlgorithm = {
           totalAlgorithmsCombined: 0,
           consensusRatio: "0%",
           consensusLevel: "0%",
-          aggregationMethod: "Percentile-Rank Aggregation",
+          confidenceScore: "0%",
+          aggregationMethod: "Percentile-Rank Aggregation (Normalized Soft Voting)",
           topRanking: [],
           error: err.message
         },
-        explanation: 'Chưa đủ dữ liệu lịch sử hợp lệ để thực hiện dự đoán tổng hợp Ensemble.'
+        explanation: `Dữ liệu lịch sử không hợp lệ: ${err.message}`,
+        warnings: [err.message]
       };
     }
+
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, normHistory);
+    const totalBalls = InputNormalizer.resolveTotalBalls(options, normHistory, isVietlott);
+    const universe = InputNormalizer.getUniverse({ ...options, isVietlott, totalBalls }, normHistory);
+    const topN = options.topN || (isVietlott ? 6 : 5);
+    const subOptions = { ...options, isVietlott, totalBalls };
 
     if (normHistory.length === 0) {
       return {
@@ -86,7 +89,8 @@ export const EnsembleAlgorithm = {
           totalAlgorithmsCombined: 0,
           consensusRatio: "0%",
           consensusLevel: "0%",
-          aggregationMethod: "Percentile-Rank Aggregation",
+          confidenceScore: "0%",
+          aggregationMethod: "Percentile-Rank Aggregation (Normalized Soft Voting)",
           topRanking: []
         },
         explanation: 'Chưa đủ dữ liệu lịch sử để thực hiện dự đoán tổng hợp Ensemble.'
@@ -106,7 +110,7 @@ export const EnsembleAlgorithm = {
         : (item.weight !== undefined ? item.weight : 1.0);
 
       try {
-        const res = item.algo.predict(normHistory, options);
+        const res = item.algo.predict(normHistory, subOptions);
         const isValidStatus = res && res.status === 'ok';
         const hasScores = res && res.scores && typeof res.scores === 'object';
         const preds = Array.isArray(res?.predictions) ? res.predictions : [];
@@ -192,7 +196,8 @@ export const EnsembleAlgorithm = {
           totalAlgorithmsCombined: 0,
           consensusRatio: "0%",
           consensusLevel: "0%",
-          aggregationMethod: "Percentile-Rank Aggregation",
+          confidenceScore: "0%",
+          aggregationMethod: "Percentile-Rank Aggregation (Normalized Soft Voting)",
           topRanking: []
         },
         explanation: 'Không có thuật toán thành phần nào đủ điều kiện hợp lệ để tổng hợp Ensemble.'
@@ -271,20 +276,23 @@ export const EnsembleAlgorithm = {
         }
       });
 
-      const finalRankScore = totalWeight > 0 ? Math.round((weightedRankSum / totalWeight) * 10) / 10 : 0;
+      const rawRankScore = totalWeight > 0 ? (weightedRankSum / totalWeight) : 0;
+      const finalRankScore = Math.round(rawRankScore * 10) / 10;
       ensembleScores[cand] = finalRankScore;
       voteCounts[cand] = votes;
 
       candidateStats.push({
         num: cand,
         score: finalRankScore,
+        rawScore: rawRankScore,
         votes
       });
     });
 
-    // Sắp xếp nhất quán: Xếp theo Điểm xếp hạng đồng thuận, phá hòa bằng số phiếu bầu, sau đó theo mã chuẩn canonical
+    // Sắp xếp nhất quán: Xếp theo Điểm xếp hạng đồng thuận, phá hòa bằng điểm thực, số phiếu bầu, sau đó theo mã chuẩn canonical
     candidateStats.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
+      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
       if (b.votes !== a.votes) return b.votes - a.votes;
       return InputNormalizer.compareCanonical(a.num, b.num);
     });
@@ -318,7 +326,9 @@ export const EnsembleAlgorithm = {
       diagnostics: {
         excludedModels: subResults.filter(sr => sr.status !== 'ok').map(sr => sr.id),
         excludedDetails: subResults.filter(sr => sr.status !== 'ok').map(sr => ({ id: sr.id, reason: sr.reason })),
-        weightMethod: validModels.length === targetSubAlgos.length ? 'out_of_fold' : 'equal_fallback',
+        weightMethod: Object.keys(customWeights).length > 0
+          ? 'custom_weights'
+          : (validModels.length === targetSubAlgos.length ? 'static_prior_weights' : 'renormalized_subset_weights'),
         sampleSize: normHistory.length
       },
       metrics: {
@@ -328,7 +338,8 @@ export const EnsembleAlgorithm = {
         modelsParticipating: `${validModels.length}/${this.defaultSubAlgorithms.length} mô hình`,
         consensusRatio: consensusPercent + "%",
         consensusLevel: consensusPercent + "%",
-        aggregationMethod: "Percentile-Rank Aggregation",
+        confidenceScore: consensusPercent + "%",
+        aggregationMethod: "Percentile-Rank Aggregation (Normalized Soft Voting)",
         weightsUsed: Object.fromEntries(validModels.map(m => [m.id, m.weight])),
         scoreType: this.scoreType,
         topRanking: candidateStats.slice(0, 10)
@@ -371,7 +382,7 @@ export const EnsembleAlgorithm = {
       // Làm sạch ký tự không phải số và đảm bảo độ dài tối thiểu 5-6 chữ số
       const digitsOnly = sp.replace(/\D/g, '');
       if (digitsOnly.length >= 5) {
-        pastSpecials.push(digitsOnly.padStart(6, '0'));
+        pastSpecials.push(digitsOnly.slice(-6).padStart(6, '0'));
       }
     });
 
@@ -447,18 +458,24 @@ export const EnsembleAlgorithm = {
       // Trạng thái hiện tại là chữ số ở kỳ mới nhất (pastSpecials[0][pos])
       const currentDigit = parseInt(pastSpecials[0][pos], 10);
       const digitPosterior = Array(10).fill(0);
+      const totalSamples = pastSpecials.length;
+
+      // Phân phối biên thực nghiệm làm trơn Laplace đóng vai trò base measure trong Dirichlet phân cấp
+      const marginalBase = Array(10).fill(0);
+      for (let d = 0; d <= 9; d++) {
+        marginalBase[d] = (marginalCounts[d] + 1) / (totalSamples + 10);
+      }
 
       if (!isNaN(currentDigit) && currentDigit >= 0 && currentDigit <= 9 && totalTransitions > 0) {
-        // Có dữ liệu chuyển tiếp: tính P(toDigit | currentDigit) với Dirichlet prior
+        // P(toDigit | currentDigit) với Hierarchical Dirichlet prior xoay quanh phân phối biên
         const totalFromCurrent = transitions[currentDigit].reduce((sum, c) => sum + c, 0);
+        const concentration = 10 * alpha;
         for (let nextDigit = 0; nextDigit <= 9; nextDigit++) {
-          digitPosterior[nextDigit] = (transitions[currentDigit][nextDigit] + alpha) / (totalFromCurrent + 10 * alpha);
+          digitPosterior[nextDigit] = (transitions[currentDigit][nextDigit] + concentration * marginalBase[nextDigit]) / (totalFromCurrent + concentration);
         }
       } else {
-        // Không đủ cặp chuyển tiếp: dùng phân phối tần suất biên với Laplace smoothing
-        const totalSamples = pastSpecials.length;
         for (let nextDigit = 0; nextDigit <= 9; nextDigit++) {
-          digitPosterior[nextDigit] = (marginalCounts[nextDigit] + alpha) / (totalSamples + 10 * alpha);
+          digitPosterior[nextDigit] = marginalBase[nextDigit];
         }
       }
 

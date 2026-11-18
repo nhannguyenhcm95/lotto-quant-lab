@@ -8,7 +8,14 @@
  *            Tách biệt hitsInRecentWindow và totalHits.
  */
 
-import { validateAndSortHistory, getDrawEventSet, getUniverse } from './input-normalizer.js';
+import {
+  validateAndSortHistory,
+  getDrawEventSet,
+  getUniverse,
+  compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls
+} from './input-normalizer.js';
 
 export const FrequencyGapAlgorithm = {
   id: "frequency-gap",
@@ -49,9 +56,10 @@ export const FrequencyGapAlgorithm = {
       };
     }
 
-    const isVietlott = options.isVietlott !== false;
+    const isVietlott = resolveIsVietlott(options, sortedHistory);
+    const totalBalls = resolveTotalBalls(options, sortedHistory, isVietlott);
     const topN = options.topN || (isVietlott ? 6 : 5);
-    const universe = getUniverse({ isVietlott, totalBalls: options.totalBalls });
+    const universe = getUniverse({ ...options, isVietlott, totalBalls }, sortedHistory);
 
     const gapStats = {};
     for (const item of universe) {
@@ -67,7 +75,7 @@ export const FrequencyGapAlgorithm = {
     // Duyệt cửa sổ nDraws từ kỳ mới nhất (index 0) đến kỳ cũ nhất
     for (let idx = 0; idx < nDraws; idx++) {
       const draw = sortedHistory[idx];
-      const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls: options.totalBalls });
+      const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls });
 
       for (const num of eventSet) {
         if (gapStats[num]) {
@@ -89,7 +97,7 @@ export const FrequencyGapAlgorithm = {
     const recentHitsMap = new Map();
 
     for (const draw of recentDraws) {
-      const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls: options.totalBalls });
+      const eventSet = getDrawEventSet(draw, { isVietlott, totalBalls });
       for (const num of eventSet) {
         recentHitsMap.set(num, (recentHitsMap.get(num) || 0) + 1);
       }
@@ -122,7 +130,7 @@ export const FrequencyGapAlgorithm = {
         item.gapStatus = 'has-intervals';
         const sumIntervals = item.intervals.reduce((a, b) => a + b, 0);
         item.avgCycle = Math.round((sumIntervals / item.intervals.length) * 10) / 10;
-        item.maxGap = Math.max(...item.intervals, item.currentGap);
+        item.maxGap = item.intervals.reduce((m, v) => (v > m ? v : m), item.currentGap);
 
         if (item.avgCycle > 0) {
           const ratio = item.currentGap / item.avgCycle;
@@ -151,7 +159,8 @@ export const FrequencyGapAlgorithm = {
       item.gapDescriptiveScore = item.cycleScore;
 
       // Điểm tổng hợp xếp hạng: 60% chu kỳ mô tả + 40% tần suất gần đây
-      item.finalScore = Math.round((item.cycleScore * 0.6 + item.frequencyScore * 0.4) * 10) / 10;
+      item.rawFinalScore = item.cycleScore * 0.6 + item.frequencyScore * 0.4;
+      item.finalScore = Math.round(item.rawFinalScore * 10) / 10;
     }
 
     const stats = Object.values(gapStats);
@@ -160,14 +169,28 @@ export const FrequencyGapAlgorithm = {
       scores[s.num] = s.finalScore;
     }
 
-    // Sắp xếp giảm dần theo điểm số tổng hợp, tie-break theo khoảng cách vắng mặt
+    // Sắp xếp giảm dần theo điểm số tổng hợp, phá hòa bằng điểm thực, khoảng cách vắng mặt và chuẩn canonical
     stats.sort((a, b) => {
       if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+      if (b.rawFinalScore !== a.rawFinalScore) return b.rawFinalScore - a.rawFinalScore;
       if (a.currentGap !== b.currentGap) return a.currentGap - b.currentGap;
-      return String(a.num).localeCompare(String(b.num));
+      return compareCanonical(a.num, b.num);
     });
 
     const topCandidates = stats.slice(0, topN).map(s => s.num);
+    const serializedGapStats = stats.map(s => ({
+      num: s.num,
+      evidenceStatus: s.evidenceStatus,
+      gapStatus: s.gapStatus,
+      currentGap: s.currentGap,
+      avgCycle: s.avgCycle,
+      ripenessIndex: s.ripenessIndex,
+      hitsInRecentWindow: s.hitsInRecentWindow,
+      recentWindow: s.recentWindow,
+      recentRate: s.recentRate,
+      totalHits: s.totalHits,
+      hits15: s.totalHits
+    }));
 
     return {
       status: 'ok',
@@ -184,21 +207,12 @@ export const FrequencyGapAlgorithm = {
           .filter(s => s.ripenessIndex !== null)
           .slice(0, 5)
           .map(s => ({ num: s.num, gap: s.currentGap, avgCycle: s.avgCycle, ripeness: s.ripenessIndex, score: s.finalScore })),
-        maxGanDetected: stats.slice().sort((a, b) => b.currentGap - a.currentGap).slice(0, 5),
-        topDetails: stats.map(s => ({
-          num: s.num,
-          evidenceStatus: s.evidenceStatus,
-          currentGap: s.currentGap,
-          avgCycle: s.avgCycle,
-          ripenessIndex: s.ripenessIndex,
-          hitsInRecentWindow: s.hitsInRecentWindow,
-          recentWindow: s.recentWindow,
-          recentRate: s.recentRate,
-          totalHits: s.totalHits,
-          hits15: s.totalHits
-        }))
+        maxGanDetected: stats.slice().sort((a, b) => b.currentGap - a.currentGap || compareCanonical(a.num, b.num)).slice(0, 5),
+        topDetails: serializedGapStats,
+        gapStats: serializedGapStats
       },
-      explanation: `Xếp hạng heuristic theo độ lệch chu kỳ chín muồi (Ripeness Index) và tần suất quan sát trong ${recentWindow} kỳ gần nhất. Top ${topN} ứng viên: ${topCandidates.join(', ')}.`
+      explanation: `Xếp hạng mô tả lịch sử (Historical Descriptive Ranking) dựa trên khoảng cách vắng mặt và tần suất quan sát trong ${recentWindow} kỳ gần nhất. Lưu ý: Do tính độc lập giữa các kỳ quay (Draw Independence), chu kỳ lịch sử không làm thay đổi xác suất lý thuyết của kỳ tiếp theo (bác bỏ Gambler's Fallacy). Top ${topN} ứng viên: ${topCandidates.join(', ')}.`,
+      disclaimer: "Chỉ số mô tả mẫu quá khứ; không bảo đảm hoặc thay đổi xác suất xuất hiện kỳ tiếp theo."
     };
   }
 };

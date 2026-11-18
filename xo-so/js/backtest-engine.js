@@ -25,14 +25,18 @@ export const RandomBaselineAlgorithm = {
   scoreType: "ranking-score",
 
   predict(historyData, options = {}) {
-    const isVietlott = Boolean(options.isVietlott);
-    const universe = InputNormalizer.getUniverse(options);
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, historyData);
+    const totalBalls = InputNormalizer.resolveTotalBalls(options, historyData, isVietlott);
+    const universe = InputNormalizer.getUniverse({ ...options, isVietlott, totalBalls }, historyData);
     const topN = options.topN || (isVietlott ? 6 : 5);
     const replicates = options.baselineReplicates || 100; // Tối thiểu 100 replicates theo BT-01
 
     // Seed giả lập xác định từ targetDrawDate, game và station để tái lập kết quả
     let baseSeed = 123456789;
-    const seedStr = `${options.targetDrawDate || 'baseline'}_${isVietlott ? 'vietlott' : (options.stationId || 'xsmn')}`;
+    const scopeKey = isVietlott
+      ? (options.stationOrGame || `vietlott-${universe.size}`)
+      : (options.stationId || options.stationOrGame || 'xsmn');
+    const seedStr = `${options.targetDrawDate || 'baseline'}_${scopeKey}`;
     for (let i = 0; i < seedStr.length; i++) {
       baseSeed = ((baseSeed << 5) - baseSeed + seedStr.charCodeAt(i)) | 0;
     }
@@ -108,7 +112,7 @@ export const BacktestEngine = {
   buildTrainingSet(fullHistory, targetDate, options = {}) {
     if (!Array.isArray(fullHistory) || typeof targetDate !== 'string') return [];
 
-    const isVietlott = Boolean(options.isVietlott);
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, fullHistory);
     const stationId = options.stationId || options.stationOrGame;
 
     // 1. Phân lập đài nghiêm ngặt (Station Scope Isolation - BT-03)
@@ -139,9 +143,9 @@ export const BacktestEngine = {
    * Chạy dò kết quả cho một ngày cụ thể (Single Date Backtest - BT-04 & BT-05)
    */
   runSingleDateBacktest(fullHistory, targetDate, options = {}) {
-    const isVietlott = Boolean(options.isVietlott);
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, fullHistory);
     const stationId = options.stationId || options.stationOrGame || (isVietlott ? 'vietlott' : 'tphcm');
-    const totalBalls = options.totalBalls || (isVietlott ? 45 : 100);
+    const totalBalls = InputNormalizer.resolveTotalBalls(options, fullHistory, isVietlott);
 
     // 1. Tìm kết quả thực tế của ngày targetDate khớp đài
     let actualDraw = null;
@@ -185,15 +189,25 @@ export const BacktestEngine = {
         } catch (e) {}
       });
     } else {
-      const rawPairs = Array.isArray(actualDraw.lottoPairs) ? actualDraw.lottoPairs : [];
-      rawPairs.forEach(p => {
-        try {
-          const norm = InputNormalizer.normalizeLottoPair(p);
-          actualWinningNumbers.push(norm);
+      try {
+        const derivedCounts = InputNormalizer.getDrawEventCounts(actualDraw, { isVietlott: false, totalBalls: 100 });
+        derivedCounts.forEach((cnt, norm) => {
           actualWinningSet.add(norm);
-          actualWinningCounts.set(norm, (actualWinningCounts.get(norm) || 0) + 1);
-        } catch (e) {}
-      });
+          actualWinningCounts.set(norm, cnt);
+        });
+      } catch (e) {}
+      const rawPairs = Array.isArray(actualDraw.lottoPairs) ? actualDraw.lottoPairs : [];
+      if (rawPairs.length > 0) {
+        rawPairs.forEach(p => {
+          try {
+            actualWinningNumbers.push(InputNormalizer.normalizeLottoPair(p));
+          } catch (e) {}
+        });
+      } else {
+        actualWinningCounts.forEach((cnt, norm) => {
+          for (let k = 0; k < cnt; k++) actualWinningNumbers.push(norm);
+        });
+      }
       specialPrize = actualDraw.specialPrize || (actualDraw.prizes && actualDraw.prizes.special ? actualDraw.prizes.special[0] : null);
     }
 
@@ -356,6 +370,18 @@ export const BacktestEngine = {
 
     const validResults = algoResults.filter(r => r.status === 'ok');
 
+    const stationScopedHistory = (!isVietlott && stationId && stationId !== 'all')
+      ? fullHistory.filter(d => d && d.stationId === stationId)
+      : fullHistory;
+    const otherStationExcluded = fullHistory.length - stationScopedHistory.length;
+    const targetAndFutureExcluded = stationScopedHistory.filter(d => !d || typeof d.date !== 'string' || d.date >= targetDate).length;
+    const windowTrimmedExcluded = Math.max(0, (stationScopedHistory.length - targetAndFutureExcluded) - trainingData.length);
+    const excludedCountByReason = {
+      'target-date-excluded': targetAndFutureExcluded
+    };
+    if (otherStationExcluded > 0) excludedCountByReason['other-station-excluded'] = otherStationExcluded;
+    if (windowTrimmedExcluded > 0) excludedCountByReason['rolling-window-trimmed'] = windowTrimmedExcluded;
+
     return {
       success: true,
       targetDate,
@@ -367,9 +393,7 @@ export const BacktestEngine = {
       trainingDataCount: trainingData.length,
       verifiedTrainingCount: trainingData.length,
       historyAvailableCount: fullHistory.length,
-      excludedCountByReason: {
-        'target-date-excluded': fullHistory.length - trainingData.length
-      },
+      excludedCountByReason,
       windowPolicy: options.windowSize ? `Rolling Window ${options.windowSize} kỳ` : 'expanding-window',
       trainingDateRange: {
         from: trainingData[trainingData.length - 1]?.date || 'N/A',
@@ -394,8 +418,10 @@ export const BacktestEngine = {
    * Chạy kiểm định hàng loạt (Walk-Forward Batch Backtesting - BT-05)
    */
   runBatchBacktest(fullHistory, options = {}, numDraws = 20) {
-    const isVietlott = Boolean(options.isVietlott);
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, fullHistory);
     const stationId = options.stationId || options.stationOrGame || (isVietlott ? 'vietlott' : 'tphcm');
+    const totalBalls = InputNormalizer.resolveTotalBalls(options, fullHistory, isVietlott);
+    const resolvedOptions = { ...options, isVietlott, totalBalls };
 
     // Lọc theo station trước khi chọn các target draws
     let filteredHistory = fullHistory;
@@ -403,7 +429,7 @@ export const BacktestEngine = {
       filteredHistory = fullHistory.filter(d => d && d.stationId === stationId);
     }
 
-    const sortedHistory = InputNormalizer.validateAndSortHistory(filteredHistory, options);
+    const sortedHistory = InputNormalizer.validateAndSortHistory(filteredHistory, resolvedOptions);
     const testDraws = sortedHistory.slice(0, numDraws);
 
     const statsByAlgo = {};
@@ -418,6 +444,8 @@ export const BacktestEngine = {
         totalHits: 0,
         totalOccurrences: 0,
         foldHitRates: [],
+        matchedBaselineSum: 0,
+        matchedBaselineCount: 0,
         bestHitRate: 0,
         specialMatches: 0
       };
@@ -429,9 +457,13 @@ export const BacktestEngine = {
 
     // Walk-Forward Loop: Mỗi fold chỉ train trên dữ liệu strictly trước ngày của draw
     testDraws.forEach(draw => {
-      const singleRes = this.runSingleDateBacktest(fullHistory, draw.date, { ...options, stationId });
+      const singleRes = this.runSingleDateBacktest(fullHistory, draw.date, { ...resolvedOptions, stationId });
       if (singleRes.success && singleRes.algoResults) {
         successfulFolds++;
+        const foldBaselineRate = (singleRes.baseline && typeof singleRes.baseline.hitRate === 'number')
+          ? singleRes.baseline.hitRate
+          : null;
+
         singleRes.algoResults.forEach(item => {
           const s = statsByAlgo[item.algoId];
           if (s) {
@@ -442,6 +474,10 @@ export const BacktestEngine = {
               s.totalHits += item.hitCount;
               s.totalOccurrences += item.totalOccurrences;
               s.foldHitRates.push(item.hitRate);
+              if (foldBaselineRate !== null) {
+                s.matchedBaselineSum += foldBaselineRate;
+                s.matchedBaselineCount++;
+              }
               if (item.hitRate > s.bestHitRate) s.bestHitRate = item.hitRate;
               if (item.hitDetails && item.hitDetails.some(h => h.isSpecial)) s.specialMatches++;
             } else {
@@ -450,8 +486,8 @@ export const BacktestEngine = {
           }
         });
 
-        if (singleRes.baseline && singleRes.baseline.hitRate !== undefined) {
-          baselineTotalRates += singleRes.baseline.hitRate;
+        if (foldBaselineRate !== null) {
+          baselineTotalRates += foldBaselineRate;
           baselineFoldCount++;
         }
       }
@@ -489,7 +525,14 @@ export const BacktestEngine = {
         ? Math.round((s.totalOccurrences / s.foldsSucceeded) * 100) / 100
         : 0;
 
-      const differenceVsBaseline = Math.round((meanFoldHitRate - baselineAvgHitRate) * 10) / 10;
+      const hasValidFolds = s.foldsSucceeded > 0;
+      const pairedBaselineRate = s.matchedBaselineCount > 0
+        ? Math.round((s.matchedBaselineSum / s.matchedBaselineCount) * 10) / 10
+        : baselineAvgHitRate;
+
+      const differenceVsBaseline = hasValidFolds
+        ? Math.round((meanFoldHitRate - pairedBaselineRate) * 10) / 10
+        : 0;
 
       return {
         id: s.id,
@@ -497,6 +540,7 @@ export const BacktestEngine = {
         foldsAttempted: s.foldsAttempted,
         foldsSucceeded: s.foldsSucceeded,
         foldsFailed: s.foldsFailed,
+        hasValidFolds,
         meanFoldHitRate,
         microHitRate,
         meanOccurrencesPerDraw,
@@ -504,16 +548,19 @@ export const BacktestEngine = {
         totalHits: s.totalHits,
         totalOccurrences: s.totalOccurrences,
         specialMatches: s.specialMatches,
-        baselineMean: baselineAvgHitRate,
+        baselineMean: pairedBaselineRate,
         differenceVsBaseline,
-        exceedsBaseline: meanFoldHitRate > baselineAvgHitRate,
+        exceedsBaseline: hasValidFolds && meanFoldHitRate > pairedBaselineRate,
         avgHitRate: meanFoldHitRate,
         baselineDiff: differenceVsBaseline
       };
     });
 
-    // Sắp xếp nhất quán: meanFoldHitRate -> differenceVsBaseline -> totalHits -> id
+    // Sắp xếp nhất quán: Mô hình có fold hợp lệ đứng trước -> meanFoldHitRate -> differenceVsBaseline -> totalHits -> id
     leaderboard.sort((a, b) => {
+      if ((a.foldsSucceeded > 0) !== (b.foldsSucceeded > 0)) {
+        return b.foldsSucceeded > 0 ? 1 : -1;
+      }
       return b.meanFoldHitRate - a.meanFoldHitRate ||
              b.differenceVsBaseline - a.differenceVsBaseline ||
              b.totalHits - a.totalHits ||

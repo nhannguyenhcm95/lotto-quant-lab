@@ -21,30 +21,31 @@ export const KMeansAlgorithm = {
   scoreType: "ranking-score",
 
   predict(historyData, options = {}) {
-    const isVietlott = Boolean(options.isVietlott);
-    const universe = InputNormalizer.getUniverse(options);
-    const topN = options.topN || (isVietlott ? 6 : 5);
-    const nDrawsRequested = options.nDraws || 30;
-
     let normHistory;
     try {
       normHistory = InputNormalizer.normalizeHistory(historyData, {
-        isVietlott,
-        totalBalls: options.totalBalls,
+        ...options,
         minDraws: 1
       });
     } catch (err) {
       return {
-        status: 'insufficient-data',
+        status: 'invalid-input',
         id: this.id,
         name: this.name,
         predictions: [],
         scores: {},
         scoreType: this.scoreType,
         metrics: { nDrawsEvaluated: 0, error: err.message },
-        explanation: 'Chưa đủ dữ liệu lịch sử hợp lệ để phân cụm K-Means.'
+        explanation: `Dữ liệu lịch sử không hợp lệ: ${err.message}`,
+        warnings: [err.message]
       };
     }
+
+    const isVietlott = InputNormalizer.resolveIsVietlott(options, normHistory);
+    const totalBalls = InputNormalizer.resolveTotalBalls(options, normHistory, isVietlott);
+    const universe = InputNormalizer.getUniverse({ ...options, isVietlott, totalBalls }, normHistory);
+    const topN = options.topN || (isVietlott ? 6 : 5);
+    const nDrawsRequested = options.analysisWindow || options.nDraws || 30;
 
     const recentDraws = normHistory.slice(0, Math.min(normHistory.length, nDrawsRequested));
     const nDraws = recentDraws.length;
@@ -66,13 +67,24 @@ export const KMeansAlgorithm = {
     const maxNum = universe.max;
     const universeSize = universe.size;
     const theoreticalMean = (minNum + maxNum) / 2;
-    const theoreticalEvenRatio = 0.5;
+    const evenUniverseCount = universe.members.filter(m => Number(m) % 2 === 0).length;
+    const theoreticalEvenRatio = universeSize > 0
+      ? Math.round((evenUniverseCount / universeSize) * 1000) / 1000
+      : 0.5;
+    const highThreshold = Math.ceil(theoreticalMean);
+    const theoreticalHighRatio = universeSize > 0
+      ? Math.round(((maxNum - highThreshold + 1) / universeSize) * 1000) / 1000
+      : 0.5;
 
-    // 1. Thống kê tần suất và khoảng cách hiện tại cho từng candidate
+    // 1. Thống kê tần suất toàn cửa sổ, xung lượng ngắn hạn và khoảng cách hiện tại (bất biến nhãn số - Label Exchangeability)
     const freq = new Map();
+    const shortFreq = new Map();
     const lastSeen = new Map();
+    const shortWindow = Math.max(1, Math.ceil(nDraws / 3));
+
     universe.members.forEach(m => {
       freq.set(m, 0);
+      shortFreq.set(m, 0);
       lastSeen.set(m, -1);
     });
 
@@ -90,10 +102,13 @@ export const KMeansAlgorithm = {
         totalBallCount += count;
         totalSum += val * count;
         if (val % 2 === 0) totalEvenCount += count; else totalOddCount += count;
-        if (val >= theoreticalMean) totalHighCount += count; else totalLowCount += count;
+        if (val >= highThreshold) totalHighCount += count; else totalLowCount += count;
 
         if (freq.has(ball)) {
           freq.set(ball, freq.get(ball) + count);
+          if (idx < shortWindow) {
+            shortFreq.set(ball, shortFreq.get(ball) + count);
+          }
           if (lastSeen.get(ball) === -1) {
             lastSeen.set(ball, idx);
           }
@@ -105,20 +120,31 @@ export const KMeansAlgorithm = {
     const observedHighRatio = totalBallCount > 0 ? totalHighCount / totalBallCount : 0.5;
     const observedMean = totalBallCount > 0 ? totalSum / totalBallCount : theoreticalMean;
 
-    // 2. Xây dựng feature vectors chuẩn hóa [0, 1] cho K-Means
+    // 2. Xây dựng feature vectors thực nghiệm chuẩn hóa nghiêm ngặt trong [0, 1] và bất biến hoán vị nhãn
+    let minFreq = Infinity, maxFreq = -Infinity;
+    let minShort = Infinity, maxShort = -Infinity;
+    universe.members.forEach(cand => {
+      const c = freq.get(cand) || 0;
+      const sc = shortFreq.get(cand) || 0;
+      if (c < minFreq) minFreq = c;
+      if (c > maxFreq) maxFreq = c;
+      if (sc < minShort) minShort = sc;
+      if (sc > maxShort) maxShort = sc;
+    });
+
     const featureVectors = [];
     universe.members.forEach(cand => {
       const count = freq.get(cand) || 0;
+      const sCount = shortFreq.get(cand) || 0;
       const seenIdx = lastSeen.get(cand);
       const currentGap = seenIdx === -1 ? nDraws : seenIdx;
-      const numVal = Number(cand);
 
-      // Feature 1: normalized frequency [0, 1]
-      const f1 = (count + 1) / (nDraws * (isVietlott ? 6 : 18) / universeSize + 1);
-      // Feature 2: normalized recency (1 = vừa ra, 0 = gan lâu)
+      // Feature 1: Tần suất chuẩn hóa toàn cửa sổ [0, 1]
+      const f1 = maxFreq > minFreq ? (count - minFreq) / (maxFreq - minFreq) : (maxFreq > 0 ? 0.5 : 0);
+      // Feature 2: Độ tươi mới chuẩn hóa [0, 1] (1 = vừa ra, 0 = chưa về trong cửa sổ)
       const f2 = Math.max(0, 1 - (currentGap / nDraws));
-      // Feature 3: normalized numeric value [0, 1]
-      const f3 = (numVal - minNum) / (maxNum - minNum || 1);
+      // Feature 3: Xung lượng ngắn hạn chuẩn hóa [0, 1]
+      const f3 = maxShort > minShort ? (sCount - minShort) / (maxShort - minShort) : (maxShort > 0 ? 0.5 : 0);
 
       featureVectors.push({
         num: cand,
@@ -128,12 +154,12 @@ export const KMeansAlgorithm = {
       });
     });
 
-    // 3. Khởi tạo K=3 centroids xác định
+    // 3. Khởi tạo K=3 centroids xác định trong không gian hành vi [0, 1]^3
     const K = 3;
-    const centroids = [
-      [0.2, 0.2, 0.2], // Cụm 0: Cold / Ít về
-      [0.5, 0.5, 0.5], // Cụm 1: Trung bình
-      [0.8, 0.8, 0.8]  // Cụm 2: Active / Điểm rơi
+    let centroids = [
+      [0.2, 0.2, 0.2], // Khởi tạo Cụm 0: Cold / Ít về
+      [0.5, 0.5, 0.5], // Khởi tạo Cụm 1: Moderate / Trung bình
+      [0.8, 0.8, 0.8]  // Khởi tạo Cụm 2: Active / Điểm rơi
     ];
 
     const dist = (v1, v2) => {
@@ -146,7 +172,7 @@ export const KMeansAlgorithm = {
 
     let iterations = 0;
     const maxIterations = 20;
-    const clusterAssignments = new Array(featureVectors.length).fill(0);
+    let clusterAssignments = new Array(featureVectors.length).fill(0);
 
     while (iterations < maxIterations) {
       iterations++;
@@ -170,13 +196,40 @@ export const KMeansAlgorithm = {
         }
       }
 
+      // Xử lý cụm rỗng an toàn: chỉ rút phần tử xa tâm cụm nhất từ cụm đang có > 1 phần tử
+      const memberCounts = new Array(K).fill(0);
+      for (let i = 0; i < clusterAssignments.length; i++) {
+        memberCounts[clusterAssignments[i]]++;
+      }
+      for (let k = 0; k < K; k++) {
+        if (memberCounts[k] === 0 && featureVectors.length >= K) {
+          let farthestIdx = -1;
+          let farthestDist = -1;
+          for (let i = 0; i < featureVectors.length; i++) {
+            const curK = clusterAssignments[i];
+            if (memberCounts[curK] <= 1) continue;
+            const d = dist(featureVectors[i].vector, centroids[curK]);
+            if (d > farthestDist) {
+              farthestDist = d;
+              farthestIdx = i;
+            }
+          }
+          if (farthestIdx !== -1 && farthestDist > 1e-6) {
+            const donorK = clusterAssignments[farthestIdx];
+            memberCounts[donorK]--;
+            memberCounts[k]++;
+            clusterAssignments[farthestIdx] = k;
+            changed = true;
+          }
+        }
+      }
+
       // Update centroids
       let maxCentroidShift = 0;
       for (let k = 0; k < K; k++) {
         const members = featureVectors.filter((_, idx) => clusterAssignments[idx] === k);
-        if (members.length === 0) {
-          continue;
-        }
+        if (members.length === 0) continue;
+
         const newC = [0, 0, 0];
         members.forEach(m => {
           for (let d = 0; d < 3; d++) newC[d] += m.vector[d];
@@ -188,10 +241,25 @@ export const KMeansAlgorithm = {
         centroids[k] = newC;
       }
 
-      if (maxCentroidShift < 1e-4) break;
+      if (!changed || maxCentroidShift < 1e-4) break;
     }
 
-    // 4. Tính điểm xếp hạng (Ranking Score) dựa trên độ gắn kết và tần suất
+    // Sắp xếp lại nhãn cụm theo mức hoạt động của tâm cụm tăng dần: 0 = Cold, 1 = Moderate, 2 = Active
+    // Khắc phục triệt để hiện tượng đảo nhãn tâm cụm (Label Switching) giữa các tập dữ liệu
+    const clusterOrder = [0, 1, 2].sort((ka, kb) => {
+      const actA = (centroids[ka][0] + centroids[ka][1] + centroids[ka][2]) / 3;
+      const actB = (centroids[kb][0] + centroids[kb][1] + centroids[kb][2]) / 3;
+      return actA - actB;
+    });
+    const oldToRankedCluster = new Map();
+    clusterOrder.forEach((oldK, rankedK) => {
+      oldToRankedCluster.set(oldK, rankedK);
+    });
+
+    centroids = clusterOrder.map(oldK => centroids[oldK]);
+    clusterAssignments = clusterAssignments.map(oldK => oldToRankedCluster.get(oldK));
+
+    // 4. Tính điểm xếp hạng (Ranking Score) dựa trên bậc cụm, mức hoạt động và độ gắn kết tâm cụm
     const clusterWeights = [0.3, 0.7, 1.0];
     const candidateScores = [];
 
@@ -200,7 +268,8 @@ export const KMeansAlgorithm = {
       const k = clusterAssignments[i];
       const d = dist(item.vector, centroids[k]);
       const proximity = 1 / (1 + d);
-      const rawScore = clusterWeights[k] * 60 + proximity * 40;
+      const activityScore = item.vector[0] * 0.45 + item.vector[1] * 0.30 + item.vector[2] * 0.25;
+      const rawScore = clusterWeights[k] * 50 + activityScore * 30 + proximity * 20;
 
       candidateScores.push({
         num: item.num,
@@ -210,18 +279,32 @@ export const KMeansAlgorithm = {
       });
     }
 
-    // Percentile-Rank normalization [0, 100]
-    candidateScores.sort((a, b) => {
-      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
-      return InputNormalizer.compareCanonical(a.num, b.num);
-    });
-
+    // Mid-rank Percentile-Rank normalization [0, 100] (bảo toàn đồng điểm khi bằng nhau)
+    const ascScores = candidateScores.slice().sort((a, b) => a.rawScore - b.rawScore);
     const N = candidateScores.length;
     const scores = {};
-    candidateScores.forEach((item, idx) => {
-      const rankScore = N > 1 ? Math.round(((N - 1 - idx) / (N - 1)) * 1000) / 10 : 100;
+
+    candidateScores.forEach(item => {
+      let lessCount = 0;
+      let equalCount = 0;
+      for (let j = 0; j < N; j++) {
+        if (Math.abs(ascScores[j].rawScore - item.rawScore) <= 1e-12) {
+          equalCount++;
+        } else if (ascScores[j].rawScore < item.rawScore) {
+          lessCount++;
+        }
+      }
+      const rankScore = N > 1
+        ? Math.round((((lessCount + 0.5 * Math.max(0, equalCount - 1)) / (N - 1)) * 100) * 10) / 10
+        : 50;
       scores[item.num] = rankScore;
       item.score = rankScore;
+    });
+
+    candidateScores.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
+      return InputNormalizer.compareCanonical(a.num, b.num);
     });
 
     const predictions = candidateScores.slice(0, topN).map(x => x.num);
@@ -247,7 +330,8 @@ export const KMeansAlgorithm = {
         evenRatio: observedEvenRatio,
         theoreticalEvenRatio,
         observedHighRatio: Math.round(observedHighRatio * 1000) / 1000,
-        theoreticalHighRatio: 0.5,
+        highRatio: observedHighRatio,
+        theoreticalHighRatio,
         observedMean: Math.round(observedMean * 10) / 10,
         avgBallVal: observedMean,
         theoreticalMean: Math.round(theoreticalMean * 10) / 10

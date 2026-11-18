@@ -1,15 +1,18 @@
 /**
- * LOTTO-QUANT LAB: UI CONTROLLER
- * Quản lý kết xuất DOM, hiển thị bảng kết quả, bóng số, thẻ thuật toán,
- * biểu đồ Chart.js & Chartist.js SVG, và Dashboard Phân Tích Chuyên Sâu.
+ * LOTTO-QUANT LAB: UI CONTROLLER (v8.0 — Warm Editorial Almanac & Tactile Craft)
+ * Quản lý kết xuất DOM, bóng số gốm sứ, thẻ vé dự đoán, bảng 18 giải,
+ * bảng Đầu - Đuôi, biểu đồ Chartist SVG & Chart.js thích ứng Sáng/Tối.
  */
 
-import { BarChart, LineChart } from './chartist.min.js';
+import { BarChart } from './chartist.min.js';
+import { LOTTO_CONFIG } from './config.js';
 
 export const UIController = {
   probChartInstance: null,
   probChartistInstance: null,
   activeProbEngine: 'chartist',
+  lastProbScores: null,
+  lastProbIsVietlott: false,
   leaderboardChartInstance: null,
   freqChartInstance: null,
   trendChartInstance: null,
@@ -17,8 +20,86 @@ export const UIController = {
   highlowChartInstance: null,
   headtailChartInstance: null,
 
+  isDarkTheme() {
+    if (typeof document !== 'undefined' && document.documentElement && typeof document.documentElement.getAttribute === 'function') {
+      return document.documentElement.getAttribute('data-theme') === 'dark';
+    }
+    return false;
+  },
+
+  destroyCanvasChart(canvas) {
+    if (!canvas || typeof window === 'undefined' || !window.Chart) return;
+    if (typeof window.Chart.getChart === 'function') {
+      const existing = window.Chart.getChart(canvas);
+      if (existing) {
+        try { existing.destroy(); } catch (e) {}
+      }
+    }
+  },
+
+  getChartTheme() {
+    const dark = this.isDarkTheme();
+    return {
+      dark,
+      amber: dark ? '#F59E0B' : '#D97706',
+      amberSoft: dark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(217, 119, 6, 0.16)',
+      jade: dark ? '#2DD4BF' : '#0B6B63',
+      jadeSoft: dark ? 'rgba(45, 212, 191, 0.24)' : 'rgba(11, 107, 99, 0.20)',
+      indigo: dark ? '#60A5FA' : '#1E3A5F',
+      indigoSoft: dark ? 'rgba(96, 165, 250, 0.14)' : 'rgba(30, 58, 95, 0.10)',
+      neutralSlice: dark ? '#2D3A4B' : '#E5DFD2',
+      cardBg: dark ? '#18202B' : '#FFFDF9',
+      grid: dark ? 'rgba(245, 242, 235, 0.08)' : 'rgba(28, 25, 23, 0.08)',
+      tick: dark ? '#ADA79C' : '#59534A',
+      legend: dark ? '#CFC9BE' : '#4E4943'
+    };
+  },
+
+  formatStationOrGame(idOrSlug) {
+    if (!idOrSlug) return 'Đài mở thưởng';
+    const clean = String(idOrSlug).trim();
+    if (LOTTO_CONFIG && LOTTO_CONFIG.VIETLOTT_GAMES && LOTTO_CONFIG.VIETLOTT_GAMES[clean]) {
+      return `Vietlott ${LOTTO_CONFIG.VIETLOTT_GAMES[clean].name}`;
+    }
+    if (LOTTO_CONFIG && Array.isArray(LOTTO_CONFIG.ALL_STATIONS)) {
+      const st = LOTTO_CONFIG.ALL_STATIONS.find(s => s.id === clean);
+      if (st) return `Đài ${st.name}`;
+    }
+    return clean;
+  },
+
+  getScheduleDescription(idOrSlug, isVietlott) {
+    const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    if (isVietlott && LOTTO_CONFIG && LOTTO_CONFIG.VIETLOTT_GAMES && LOTTO_CONFIG.VIETLOTT_GAMES[idOrSlug]) {
+      const days = LOTTO_CONFIG.VIETLOTT_GAMES[idOrSlug].drawDays || [];
+      return days.map(d => dayNames[d]).join(', ');
+    }
+    if (!isVietlott && LOTTO_CONFIG && LOTTO_CONFIG.XSMN_SCHEDULE) {
+      const days = [];
+      Object.keys(LOTTO_CONFIG.XSMN_SCHEDULE).forEach(dayKey => {
+        const list = LOTTO_CONFIG.XSMN_SCHEDULE[dayKey] || [];
+        if (list.some(s => s.id === idOrSlug)) {
+          days.push(dayNames[Number(dayKey)]);
+        }
+      });
+      if (days.length > 0) return days.join(', ');
+    }
+    return '';
+  },
+
+  getWatermarkSvg() {
+    return `
+      <svg class="hero-watermark-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <circle cx="100" cy="100" r="68" stroke="currentColor" stroke-width="1"/>
+        <circle cx="100" cy="100" r="46" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 3"/>
+        <path d="M100 6V194M6 100H194M33 33L167 167M167 33L33 167" stroke="currentColor" stroke-width="0.8"/>
+      </svg>
+    `;
+  },
+
   /**
-   * 1. Kết xuất Bảng Kết Quả Mới Nhất (Institutional Table Format)
+   * 1. Kết xuất Tấm Vé Dự Đoán Trọng Tâm & Bảng Kết Quả Kỳ Trước
    */
   renderLiveResult(draw, isVietlott, containerId = 'live-result-container', quickPrediction = null, targetInfo = null) {
     const container = document.getElementById(containerId);
@@ -26,41 +107,54 @@ export const UIController = {
 
     if (!draw) {
       container.innerHTML = `
-        <div class="quant-card" style="text-align: center; padding: 40px;">
-          <p style="color: var(--text-secondary);">Chưa có dữ liệu kết quả cho đài/loại hình này.</p>
+        <div class="quant-card" style="text-align: center; padding: 36px 24px;">
+          <p style="color: var(--text-secondary);">Chưa có dữ liệu kết quả cho đài hoặc loại hình này.</p>
         </div>`;
       return;
     }
 
-    // 1. Thẻ Hero Dự Đoán Kỳ Kế Tiếp (Nổi bật ngay đầu Tab Kết Quả)
     let heroPredictionHtml = '';
     if (quickPrediction) {
+      const consensusText = quickPrediction.metrics && quickPrediction.metrics.consensusRatio
+        ? `Độ đồng thuận mô hình: <strong>${quickPrediction.metrics.consensusRatio}</strong>`
+        : 'Tổng hợp từ 7 mô hình xác suất độc lập';
+
       if (isVietlott) {
-        const vBalls = (quickPrediction.predictions || []).map(b => 
+        const vBalls = (quickPrediction.predictions || []).map(b =>
           `<div class="ensemble-ball-lg">${String(b).padStart(2, '0')}</div>`
         ).join('');
         heroPredictionHtml = `
           <div class="hero-prediction-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <span style="background: var(--accent); color: #FFF; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: var(--r-xs); text-transform: uppercase; letter-spacing: 0.3px;">
-                <i class="fa-solid fa-bullseye"></i> GỢI Ý MÔ HÌNH KỲ TỚI
-              </span>
-              <span style="font-size: 12.5px; color: var(--text-primary); font-weight: 700;">
-                ${targetInfo ? `${targetInfo.gameOrStationName} • ${targetInfo.nextDayName}, ${targetInfo.nextDate}` : 'Kỳ Quay Tới'}
-              </span>
-            </div>
-            <div style="text-align: center; margin: 10px 0 6px 0;">
-              <div style="font-size: 11.5px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.3px;">
-                BỘ 6 SỐ TỐI ƯU XÁC SUẤT VIETLOTT (MÔ HÌNH HỘI TỤ):
+            ${this.getWatermarkSvg()}
+            <div class="hero-card-header">
+              <div class="hero-card-sub-top">
+                <span class="hero-crown-badge">
+                  <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Vé Gợi Ý Kỳ Tiếp Theo
+                </span>
+                <span class="live-status-pill hero-live-pill">
+                  <span class="pulse-dot"></span> Chưa mở thưởng
+                </span>
               </div>
-              <div class="hero-pred-balls-row" style="justify-content: center; gap: 8px;">
+              <div class="hero-target-station">
+                <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                <span>${targetInfo ? `${targetInfo.gameOrStationName} • ${targetInfo.nextDayName}, ${targetInfo.nextDate}` : 'Kỳ Quay Tới'}</span>
+              </div>
+            </div>
+
+            <div class="hero-special-stage vietlott-stage">
+              <div class="stage-caption">
+                <i class="fa-solid fa-clover" aria-hidden="true"></i>
+                <span>Bộ 6 số hội tụ Vietlott có điểm xếp hạng cao nhất</span>
+              </div>
+              <div class="hero-pred-balls-row" style="justify-content: center; margin: 10px 0 4px;">
                 ${vBalls}
               </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line-subtle); padding-top: 10px;">
-              <span style="font-size: 12px; color: var(--text-secondary);">Phân tích hội tụ từ 7 mô hình toán học & xác suất định lượng</span>
-              <button class="btn-primary" onclick="document.getElementById('panel-predict')?.scrollIntoView({behavior:'smooth'})" style="font-size: 11.5px; padding: 5px 12px;">
-                <i class="fa-solid fa-brain"></i> Xem 8 Thuật Toán ➔
+
+            <div class="hero-card-footer">
+              <span>${consensusText} &bull; Huấn luyện từ dữ liệu thực tế đến kỳ ${targetInfo ? targetInfo.latestDate : draw.date}</span>
+              <button type="button" class="btn-predict-explore" onclick="document.getElementById('predictions-container')?.scrollIntoView({behavior:'smooth'})">
+                <i class="fa-solid fa-layer-group" aria-hidden="true"></i> Xem chi tiết 8 mô hình ➔
               </button>
             </div>
           </div>
@@ -69,64 +163,78 @@ export const UIController = {
         const sp = quickPrediction.specialPrize;
         const preds = quickPrediction.predictions || [];
         const shortLabels = ['Đầu', 'Vạn', 'Ngàn', 'Trăm', 'Chục', 'Đuôi'];
-        const balls6 = sp ? sp.positions.map((p, idx) => `
+        const balls6 = sp && Array.isArray(sp.positions) ? sp.positions.map((p, idx) => `
           <div class="special-ball-col">
             <div class="special-digit-ball ${p.isDuoi || p.isDau ? 'highlight-de' : (p.isCang ? 'highlight-cang' : '')}">
               ${p.digit}
             </div>
-            <span class="special-ball-label" style="color: ${p.isDuoi || p.isDau ? 'var(--gold-300)' : (p.isCang ? 'var(--blue-400)' : 'var(--text-muted)')};">
-              ${shortLabels[idx] || p.label}
-            </span>
+            <span class="special-ball-label">${shortLabels[idx] || p.label}</span>
           </div>
         `).join('') : '';
 
+        const copyBtnHtml = sp && sp.fullNumber ? `
+          <div class="special-ticket-strip">
+            <span>Vé 6 số: <code class="special-code-pill">${sp.fullNumber}</code></span>
+            <button id="btn-copy-special" type="button" class="btn-copy-ticket" onclick="navigator.clipboard?.writeText('${sp.fullNumber}'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Đã chép'; setTimeout(() => this.innerHTML='<i class=\\'fa-regular fa-copy\\'></i> Chép 6 số', 1800);">
+              <i class="fa-regular fa-copy" aria-hidden="true"></i> Chép 6 số
+            </button>
+          </div>
+        ` : '';
+
         heroPredictionHtml = `
           <div class="hero-prediction-card">
+            ${this.getWatermarkSvg()}
             <div class="hero-card-header">
               <div class="hero-card-sub-top">
                 <span class="hero-crown-badge">
-                  <i class="fa-solid fa-crown"></i> DỰ ĐOÁN KỲ TIẾP THEO
+                  <i class="fa-solid fa-crown" aria-hidden="true"></i> Phiếu Dự Báo Kỳ Tiếp Theo
                 </span>
                 <span class="live-status-pill hero-live-pill">
-                  <span class="pulse-dot"></span>Chưa quay
+                  <span class="pulse-dot"></span> Chưa quay
                 </span>
               </div>
               <div class="hero-target-station">
-                <i class="fa-solid fa-calendar-day" style="color: var(--gold-400); margin-right: 4px;"></i>
-                ${targetInfo ? `${targetInfo.gameOrStationName} • ${targetInfo.nextDayName}, ${targetInfo.nextDate}` : 'Kỳ Tiếp Theo'}
+                <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                <span>${targetInfo ? `${targetInfo.gameOrStationName} • ${targetInfo.nextDayName}, ${targetInfo.nextDate} (${targetInfo.nextDrawTime})` : 'Kỳ Tiếp Theo'}</span>
               </div>
             </div>
 
-            <!-- 6 Quả bóng vàng Giải Đặc Biệt (Fluid 100% không rớt dòng) -->
-            <div style="text-align: center; margin: 12px 0 16px 0;">
-              <div style="font-size: 12px; color: var(--gold-400); font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;">
-                ✦ DÃY 6 SỐ GIẢI ĐẶC BIỆT DỰ BÁO:
+            <div class="hero-ticket-body">
+              <!-- Cột Trái: 6 chữ số Giải Đặc Biệt -->
+              <div class="hero-special-stage">
+                <div class="stage-caption">
+                  <i class="fa-solid fa-award" aria-hidden="true"></i>
+                  <span>Dãy 6 số Giải Đặc Biệt dự báo</span>
+                </div>
+                <div class="special-balls-container">
+                  ${balls6}
+                </div>
+                ${copyBtnHtml}
               </div>
-              <div class="special-balls-container">
-                ${balls6}
+
+              <!-- Cột Phải: 3 ô số gợi ý trọng tâm -->
+              <div class="hero-signals-stage">
+                <div class="lucky-lotto-grid">
+                  <div class="lucky-card lucky-gold">
+                    <span class="lucky-label"><i class="fa-solid fa-star" aria-hidden="true"></i> Bạch Thủ Lô (1 số)</span>
+                    <span class="lucky-value">${preds[0] || '--'}</span>
+                  </div>
+                  <div class="lucky-card lucky-blue">
+                    <span class="lucky-label"><i class="fa-solid fa-gem" aria-hidden="true"></i> Song Thủ Lô (Cặp)</span>
+                    <span class="lucky-value">${preds[0] || '--'} – ${preds[1] || '--'}</span>
+                  </div>
+                  <div class="lucky-card lucky-emerald">
+                    <span class="lucky-label"><i class="fa-solid fa-compass" aria-hidden="true"></i> Dàn 5 Số Đẹp (Bao Lô)</span>
+                    <span class="lucky-value dan">${preds.slice(0, 5).join(' · ')}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Cặp số VIP: Bạch Thủ Lô & Song Thủ Lô -->
-            <div class="lucky-lotto-grid">
-              <div class="lucky-card lucky-gold">
-                <span class="lucky-label"><i class="fa-solid fa-star"></i> BẠCH THỦ LÔ</span>
-                <span class="lucky-value">${preds[0] || '--'}</span>
-              </div>
-              <div class="lucky-card lucky-blue">
-                <span class="lucky-label"><i class="fa-solid fa-gem"></i> SONG THỦ LÔ</span>
-                <span class="lucky-value">${preds[0] || '--'} - ${preds[1] || '--'}</span>
-              </div>
-              <div class="lucky-card lucky-emerald">
-                <span class="lucky-label"><i class="fa-solid fa-fire"></i> DÀN 5 LÔ ĐẸP</span>
-                <span class="lucky-value dan">${preds.slice(0, 5).join(' · ')}</span>
-              </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 12px; margin-top: 14px; border-top: 1px dashed var(--line-subtle); font-size: 12px;">
-              <span style="color: var(--text-secondary); font-size: 12px;">Gợi ý soi cầu định lượng dựa trên phân tích xác suất chuỗi 180 kỳ</span>
-              <button class="btn-predict-explore" onclick="document.getElementById('panel-predict')?.scrollIntoView({behavior:'smooth'})">
-                <i class="fa-solid fa-brain"></i> Xem 8 Thuật Toán ➔
+            <div class="hero-card-footer">
+              <span>${consensusText} &bull; Phân tích chuỗi mở thưởng đến ngày ${targetInfo ? targetInfo.latestDate : draw.date}</span>
+              <button type="button" class="btn-predict-explore" onclick="document.getElementById('predictions-container')?.scrollIntoView({behavior:'smooth'})">
+                <i class="fa-solid fa-layer-group" aria-hidden="true"></i> Xem 8 mô hình chi tiết ➔
               </button>
             </div>
           </div>
@@ -135,52 +243,66 @@ export const UIController = {
     }
 
     if (isVietlott) {
-      // Kết xuất Vietlott
-      const ballsHtml = (draw.winningNumbers || []).map(b => 
+      const ballsHtml = (draw.winningNumbers || []).map(b =>
         `<div class="lotto-ball gold">${String(b).padStart(2, '0')}</div>`
       ).join('');
 
-      const bonusHtml = draw.bonusNumber 
-        ? `<div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
-             <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Số Đặc Biệt:</span>
+      const bonusHtml = draw.bonusNumber
+        ? `<div class="vietlott-bonus-group">
+             <span class="vietlott-bonus-label">Số đặc biệt:</span>
              <div class="lotto-ball bonus">${String(draw.bonusNumber).padStart(2, '0')}</div>
            </div>`
         : '';
+
+      const gameLabel = draw.gameType === 'power-6-55' ? 'Power 6/55' : 'Mega 6/45';
+      const formattedJackpot = draw.jackpotEst
+        ? draw.jackpotEst.toString().replace(/[\sđ₫]+$/gi, '').trim() + ' ₫'
+        : 'Đang cập nhật giá trị Jackpot';
 
       container.innerHTML = `
         ${heroPredictionHtml}
         <div class="quant-card">
           <div class="card-header-bar">
             <div class="card-title-group">
-              <h2>Kết Quả ${draw.gameType === 'mega-6-45' ? 'Mega 6/45' : 'Power 6/55'} Mới Nhất</h2>
-              <span class="meta-info-badge">Kỳ ${draw.drawId || '#Kỳ-mới'}</span>
+              <h2>Kết Quả Mở Thưởng ${gameLabel} Kỳ Gần Nhất</h2>
+              <span class="meta-info-badge">Kỳ ${draw.drawId || '#Mới'}</span>
             </div>
-            <span class="meta-info-badge">Ngày mở thưởng: ${draw.date}</span>
+            <span class="meta-info-badge"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Ngày: ${draw.date}</span>
           </div>
 
-          <div style="background: var(--bg-subtle); padding: 22px 16px; border-radius: var(--r-md); text-align: center; margin-bottom: 16px; border: 1px solid var(--line-subtle);">
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Dãy Số Trúng Thưởng Chính Thức</div>
+          <div style="background: var(--bg-subtle); padding: 22px 18px; border-radius: var(--r-lg); text-align: center; margin-bottom: 16px; border: 1px solid var(--line-subtle);">
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">Bộ số trúng thưởng chính thức đã xác thực</div>
             <div class="ball-group" style="justify-content: center;">
               ${ballsHtml}
               ${bonusHtml}
             </div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; border: 1.5px solid #FCD34D; padding: 14px 18px; border-radius: var(--r-md); flex-wrap: wrap; gap: 8px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);">
-            <div style="color: #B45309; font-weight: 700; font-size: 14px;">Giải Jackpot Ước Tính:</div>
-            <div class="tabular-numbers" style="font-family: var(--font-sans); font-size: 22px; font-weight: 800; color: #B45309;">${draw.jackpotEst ? draw.jackpotEst.toString().replace(/[\sđ₫]+$/gi, '').trim() + ' ₫' : 'Chưa có thông tin Jackpot'}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; flex-wrap: wrap; gap: 8px;">
+            <span style="color: var(--text-secondary); font-weight: 600; font-size: 13px;">Giá trị quỹ thưởng Jackpot ghi nhận:</span>
+            <span class="tabular-numbers" style="font-size: 21px; font-weight: 800; color: var(--accent-amber);">${formattedJackpot}</span>
           </div>
         </div>
       `;
     } else {
-      // Kết xuất XSMN: Bảng 18 giải định dạng Thẻ Số (Chips) + Bảng Đầu Đuôi
       const prizes = draw.prizes || {};
-      const headTail = draw.headTail || { head: {}, tail: {} };
+      let headTail = draw.headTail;
+      if (!headTail || !headTail.head || !headTail.tail) {
+        const head = {}, tail = {};
+        for (let d = 0; d <= 9; d++) { head[d] = []; tail[d] = []; }
+        (draw.lottoPairs || []).forEach(num => {
+          if (typeof num === 'string' && num.length >= 2) {
+            head[num[0]].push(num[1]);
+            tail[num[1]].push(num[0]);
+          }
+        });
+        for (let d = 0; d <= 9; d++) { head[d].sort(); tail[d].sort(); }
+        headTail = { head, tail };
+      }
 
       const formatChips = (nums, type = '') => {
         if (!nums || !nums.length || nums[0] === '-') return `<span class="prize-chip">-</span>`;
-        const isMulti = nums.length > 3;
-        return `<div class="prize-chips-wrapper ${isMulti ? 'multi-cols' : ''}">` +
+        return `<div class="prize-chips-wrapper">` +
           nums.map(n => {
             let cls = 'prize-chip';
             if (type === 'special') cls += ' chip-special';
@@ -193,93 +315,101 @@ export const UIController = {
 
       let headTailRows = '';
       for (let d = 0; d <= 9; d++) {
-        const heads = (headTail.head && headTail.head[d]) ? headTail.head[d].join(', ') : '-';
-        const tails = (headTail.tail && headTail.tail[d]) ? headTail.tail[d].join(', ') : '-';
+        const heads = (headTail.head && headTail.head[d] && headTail.head[d].length > 0) ? headTail.head[d].join(', ') : '—';
+        const tails = (headTail.tail && headTail.tail[d] && headTail.tail[d].length > 0) ? headTail.tail[d].join(', ') : '—';
+        const hasHeads = heads !== '—';
+        const hasTails = tails !== '—';
         headTailRows += `
           <tr>
-            <td class="digit-header">${d}</td>
-            <td style="color: var(--blue-400);">${heads}</td>
-            <td class="digit-header" style="border-left: 1px solid var(--line-subtle);">${d}</td>
-            <td style="color: var(--emerald-400);">${tails}</td>
+            <td class="digit-header"><span class="digit-badge">${d}</span></td>
+            <td class="pairs-cell ${hasHeads ? 'has-pairs' : 'empty-pairs'}">${heads}</td>
+            <td class="digit-header divider-left"><span class="digit-badge">${d}</span></td>
+            <td class="pairs-cell ${hasTails ? 'has-pairs' : 'empty-pairs'}">${tails}</td>
           </tr>
         `;
       }
 
+      const stationTitle = draw.stationName
+        ? `Đài ${draw.stationName}`
+        : this.formatStationOrGame(draw.stationId);
+
       container.innerHTML = `
         ${heroPredictionHtml}
         <div class="results-card-container">
-          <!-- Bảng 18 Giải Truyền Thống Được Thiết Kế Lại Theo Phong Cách Thẻ Số Hiện Đại -->
+          <!-- Bảng 18 Giải Mở Thưởng Kỳ Trước -->
           <div class="quant-card">
             <div class="card-header-bar">
               <div class="card-title-group">
-                <h2>XSMN &bull; Đài ${draw.stationName || draw.stationId} (Kỳ Trước)</h2>
-                <span class="meta-info-badge">Kỳ ${draw.drawId}</span>
+                <h2>Kết Quả ${stationTitle} (Kỳ Vừa Mở)</h2>
+                ${draw.drawId ? `<span class="meta-info-badge">Mã ${draw.drawId}</span>` : ''}
               </div>
-              <span class="meta-info-badge">Ngày: ${draw.date}</span>
+              <span class="meta-info-badge"><i class="fa-regular fa-calendar" aria-hidden="true"></i> ${draw.date}</span>
             </div>
 
             <table class="xsmn-table">
-              <tr>
-                <td class="prize-label">Đặc Biệt</td>
-                <td class="prize-numbers">${formatChips(prizes.special, 'special')}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Nhất</td>
-                <td class="prize-numbers">${formatChips(prizes.first, 'first')}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Nhì</td>
-                <td class="prize-numbers">${formatChips(prizes.second)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Ba</td>
-                <td class="prize-numbers">${formatChips(prizes.third)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Tư</td>
-                <td class="prize-numbers">${formatChips(prizes.fourth)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Năm</td>
-                <td class="prize-numbers">${formatChips(prizes.fifth)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Sáu</td>
-                <td class="prize-numbers">${formatChips(prizes.sixth)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Bảy</td>
-                <td class="prize-numbers">${formatChips(prizes.seventh)}</td>
-              </tr>
-              <tr>
-                <td class="prize-label">Giải Tám</td>
-                <td class="prize-numbers">${formatChips(prizes.eighth, 'eighth')}</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="prize-label">Đặc Biệt</td>
+                  <td class="prize-numbers">${formatChips(prizes.special, 'special')}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Nhất</td>
+                  <td class="prize-numbers">${formatChips(prizes.first, 'first')}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Nhì</td>
+                  <td class="prize-numbers">${formatChips(prizes.second)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Ba</td>
+                  <td class="prize-numbers">${formatChips(prizes.third)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Tư</td>
+                  <td class="prize-numbers">${formatChips(prizes.fourth)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Năm</td>
+                  <td class="prize-numbers">${formatChips(prizes.fifth)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Sáu</td>
+                  <td class="prize-numbers">${formatChips(prizes.sixth)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Bảy</td>
+                  <td class="prize-numbers">${formatChips(prizes.seventh)}</td>
+                </tr>
+                <tr>
+                  <td class="prize-label">Giải Tám</td>
+                  <td class="prize-numbers">${formatChips(prizes.eighth, 'eighth')}</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
-          <!-- Bảng Phân Tích Đầu - Đuôi Lô Tô -->
-          <div class="quant-card">
-            <div class="card-header-bar">
-              <div class="card-title-group">
-                <h3>Thống Kê Đầu - Đuôi</h3>
-              </div>
-              <span class="meta-info-badge">18 Lô</span>
+          <!-- Bảng Phân Tích Đầu - Đuôi 18 Lô -->
+          <div class="quant-card head-tail-card">
+            <div class="head-tail-header-box">
+              <h3 class="head-tail-main-title">Thống Kê Đầu – Đuôi</h3>
+              <span class="head-tail-sub-title">18 Lô</span>
             </div>
 
-            <table class="head-tail-table">
-              <thead>
-                <tr>
-                  <th style="width: 40px; text-align: center;">Đầu</th>
-                  <th>Cặp Lô</th>
-                  <th style="width: 40px; text-align: center; border-left: 1px solid var(--line-subtle);">Đuôi</th>
-                  <th>Cặp Lô</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${headTailRows}
-              </tbody>
-            </table>
+            <div class="head-tail-table-wrapper">
+              <table class="head-tail-table">
+                <thead>
+                  <tr>
+                    <th class="th-digit">Đầu</th>
+                    <th class="th-pairs">Cặp Lô</th>
+                    <th class="th-digit divider-left">Đuôi</th>
+                    <th class="th-pairs">Cặp Lô</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${headTailRows}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;
@@ -287,230 +417,144 @@ export const UIController = {
   },
 
   /**
-   * 2. Kết xuất Trạm Dự Đoán Đa Thuật Toán (Ensemble & 7 Thuật Toán)
+   * 2. Kết xuất Khối Đồng Thuận Ensemble & Lưới 7 Mô Hình Độc Lập
    */
   renderPredictions(ensembleResult, isVietlott, containerId = 'predictions-container', targetInfo = null) {
     const container = document.getElementById(containerId);
     if (!container || !ensembleResult) return;
 
     const preds = ensembleResult.predictions || [];
+    const normalizedPredSet = new Set(preds.map(p => String(p).padStart(2, '0')));
 
-    const confidence = ensembleResult.metrics 
-      ? (ensembleResult.metrics.consensusRatio || ensembleResult.metrics.confidenceScore || '---') 
+    const confidence = ensembleResult.metrics
+      ? (ensembleResult.metrics.consensusRatio || ensembleResult.metrics.confidenceScore || '---')
       : '---';
 
-    const heroBallsHtml = preds.map(p => 
+    const heroBallsHtml = preds.map(p =>
       `<div class="ensemble-ball-lg">${isVietlott ? String(p).padStart(2, '0') : p}</div>`
     ).join('');
 
-    const guideNoteHtml = isVietlott
-      ? `
-        <div style="margin-top: 14px; padding: 10px 14px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--r-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-          <i class="fa-solid fa-circle-info" style="color: var(--blue-400); margin-right: 6px;"></i>
-          <span>Bộ 6 con số độc lập được máy học chọn lọc từ dãy bóng Vietlott để tạo thành 1 bộ vé dự thưởng cho kỳ quay tới ${targetInfo ? `(${targetInfo.nextDate})` : ''}.</span>
-        </div>
-      `
-      : `
-        <div style="margin-top: 14px; padding: 12px 16px; background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: var(--r-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.6; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);">
-          <div style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 7px; margin-bottom: 4px;">
-            <i class="fa-solid fa-circle-question" style="color: var(--gold-600);"></i>
-            <span>Giải Thích: 5 Con Số Này Dùng Để Làm Gì?</span>
-          </div>
-          <div>
-            ✦ <strong>Mỗi quả cầu là 1 Cặp Số Lô Tô 2 số (00 - 99) riêng biệt</strong> — dùng để đón đầu <strong>2 số cuối của toàn bộ 18 giải</strong> (Bao Lô) hoặc <strong>2 số cuối của Giải Đặc Biệt</strong> cho <strong>kỳ mở thưởng tiếp theo ${targetInfo ? `(${targetInfo.nextDayName}, ${targetInfo.nextDate})` : ''}</strong>. Đây <em>không phải</em> là ghép lại thành dãy 10 chữ số, và <em>không phải</em> là nói lại kết quả của kỳ đã quay.
-          </div>
-          <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line-subtle); display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px;">
-            <span><strong style="color: var(--gold-600);">⭐ Bạch Thủ Lô (1 con):</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:#FEF3C7; padding:2px 6px; border-radius:4px;">${preds[0] || '--'}</code></span>
-            <span><strong style="color: var(--blue-500);">🔗 Song Thủ Lô (2 con):</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:#EFF6FF; padding:2px 6px; border-radius:4px;">${preds[0] || '--'} - ${preds[1] || '--'}</code></span>
-            <span><strong style="color: var(--emerald-600);">🎯 Dàn 5 Con Bao Lô:</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:#ECFDF5; padding:2px 6px; border-radius:4px;">${preds.join(', ')}</code></span>
-          </div>
-        </div>
-      `;
-
-    const targetBannerHtml = targetInfo ? `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding: 11px 16px; background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: var(--r-sm);">
-        <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
-          <span style="background: linear-gradient(135deg, #2563EB, #1D4ED8); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase;">
-            <i class="fa-solid fa-bullseye" style="margin-right: 5px;"></i> DỰ ĐOÁN KỲ TIẾP THEO
-          </span>
-          <span style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">
-            ${targetInfo.gameOrStationName} • Mở thưởng: <span style="color: var(--gold-600);">${targetInfo.nextDayName}, ${targetInfo.nextDate}</span> <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">(${targetInfo.nextDrawTime})</span>
-          </span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
-          <span style="display: inline-flex; align-items: center; gap: 5px; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
-            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--emerald-500); box-shadow: 0 0 6px var(--emerald-400); display: inline-block;"></span>
-            Chưa Mở Thưởng
-          </span>
-          <span style="color: var(--text-muted);">(Học máy phân tích từ dữ liệu đến kỳ: ${targetInfo.latestDate})</span>
-        </div>
-      </div>
-    ` : '';
-
     const sp = ensembleResult.specialPrize;
-    const specialPrizeHtml = sp ? `
-      <div style="background: #FFFDF5; border: 1.5px solid #FCD34D; border-radius: var(--r-md); padding: 20px; margin-top: 14px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.1);">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
-              <i class="fa-solid fa-trophy" style="margin-right: 4px;"></i> TRỌNG TÂM DỰ ĐOÁN
-            </span>
-            <h4 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">
-              Dãy 6 Số Giải Đặc Biệt (Kỳ Quay Kế Tiếp)
-            </h4>
-          </div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 13px;">
-            <span>3 Càng Đặc Biệt: <strong style="color: var(--blue-500); font-family: var(--font-mono); font-size: 15px; font-weight: 700;">${sp.baCang}</strong></span>
-            <span style="color: var(--line-medium);">|</span>
-            <span>Bạch Thủ Đề: <strong style="color: var(--emerald-500); font-family: var(--font-mono); font-size: 15px; font-weight: 700;">${sp.bachThuDe}</strong></span>
-          </div>
-        </div>
-
-        <div class="hero-pred-balls-row" style="margin: 14px 0; justify-content: center; gap: 6px;">
-          ${sp.positions.map((p, idx) => {
-            const shortLabels = ['Tr.Nghìn', 'Ch.Nghìn', 'Nghìn', '3 Càng', 'Đầu', 'Đuôi'];
-            return `
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 44px; text-align: center;">
-              <div class="special-digit-ball ${p.isDuoi || p.isDau ? 'highlight-de' : (p.isCang ? 'highlight-cang' : '')}">
-                ${p.digit}
-              </div>
-              <span style="font-size: 9px; font-weight: 700; white-space: nowrap; color: ${p.isDuoi || p.isDau ? 'var(--gold-600)' : (p.isCang ? 'var(--blue-500)' : 'var(--text-muted)')}; text-align: center;">
-                ${shortLabels[idx] || p.label}
-              </span>
-            </div>
-          `;
-          }).join('')}
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px dashed var(--line-subtle); font-size: 13px; color: var(--text-secondary);">
-          <div>
-            ✦ Dãy 6 số dự thưởng: <code style="font-family: var(--font-mono); font-size: 17px; font-weight: 800; color: #B45309; letter-spacing: 2.5px; background: #FEF3C7; padding: 2px 8px; border-radius: 4px; border: 1px solid #FCD34D;">${sp.fullNumber}</code>
-          </div>
-          <button id="btn-copy-special" onclick="navigator.clipboard.writeText('${sp.fullNumber}'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Đã chép!'; setTimeout(() => this.innerHTML='<i class=\\'fa-regular fa-copy\\'></i> Sao chép 6 số', 2000);" style="background: #FFFFFF; border: 1px solid var(--line-medium); color: var(--text-primary); padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-            <i class="fa-regular fa-copy"></i> Sao chép 6 số
-          </button>
-        </div>
-      </div>
-    ` : '';
-
-    const lottoReferenceHtml = !isVietlott ? `
-      <div style="margin-top: 16px; padding: 14px 18px; background: rgba(255, 255, 255, 0.025); border: 1px solid var(--line-subtle); border-radius: var(--r-sm);">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-layer-group" style="color: var(--blue-400);"></i>
-            <span>Dàn Lô Tô 2 Số Đề Xuất (Tham Khảo Đánh Bao Lô 18 Giải / Xiên)</span>
-            <span style="font-size: 10.5px; background: rgba(56, 189, 248, 0.12); color: var(--blue-400); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 7px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Tham Khảo</span>
-          </div>
-          <div style="font-size: 12px; color: var(--text-muted);">
-            Dùng để so khớp 18 giải hoặc đá/xiên
-          </div>
-        </div>
-
-        <div class="ensemble-numbers-display" style="margin-top: 10px; margin-bottom: 12px;">
-          ${heroBallsHtml}
-        </div>
-
-        <div style="margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line-subtle); display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px;">
-          <span><strong style="color: var(--accent);">Bạch Thủ Lô:</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:var(--accent-soft); padding:2px 6px; border-radius:var(--r-xs); border:1px solid var(--accent-border);">${preds[0] || '--'}</code></span>
-          <span><strong style="color: var(--info);">Song Thủ Lô:</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:var(--bg-subtle); padding:2px 6px; border-radius:var(--r-xs); border:1px solid var(--line-subtle);">${preds[0] || '--'} - ${preds[1] || '--'}</code></span>
-          <span><strong style="color: var(--success);">Dàn 5 Con:</strong> <code style="color:var(--text-primary); font-weight:700; font-size:13px; background:var(--success-soft); padding:2px 6px; border-radius:var(--r-xs); border:1px solid rgba(30, 107, 82, 0.2);">${preds.join(', ')}</code></span>
-        </div>
+    const usageGuideHtml = !isVietlott ? `
+      <div class="ensemble-usage-pills">
+        <span class="usage-pill-item"><strong>Bạch Thủ Lô:</strong> <code>${preds[0] || '--'}</code></span>
+        <span class="usage-pill-item"><strong>Song Thủ Lô:</strong> <code>${preds[0] || '--'} – ${preds[1] || '--'}</code></span>
+        <span class="usage-pill-item"><strong>Bao Lô 5 số:</strong> <code>${preds.join(', ')}</code></span>
+        ${sp ? `<span class="usage-pill-item"><strong>3 Càng / Đề ĐB:</strong> <code>${sp.baCang}</code> / <code>${sp.bachThuDe}</code></span>` : ''}
       </div>
     ` : `
-      <div style="margin-top: 14px;">
-        <div style="font-size: 13.5px; font-weight: 700; color: var(--gold-600); margin-bottom: 8px;">
-          ✦ Đề xuất bộ 6 số Vietlott cho kỳ quay tới ${targetInfo ? `(${targetInfo.nextDate})` : ''}:
-        </div>
-        <div class="ensemble-numbers-display">
-          ${heroBallsHtml}
-        </div>
-        ${guideNoteHtml}
+      <div class="ensemble-usage-pills">
+        <span class="usage-pill-item"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Bộ 6 số độc lập chọn từ tập ứng viên Vietlott cho kỳ mở thưởng ${targetInfo ? targetInfo.nextDate : 'tiếp theo'}.</span>
       </div>
     `;
 
     const heroCardHtml = `
-      ${targetBannerHtml}
       <div class="hero-ensemble-card">
         <div class="ensemble-content">
           <div>
             <div class="ensemble-badge-title">
-              <h3>Mô Hình Tổng Hợp (Ensemble Consensus)</h3>
-              <span class="badge">ĐỀ XUẤT TỐI ƯU</span>
+              <h3>Mô Hình Tổng Hợp Đồng Thuận (Ensemble Consensus)</h3>
+              <span class="badge">Xếp hạng bách phân vị</span>
             </div>
-            <p style="color: var(--text-secondary); max-width: 700px; font-size: 13.5px; line-height: 1.6; margin-bottom: 12px;">
-              ${ensembleResult.explanation}
+            <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; margin: 0 0 8px 0;">
+              ${ensembleResult.explanation || 'Kết hợp trọng số từ 7 mô hình thống kê độc lập để chọn ra các con số có sự đồng thuận cao nhất.'}
             </p>
-            ${specialPrizeHtml}
-            ${lottoReferenceHtml}
+            <div class="ensemble-numbers-display">
+              ${heroBallsHtml}
+            </div>
+            ${usageGuideHtml}
           </div>
-          <div class="confidence-meter" title="Tỷ lệ đồng thuận giữa các thuật toán độc lập (Normalized Soft Voting)">
-            <div class="confidence-value">${confidence}</div>
-            <div class="confidence-label">Mức Đồng Thuận Mô Hình</div>
+          <div class="confidence-meter" title="Mức đồng thuận giữa các mô hình độc lập; không phải xác suất trúng xổ số">
+            <div class="confidence-value tabular-numbers">${confidence}</div>
+            <div class="confidence-label">Độ đồng thuận mô hình</div>
           </div>
         </div>
       </div>
     `;
 
-    // Lưới 7 thuật toán thành phần
     const subAlgos = ensembleResult.subResults || [];
+    const activeWeightSum = subAlgos
+      .filter(s => s && s.status === 'ok' && (s.weight || 0) > 0)
+      .reduce((acc, s) => acc + (s.weight || 0), 0);
+
     const algoCardsHtml = subAlgos.map(item => {
-      const res = item.result;
-      const subPredsHtml = (res.predictions || []).map(p => 
-        `<div class="algo-pred-ball">${isVietlott ? String(p).padStart(2, '0') : p}</div>`
-      ).join('');
+      const res = item.result || {};
+      const isModelActive = item.status === 'ok' && (item.weight || 0) > 0;
+      const weightPct = isModelActive
+        ? (activeWeightSum > 0 ? Math.round(((item.weight || 0) / activeWeightSum) * 100) : Math.round((item.weight || 0) * 100))
+        : 0;
+      const barWidth = isModelActive ? Math.min(100, Math.max(12, weightPct * 4)) : 0;
+      const subPredsHtml = isModelActive
+        ? (res.predictions || []).map(p => {
+            const label = isVietlott ? String(p).padStart(2, '0') : String(p);
+            const padded = String(p).padStart(2, '0');
+            const isHitConsensus = normalizedPredSet.has(padded);
+            return `<div class="algo-pred-ball ${isHitConsensus ? 'is-consensus' : ''}" title="${isHitConsensus ? 'Nằm trong nhóm số đồng thuận cao' : 'Ứng viên riêng của mô hình'}">${label}</div>`;
+          }).join('')
+        : `<span class="meta-info-badge">Chưa đủ kỳ lịch sử</span>`;
 
       return `
-        <div class="algo-card">
+        <article class="algo-card">
           <div>
             <div class="algo-header">
               <div class="algo-name-box">
                 <h4>${item.name}</h4>
-                <div class="algo-category"><i class="fa-solid fa-gauge-high" style="color:var(--gold-600);"></i> Mức đóng góp: ${Math.round(item.weight * 100)}%</div>
+                <div class="algo-category">
+                  <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+                  <span>${isModelActive ? `Trọng số đóng góp: ${weightPct}%` : 'Trọng số đóng góp: 0% (tạm nghỉ)'}</span>
+                </div>
               </div>
+            </div>
+            <div class="algo-weight-bar" aria-hidden="true">
+              <div class="algo-weight-fill" style="width: ${barWidth}%;"></div>
             </div>
             <div class="algo-prediction-row">
               ${subPredsHtml}
             </div>
           </div>
           <div class="algo-explanation">
-            ${res.explanation || 'Đang cập nhật mô tả'}
+            ${res.explanation || item.reason || 'Đang cập nhật thuyết minh mô hình.'}
           </div>
-        </div>
+        </article>
       `;
     }).join('');
 
     container.innerHTML = `
       ${heroCardHtml}
-      <h3 style="font-family: var(--font-display); font-size: 20px; margin-bottom: 18px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-        <span style="color: var(--gold-600);">✦</span> Chi Tiết 7 Mô Hình Thành Phần Độc Lập
-      </h3>
+      <div class="algorithms-section-header">
+        <h3 class="algorithms-section-title">Chi Tiết 7 Mô Hình Toán Học Thành Phần</h3>
+        <span style="font-size: 12px; color: var(--text-muted);">Bóng vàng cam biểu thị con số hội tụ cùng kết quả Ensemble</span>
+      </div>
       <div class="algorithms-grid">
         ${algoCardsHtml}
       </div>
     `;
 
-    // Cập nhật biểu đồ xác suất
     this.renderProbabilityChart(ensembleResult.scores, isVietlott);
   },
 
   /**
-   * 3. Biểu đồ phân phối xác suất Chart.js & Chartist.dev SVG
+   * 3. Biểu đồ phân phối điểm hội tụ Top 30 (Chartist SVG & Chart.js Canvas)
    */
   renderProbabilityChart(scores, isVietlott, canvasId = 'prob-chart-canvas') {
+    this.lastProbScores = scores;
+    this.lastProbIsVietlott = isVietlott;
+
     const labels = Object.keys(scores || {});
     const dataValues = Object.values(scores || {});
-
-    // Giới hạn hiển thị 30 số có điểm cao nhất
-    const paired = labels.map((l, i) => ({ label: l, val: dataValues[i] }));
+    const paired = labels.map((l, i) => ({ label: String(l).padStart(2, '0'), val: dataValues[i] }));
     paired.sort((a, b) => b.val - a.val);
     const topShow = paired.slice(0, 30);
+    const topCount = isVietlott ? 6 : 5;
+    const theme = this.getChartTheme();
 
-    // --- A. Render Biểu đồ Chart.js Canvas (Luôn giữ để tương thích hệ thống kiểm thử) ---
+    // A. Chart.js Canvas
     const canvas = typeof document !== 'undefined' ? document.getElementById(canvasId) : null;
     if (canvas && typeof window !== 'undefined' && window.Chart) {
       if (this.probChartInstance) {
-        this.probChartInstance.destroy();
+        try { this.probChartInstance.destroy(); } catch (e) {}
       }
+      this.destroyCanvasChart(canvas);
 
       const ctx = canvas.getContext('2d');
       this.probChartInstance = new window.Chart(ctx, {
@@ -518,33 +562,34 @@ export const UIController = {
         data: {
           labels: topShow.map(p => p.label),
           datasets: [{
-            label: 'Điểm Xác Suất Dự Báo (%)',
+            label: 'Điểm hội tụ chuẩn hóa',
             data: topShow.map(p => p.val),
-            backgroundColor: topShow.map((p, idx) => idx < (isVietlott ? 6 : 5) ? 'rgba(217, 169, 59, 0.85)' : 'rgba(56, 189, 248, 0.25)'),
-            borderColor: topShow.map((p, idx) => idx < (isVietlott ? 6 : 5) ? '#F59E0B' : 'rgba(56, 189, 248, 0.4)'),
-            borderWidth: 1,
-            borderRadius: 4
+            backgroundColor: topShow.map((_, idx) => idx < topCount ? theme.amber : theme.jade),
+            borderColor: topShow.map((_, idx) => idx < topCount ? theme.amber : theme.jade),
+            borderWidth: 0,
+            borderRadius: 5
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: { duration: 260 },
           plugins: {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (c) => `Xác suất hội tụ: ${c.parsed.y}%`
+                label: (c) => ` Điểm hội tụ: ${c.parsed.y}`
               }
             }
           },
           scales: {
             x: {
-              grid: { color: '#E2E8F0' },
-              ticks: { color: '#475569', font: { family: 'JetBrains Mono', weight: 'bold' } }
+              grid: { display: false },
+              ticks: { color: theme.tick, font: { family: 'JetBrains Mono', weight: 'bold', size: 11 } }
             },
             y: {
-              grid: { color: '#E2E8F0' },
-              ticks: { color: '#475569', font: { family: 'JetBrains Mono' } },
+              grid: { color: theme.grid },
+              ticks: { color: theme.tick, font: { family: 'JetBrains Mono', size: 11 } },
               beginAtZero: true,
               max: 100
             }
@@ -553,64 +598,58 @@ export const UIController = {
       });
     }
 
-    // --- B. Render Biểu đồ Chartist.dev SVG Vector Thuần (Sắc nét vô hạn, siêu nhẹ) ---
+    // B. Chartist SVG Vector (Chỉ vẽ trực tiếp khi container đang hiển thị để tránh width=0)
     const hasFullDom = typeof document !== 'undefined' && Boolean(document.defaultView);
     const chartistBox = hasFullDom ? document.getElementById('prob-chartist-box') : null;
     if (chartistBox && typeof BarChart === 'function') {
+      if (chartistBox.classList) {
+        chartistBox.classList.toggle('is-vietlott', Boolean(isVietlott));
+      }
       if (this.probChartistInstance) {
         try { this.probChartistInstance.detach(); } catch (e) {}
         this.probChartistInstance = null;
       }
 
-      try {
-        const chartistData = {
-          labels: topShow.map(p => p.label),
-          series: [topShow.map(p => p.val)]
-        };
+      const isBoxVisible = chartistBox.offsetParent !== null && chartistBox.clientWidth > 0;
+      if (isBoxVisible) {
+        this._probChartistNeedsRender = false;
+        try {
+          const chartistData = {
+            labels: topShow.map(p => p.label),
+            series: [topShow.map(p => p.val)]
+          };
 
-        const chartistOptions = {
-          seriesBarDistance: 6,
-          axisX: {
-            showGrid: false
-          },
-          axisY: {
-            onlyInteger: true,
-            offset: 32,
-            scaleMinSpace: 25
-          },
-          height: 300
-        };
+          const chartistOptions = {
+            seriesBarDistance: 6,
+            axisX: { showGrid: false },
+            axisY: { onlyInteger: true, offset: 34, scaleMinSpace: 26 },
+            height: 290
+          };
 
-        this.probChartistInstance = new BarChart(chartistBox, chartistData, chartistOptions);
+          this.probChartistInstance = new BarChart(chartistBox, chartistData, chartistOptions);
 
-        // Styling SVG elements bằng requestAnimationFrame chuẩn Chartist v2 (không dùng v1 event emitter)
-        requestAnimationFrame(() => {
-          try {
-            const bars = chartistBox.querySelectorAll('.ct-bar');
-            const topCount = isVietlott ? 6 : 5;
-            bars.forEach((bar, index) => {
-              const isTopTarget = index < topCount;
-              bar.style.stroke = isTopTarget ? '#D97706' : '#0284C7';
-              bar.style.strokeWidth = '14px';
-              bar.style.strokeLinecap = 'round';
-              bar.style.opacity = isTopTarget ? '1' : '0.65';
-            });
-          } catch (e) {
-            // Không ảnh hưởng tới biểu đồ nếu render ban đầu chưa xong
-          }
-        });
-      } catch (err) {
-        console.warn('Lỗi khi vẽ biểu đồ Chartist.dev SVG:', err);
+          requestAnimationFrame(() => {
+            try {
+              const bars = chartistBox.querySelectorAll('.ct-bar');
+              bars.forEach((bar, index) => {
+                const isTopTarget = index < topCount;
+                bar.style.stroke = isTopTarget ? theme.amber : theme.jade;
+                bar.style.strokeLinecap = 'round';
+                bar.style.opacity = isTopTarget ? '1' : '0.75';
+              });
+            } catch (e) {}
+          });
+        } catch (err) {
+          console.warn('Lỗi khi vẽ biểu đồ Chartist SVG:', err);
+        }
+      } else {
+        this._probChartistNeedsRender = true;
       }
     }
 
-    // --- C. Thiết lập Bộ Chuyển Đổi Engine (Chartist vs Chart.js) ---
     this.setupChartEngineSwitcher();
   },
 
-  /**
-   * Thiết lập tương tác chuyển đổi giữa Chartist.dev (SVG) và Chart.js (Canvas)
-   */
   setupChartEngineSwitcher() {
     if (typeof document === 'undefined') return;
 
@@ -622,41 +661,48 @@ export const UIController = {
 
     if (!btnChartist || !btnChartjs || !chartistView || !chartjsView) return;
 
-    const applyEngine = (engine) => {
+    const applyEngine = (engine, fromUserClick = false) => {
       this.activeProbEngine = engine;
       if (engine === 'chartist') {
-        if (chartistView && chartistView.style) chartistView.style.display = 'block';
-        if (chartjsView && chartjsView.style) chartjsView.style.display = 'none';
-        if (btnChartist && btnChartist.classList) btnChartist.classList.add('active');
-        if (btnChartjs && btnChartjs.classList) btnChartjs.classList.remove('active');
-        if (indicator) {
-          indicator.innerHTML = '<i class="fa-solid fa-bolt"></i> Chartist.dev (SVG Vector Engine) Đang Hoạt Động';
-          if (indicator.style) indicator.style.color = 'var(--accent)';
+        if (chartistView.style) chartistView.style.display = 'block';
+        if (chartjsView.style) chartjsView.style.display = 'none';
+        if (btnChartist.classList) btnChartist.classList.add('active');
+        if (btnChartjs.classList) btnChartjs.classList.remove('active');
+        if (btnChartist.setAttribute) btnChartist.setAttribute('aria-pressed', 'true');
+        if (btnChartjs.setAttribute) btnChartjs.setAttribute('aria-pressed', 'false');
+        if (indicator) indicator.textContent = 'Đang hiển thị: Biểu đồ Vector SVG';
+        if (fromUserClick && (this._probChartistNeedsRender || !this.probChartistInstance) && this.lastProbScores) {
+          requestAnimationFrame(() => {
+            this.renderProbabilityChart(this.lastProbScores, this.lastProbIsVietlott);
+          });
+        } else if (fromUserClick && this.probChartistInstance && typeof this.probChartistInstance.update === 'function') {
+          requestAnimationFrame(() => {
+            try { this.probChartistInstance.update(); } catch (e) {}
+          });
         }
       } else {
-        if (chartistView && chartistView.style) chartistView.style.display = 'none';
-        if (chartjsView && chartjsView.style) chartjsView.style.display = 'block';
-        if (btnChartjs && btnChartjs.classList) btnChartjs.classList.add('active');
-        if (btnChartist && btnChartist.classList) btnChartist.classList.remove('active');
-        if (indicator) {
-          indicator.innerHTML = '<i class="fa-solid fa-circle-nodes"></i> Chart.js (HTML5 Canvas Engine) Đang Hoạt Động';
-          if (indicator.style) indicator.style.color = 'var(--blue-500)';
+        if (chartistView.style) chartistView.style.display = 'none';
+        if (chartjsView.style) chartjsView.style.display = 'block';
+        if (btnChartjs.classList) btnChartjs.classList.add('active');
+        if (btnChartist.classList) btnChartist.classList.remove('active');
+        if (btnChartjs.setAttribute) btnChartjs.setAttribute('aria-pressed', 'true');
+        if (btnChartist.setAttribute) btnChartist.setAttribute('aria-pressed', 'false');
+        if (indicator) indicator.textContent = 'Đang hiển thị: Biểu đồ Canvas HD';
+        if (fromUserClick && this.probChartInstance && typeof this.probChartInstance.resize === 'function') {
+          requestAnimationFrame(() => {
+            try { this.probChartInstance.resize(); } catch (e) {}
+          });
         }
       }
     };
 
-    if (btnChartist) btnChartist.onclick = () => applyEngine('chartist');
-    if (btnChartjs) btnChartjs.onclick = () => applyEngine('chartjs');
-
-    // Đồng bộ trạng thái hiện tại
-    applyEngine(this.activeProbEngine || 'chartist');
+    btnChartist.onclick = () => applyEngine('chartist', true);
+    btnChartjs.onclick = () => applyEngine('chartjs', true);
+    applyEngine(this.activeProbEngine || 'chartist', false);
   },
 
   /**
-   * 4. KẾT XUẤT DASHBOARD PHÂN TÍCH CHUYÊN SÂU (QUANT DASHBOARD WIDGETS)
-   */
-  /**
-   * 4. KẾT XUẤT DASHBOARD PHÂN TÍCH CHUYÊN SÂU & HỆ THỐNG BIỂU ĐỒ (PORTFOLIO-HIEN INSPIRATION)
+   * 4. Kết xuất Dashboard Thống Kê Đa Chiều & Lưới 4 Biểu Đồ 2x2 Đối Xứng
    */
   renderExecutiveDashboard(data, isVietlott, containerId = 'dashboard-container') {
     const container = document.getElementById(containerId);
@@ -664,15 +710,14 @@ export const UIController = {
 
     const { history, gapStats, clusterStats, rulesStats } = data;
     const draws = history || [];
+    const theme = this.getChartTheme();
 
-    // Hủy các instance biểu đồ cũ tránh rò rỉ bộ nhớ
     if (this.freqChartInstance) { this.freqChartInstance.destroy(); this.freqChartInstance = null; }
     if (this.trendChartInstance) { this.trendChartInstance.destroy(); this.trendChartInstance = null; }
     if (this.parityChartInstance) { this.parityChartInstance.destroy(); this.parityChartInstance = null; }
     if (this.highlowChartInstance) { this.highlowChartInstance.destroy(); this.highlowChartInstance = null; }
     if (this.headtailChartInstance) { this.headtailChartInstance.destroy(); this.headtailChartInstance = null; }
 
-    // 1. TÍNH TOÁN DỮ LIỆU THỐNG KÊ
     const freqMap = {};
     draws.forEach(d => {
       const nums = isVietlott ? (d.winningNumbers || []) : (d.lottoPairs || []);
@@ -690,27 +735,32 @@ export const UIController = {
     const top15Labels = top15.map(t => t.num);
     const top15Counts = top15.map(t => t.count);
 
-    const gapDetails = (gapStats && gapStats.topDetails) ? gapStats.topDetails : [];
+    const gapDetails = (gapStats && Array.isArray(gapStats.topDetails)) ? gapStats.topDetails : [];
+    const getRipeness = (item) => {
+      if (!item) return null;
+      if (typeof item.ripeness === 'number') return item.ripeness;
+      if (typeof item.ripenessIndex === 'number') return item.ripenessIndex;
+      return null;
+    };
+
     const top15Gaps = top15.map(t => {
       const found = gapDetails.find(d => String(d.num).padStart(2, '0') === t.num);
-      return found ? found.currentGap : 2;
+      return found && typeof found.currentGap === 'number' ? found.currentGap : 2;
     });
     const top15Cycles = top15.map(t => {
       const found = gapDetails.find(d => String(d.num).padStart(2, '0') === t.num);
-      return found ? found.avgCycle : 5;
+      return found && typeof found.avgCycle === 'number' ? found.avgCycle : 5;
     });
 
-    // Cân bằng Chẵn / Lẻ và Tài / Xỉu
-    const evenPct = clusterStats && clusterStats.evenRatio !== undefined ? Math.round(clusterStats.evenRatio * 100) : 52;
+    const evenPct = clusterStats && typeof clusterStats.evenRatio === 'number' ? Math.round(clusterStats.evenRatio * 100) : 50;
     const oddPct = 100 - evenPct;
-    const highPct = clusterStats && clusterStats.highRatio !== undefined ? Math.round(clusterStats.highRatio * 100) : 48;
+    const rawHighRatio = clusterStats && (typeof clusterStats.highRatio === 'number' ? clusterStats.highRatio : clusterStats.observedHighRatio);
+    const highPct = typeof rawHighRatio === 'number' ? Math.round(rawHighRatio * 100) : 50;
     const lowPct = 100 - highPct;
 
-    // Phân bố Đầu (0-9) và Đuôi (0-9) trong 5 kỳ gần nhất
     const headCounts = Array(10).fill(0);
     const tailCounts = Array(10).fill(0);
-    const recentDraws = draws.slice(0, 5);
-    recentDraws.forEach(d => {
+    draws.slice(0, 5).forEach(d => {
       const nums = isVietlott ? (d.winningNumbers || []) : (d.lottoPairs || []);
       nums.forEach(n => {
         const s = String(n).padStart(2, '0');
@@ -721,346 +771,344 @@ export const UIController = {
       });
     });
 
-    // 2. TÌM 3 ĐIỂM SỐ GỢI Ý CHO NGƯỜI DÙNG PHỔ THÔNG
-    // Bạch thủ vàng: số thuộc top tần suất và có nhịp chín muồi 0.85 - 1.25x
+    // Hỗ trợ đồng thời cả schema ripenessIndex (FrequencyGapAlgorithm) và ripeness (Integration test)
     let bachThu = top15[0] ? top15[0].num : (isVietlott ? '18' : '68');
-    const ripeItem = gapDetails.find(d => d.ripeness >= 0.85 && d.ripeness <= 1.25);
+    const ripeItem = gapDetails.find(d => {
+      const r = getRipeness(d);
+      return r !== null && r >= 0.85 && r <= 1.25;
+    });
     if (ripeItem) bachThu = String(ripeItem.num).padStart(2, '0');
 
-    // Song thủ bạc nhớ: lấy từ topPairs của Association Rules Heuristic
-    const topPairs = (rulesStats && rulesStats.topPairs) ? rulesStats.topPairs : [];
-    const songThu = topPairs[0] ? `${topPairs[0].a} - ${topPairs[0].b}` : (isVietlott ? '12 - 24' : '39 - 79');
+    // Hỗ trợ đồng thời cả schema frequentPairs (AssociationRulesAlgorithm) và topPairs (Integration test)
+    const rawPairs = (rulesStats && (rulesStats.topPairs || rulesStats.frequentPairs)) || [];
+    const topPairs = Array.isArray(rawPairs) ? rawPairs : [];
+    const songThu = topPairs[0] ? `${topPairs[0].a} – ${topPairs[0].b}` : (top15.length >= 2 ? `${top15[0].num} – ${top15[1].num}` : '12 – 24');
 
-    // Cảnh báo số gan: số có currentGap lớn nhất
-    const maxGanItem = gapDetails.slice().sort((a, b) => b.currentGap - a.currentGap)[0];
+    const maxGanItem = gapDetails.slice().sort((a, b) => (b.currentGap || 0) - (a.currentGap || 0))[0];
     const soGan = maxGanItem ? String(maxGanItem.num).padStart(2, '0') : '47';
-    const soGanKỳ = maxGanItem ? maxGanItem.currentGap : 16;
+    const soGanKy = maxGanItem && typeof maxGanItem.currentGap === 'number' ? maxGanItem.currentGap : 16;
 
-    // Chuẩn bị ma trận 3 làn
-    const primeNums = [];
-    const hotNums = [];
-    const coldNums = [];
+    const primeItems = [];
+    const hotItems = [];
+    const coldItems = [];
     gapDetails.forEach(item => {
       const numStr = String(item.num).padStart(2, '0');
-      if (item.ripeness >= 0.8 && item.ripeness <= 1.35) {
-        primeNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(${item.currentGap}k)</span>`);
+      const r = getRipeness(item);
+      const curGap = typeof item.currentGap === 'number' ? item.currentGap : 0;
+      const recentHits = typeof item.hitsInRecentWindow === 'number' ? item.hitsInRecentWindow : (item.hits15 || 0);
+      if (r !== null && r >= 0.8 && r <= 1.35) {
+        primeItems.push({ numStr, curGap, dist: Math.abs(r - 1.0) });
       }
-      if (item.hits15 >= 3) {
-        hotNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(${item.hits15}l)</span>`);
+      if (recentHits >= 3) {
+        hotItems.push({ numStr, recentHits });
       }
-      if (item.currentGap >= 12 || item.ripeness > 1.4) {
-        coldNums.push(`${numStr} <span style="font-size:10px; opacity:0.8;">(gan ${item.currentGap}k)</span>`);
+      if (curGap >= 12) {
+        coldItems.push({ numStr, curGap });
       }
     });
 
-    const primeChipsHtml = primeNums.slice(0, 10).map(s => `<span class="lotto-chip special-hit">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Đang cập nhật...</span>';
-    const hotChipsHtml = hotNums.slice(0, 10).map(s => `<span class="lotto-chip hit">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Đang cập nhật...</span>';
-    const coldChipsHtml = coldNums.slice(0, 8).map(s => `<span class="lotto-chip" style="color:var(--rose-400); border-color:rgba(244,63,94,0.3);">${s}</span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">Không có số vượt ngưỡng cực đại</span>';
+    primeItems.sort((a, b) => a.dist - b.dist);
+    hotItems.sort((a, b) => b.recentHits - a.recentHits);
+    coldItems.sort((a, b) => b.curGap - a.curGap);
 
-    // Bạc nhớ HTML: Chuẩn hóa schema, loại bỏ hoàn toàn undefined, NaN
-    const liftPairsHtml = (topPairs && topPairs.length > 0) ? topPairs.slice(0, 6).map(p => {
-      const cooccur = (typeof p.coOccurrenceCount === 'number') 
-        ? p.coOccurrenceCount 
+    const primeChipsHtml = primeItems.slice(0, 10)
+      .map(x => `<span class="lotto-chip special-hit">${x.numStr} <small style="opacity:0.8; margin-left:3px;">(${x.curGap}k)</small></span>`)
+      .join('') || '<span style="color:var(--text-muted);font-size:12.5px;">Chưa có số rơi đúng dải chu kỳ 0.8x–1.35x ở mẫu hiện tại</span>';
+    const hotChipsHtml = hotItems.slice(0, 10)
+      .map(x => `<span class="lotto-chip hit">${x.numStr} <small style="opacity:0.8; margin-left:3px;">(${x.recentHits}l)</small></span>`)
+      .join('') || '<span style="color:var(--text-muted);font-size:12.5px;">Tần suất đang phân bổ đồng đều giữa các con số</span>';
+    const coldChipsHtml = coldItems.slice(0, 10)
+      .map(x => `<span class="lotto-chip" style="color: var(--danger); border-color: var(--callout-rose-border); background: var(--callout-rose-bg);">${x.numStr} <small style="opacity:0.85; margin-left:3px;">(${x.curGap}k)</small></span>`)
+      .join('') || '<span style="color:var(--text-muted);font-size:12.5px;">Không có số nào vượt ngưỡng gan 12 kỳ trong mẫu hiện tại</span>';
+
+    const liftPairsHtml = topPairs.length > 0 ? topPairs.slice(0, 5).map(p => {
+      const cooccur = (typeof p.coOccurrenceCount === 'number')
+        ? p.coOccurrenceCount
         : ((typeof p.count === 'number') ? p.count : 0);
       const totalDraws = p.totalEligibleDraws || draws.length || 50;
       const liftVal = (typeof p.lift === 'number' && !isNaN(p.lift)) ? p.lift.toFixed(2) : '1.00';
       return `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-subtle); border:1px solid var(--line-subtle); border-radius:var(--r-sm); margin-bottom:8px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span class="lotto-chip">${p.a}</span>
-            <i class="fa-solid fa-arrow-right" style="color:var(--gold-600); font-size:11px;"></i>
-            <span class="lotto-chip special-hit">${p.b}</span>
+        <div class="bac-nho-pair-row">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="lotto-chip" style="margin:0;">${p.a}</span>
+            <i class="fa-solid fa-arrows-left-right" style="color:var(--accent-amber); font-size:11px;"></i>
+            <span class="lotto-chip special-hit" style="margin:0;">${p.b}</span>
           </div>
           <div style="text-align:right;">
-            <span style="font-family:var(--font-mono); font-weight:700; color:var(--emerald-600); font-size:13px;">Gắn kết ${liftVal}x</span>
-            <div style="font-size:10px; color:var(--text-muted);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
+            <span class="tabular-numbers" style="font-weight:700; color:var(--accent-emerald); font-size:13px;">Gắn kết ${liftVal}x</span>
+            <div style="font-size:11px; color:var(--text-muted);">${cooccur} lần về cùng nhau (trong ${totalDraws} kỳ)</div>
           </div>
         </div>
       `;
-    }).join('') : '<p style="color:var(--text-muted); font-size:13px; padding:12px 0;">Chưa đủ dữ liệu để tính cặp số đi kèm trong phạm vi này.</p>';
+    }).join('') : '<p style="color:var(--text-muted); font-size:13px; padding:8px 0;">Chưa đủ mẫu cặp đồng xuất hiện trong phạm vi này.</p>';
 
-    // RENDER HTML DASHBOARD
     container.innerHTML = `
-      <!-- 1. HEADER DASHBOARD -->
-      <div class="quant-card" style="margin-bottom: 20px;">
-        <div class="card-header-bar" style="margin-bottom: 12px; padding-bottom: 12px;">
-          <div class="card-title-group">
-            <div class="eyebrow"><i class="fa-solid fa-chart-line"></i> Dashboard Trực Quan</div>
-            <h2 style="font-size: 22px; width: 100%;">Trung Tâm Phân Tích Dữ Liệu & Biểu Đồ Soi Cầu Đa Chiều</h2>
-          </div>
-          <span class="meta-info-badge" style="color:var(--gold-600); border-color:var(--gold-300); background:var(--gold-50);">
-            Khảo sát ${draws.length} kỳ mở thưởng gần nhất
-          </span>
-        </div>
-        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin: 0;">
-          Dữ liệu trực quan hóa bằng các biểu đồ tương tác: theo dõi tần suất nổ, xu hướng chu kỳ điểm rơi, tỷ lệ cân bằng chẵn lẻ và phân bố 10 đầu số giúp bạn đưa ra lựa chọn sáng suốt nhất.
-        </p>
-      </div>
-
-      <!-- 2. THẺ GỢI Ý NHANH CHO NGƯỜI DÙNG PHỔ THÔNG -->
+      <!-- 1. 3 Thẻ Tóm Tắt Điểm Nhấn Dễ Dùng -->
       <div class="recommendation-cards-grid">
-        <!-- Thẻ 1: Bạch Thủ -->
         <div class="rec-card rec-gold">
           <div>
             <div class="rec-header">
-              <span class="rec-title"><i class="fa-solid fa-star"></i> Bạch Thủ Tiềm Năng</span>
-              <span class="meta-info-badge" style="background:rgba(217,169,59,0.15); color:#FDE047; border:none;">Điểm Rơi Vàng</span>
+              <span class="rec-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Ứng Viên Điểm Rơi Chu Kỳ</span>
+              <span class="meta-info-badge">Nhịp cân bằng</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${bachThu}</span>
-              <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">Nhịp xuất hiện lý tưởng</span>
+              <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">Khớp chu kỳ lịch sử</span>
             </div>
             <div class="rec-desc">
-              Con số có tần suất xuất hiện ổn định và khoảng cách chưa về đang khớp hoàn hảo với chu kỳ trung bình.
+              Con số có khoảng nghỉ hiện tại tiệm cận chu kỳ xuất hiện trung bình trong ${draws.length} kỳ khảo sát.
             </div>
           </div>
         </div>
 
-        <!-- Thẻ 2: Song Thủ Bạc Nhớ -->
         <div class="rec-card rec-emerald">
           <div>
             <div class="rec-header">
-              <span class="rec-title"><i class="fa-solid fa-link"></i> Song Thủ Bạc Nhớ</span>
-              <span class="meta-info-badge" style="background:rgba(16,185,129,0.15); color:#34D399; border:none;">Cùng Nổ</span>
+              <span class="rec-title"><i class="fa-solid fa-link" aria-hidden="true"></i> Cặp Đôi Đồng Xuất Hiện</span>
+              <span class="meta-info-badge">Đi kèm cao</span>
             </div>
             <div class="rec-ball-box">
-              <span class="rec-ball" style="padding:0 16px;">${songThu}</span>
+              <span class="rec-ball">${songThu}</span>
             </div>
             <div class="rec-desc">
-              Cặp số có mối tương quan ăn theo cao nhất: khi một trong hai con xuất hiện thì con còn lại có tỷ lệ về kèm rất cao.
+              Cặp số có tần suất xuất hiện cùng kỳ nổi bật nhất trong tập mẫu lịch sử của đài/sản phẩm này.
             </div>
           </div>
         </div>
 
-        <!-- Thẻ 3: Cảnh Báo Số Gan -->
         <div class="rec-card rec-rose">
           <div>
             <div class="rec-header">
-              <span class="rec-title"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh Báo Số Gan</span>
-              <span class="meta-info-badge" style="background:rgba(244,63,94,0.15); color:#FB7185; border:none;">Không Nuôi</span>
+              <span class="rec-title"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Cảnh Báo Số Vắng Mặt Lâu</span>
+              <span class="meta-info-badge">Tránh gấp thếp</span>
             </div>
             <div class="rec-ball-box">
               <span class="rec-ball">${soGan}</span>
-              <span style="font-size: 13px; color: var(--rose-400); font-weight: 600;">Đã ${soGanKỳ} kỳ chưa ra</span>
+              <span style="font-size: 13px; color: var(--danger); font-weight: 700;">Vắng ${soGanKy} kỳ liên tiếp</span>
             </div>
             <div class="rec-desc">
-              Con số đã bị giam vượt ngưỡng an toàn. Khuyên bạn tuyệt đối không nên mạo hiểm dồn tiền nuôi số này!
+              Đang trong chuỗi gan dài ngày. Không nên dồn ngân sách nuôi gấp thếp cho tới khi số này về lại.
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 3. LƯỚI 4 BIỂU ĐỒ INTERACTIVE CHART.JS -->
+      <!-- 2. Lưới 2x2 Bốn Biểu Đồ Phân Tích Tương Tác Cân Đối -->
       <div class="dashboard-charts-grid">
-        
-        <!-- BIỂU ĐỒ 1: TẦN SUẤT TOP 15 SỐ -->
         <div class="chart-card">
           <div class="chart-card-header">
             <div class="chart-card-title-group">
-              <h3>1. Tần Suất Xuất Hiện (Top 15 Con Số)</h3>
-              <div class="chart-card-subtitle">Số lần nổ trong 50 kỳ mở thưởng gần nhất</div>
+              <h3>1. Tần Suất Xuất Hiện (Top 15 Số)</h3>
+              <div class="chart-card-subtitle">Tổng số lần xuất hiện trong ${draws.length} kỳ gần nhất</div>
             </div>
-            <span class="meta-info-badge">Cột Tần Suất</span>
+            <span class="meta-info-badge">Cột tần suất</span>
           </div>
           <div class="chart-canvas-box">
             <canvas id="chart-freq-canvas"></canvas>
           </div>
           <div class="chart-footer-insight">
             <i class="fa-solid fa-circle-info" style="color:var(--gold-400);"></i>
-            <span>Top 3 con số dẫn đầu tần suất: <strong>${top15Labels.slice(0, 3).join(', ')}</strong></span>
+            <span>Nhóm về đều nhất: <strong>${top15Labels.slice(0, 3).join(', ') || '--'}</strong></span>
           </div>
         </div>
 
-        <!-- BIỂU ĐỒ 2: NHỊP CẦU & ĐIỂM RƠI CHU KỲ -->
         <div class="chart-card">
           <div class="chart-card-header">
             <div class="chart-card-title-group">
-              <h3>2. Nhịp Cầu & Điểm Rơi Chu Kỳ</h3>
-              <div class="chart-card-subtitle">So sánh số kỳ chưa về (Xanh) vs Chu kỳ trung bình (Vàng)</div>
+              <h3>2. Khoảng Nghỉ Hiện Tại &amp; Chu Kỳ Trung Bình</h3>
+              <div class="chart-card-subtitle">Đường liền: Số kỳ chưa về &bull; Đường đứt: Chu kỳ TB</div>
             </div>
-            <span class="meta-info-badge">Đường Xu Hướng</span>
+            <span class="meta-info-badge">So sánh chu kỳ</span>
           </div>
           <div class="chart-canvas-box">
             <canvas id="chart-trend-canvas"></canvas>
           </div>
           <div class="chart-footer-insight">
-            <i class="fa-solid fa-chart-line" style="color:var(--emerald-400);"></i>
-            <span>Khi đường Xanh chạm hoặc vượt đường Vàng là dấu hiệu con số đã chín muồi sắp nổ.</span>
+            <i class="fa-solid fa-wave-square" style="color:var(--accent);"></i>
+            <span>Điểm giao cắt cho biết con số vừa chạm chu kỳ lặp lại trung bình trong mẫu.</span>
           </div>
         </div>
 
-        <!-- BIỂU ĐỒ 3: CÂN BẰNG CHẴN/LẺ & TÀI/XỈU -->
         <div class="chart-card">
           <div class="chart-card-header">
             <div class="chart-card-title-group">
-              <h3>3. Tỷ Lệ Cân Bằng Chẵn - Lẻ & Tài - Xỉu</h3>
-              <div class="chart-card-subtitle">Phân bổ tỷ lệ % hình học của toàn bộ các dãy số</div>
+              <h3>3. Tỷ Lệ Chẵn – Lẻ &amp; Tài – Xỉu</h3>
+              <div class="chart-card-subtitle">Cấu trúc phân bổ chẵn/lẻ và lớn/nhỏ toàn tập mẫu</div>
             </div>
-            <span class="meta-info-badge">Tròn Đôi (Donut)</span>
+            <span class="meta-info-badge">Tỷ trọng %</span>
           </div>
           <div class="donuts-container">
             <div class="single-donut-box">
-              <canvas id="chart-donut-parity-canvas"></canvas>
-              <div class="donut-label-center">
-                <div class="donut-pct">${evenPct}%</div>
-                <div class="donut-sub">Chẵn</div>
+              <div class="donut-ring-wrap">
+                <canvas id="chart-donut-parity-canvas"></canvas>
+                <div class="donut-label-center">
+                  <div class="donut-pct">${evenPct}%</div>
+                  <div class="donut-sub">Số chẵn</div>
+                </div>
+              </div>
+              <div class="donut-custom-legend" aria-hidden="true">
+                <span class="donut-legend-pill"><i class="donut-swatch" style="background: ${theme.indigo};"></i>Chẵn</span>
+                <span class="donut-legend-pill"><i class="donut-swatch" style="background: ${theme.neutralSlice};"></i>Lẻ</span>
               </div>
             </div>
             <div class="single-donut-box">
-              <canvas id="chart-donut-highlow-canvas"></canvas>
-              <div class="donut-label-center">
-                <div class="donut-pct">${highPct}%</div>
-                <div class="donut-sub">Tài</div>
+              <div class="donut-ring-wrap">
+                <canvas id="chart-donut-highlow-canvas"></canvas>
+                <div class="donut-label-center">
+                  <div class="donut-pct">${highPct}%</div>
+                  <div class="donut-sub">Nhóm lớn</div>
+                </div>
+              </div>
+              <div class="donut-custom-legend" aria-hidden="true">
+                <span class="donut-legend-pill"><i class="donut-swatch" style="background: ${theme.jade};"></i>Tài</span>
+                <span class="donut-legend-pill"><i class="donut-swatch" style="background: ${theme.neutralSlice};"></i>Xỉu</span>
               </div>
             </div>
           </div>
           <div class="chart-footer-insight">
-            <i class="fa-solid fa-scale-balanced" style="color:var(--blue-400);"></i>
-            <span>${evenPct > 53 ? '✦ Nhịp tới: Ưu tiên chọn thêm bóng số Lẻ để cân bằng xác suất.' : '✦ Nhịp tới: Trạng thái cân bằng tự nhiên ổn định.'}</span>
+            <i class="fa-solid fa-scale-balanced" style="color:var(--brand-primary);"></i>
+            <span>Lẻ: <strong>${oddPct}%</strong> &bull; Nhóm nhỏ: <strong>${lowPct}%</strong> (Giúp phối bộ số hài hòa)</span>
           </div>
         </div>
 
-        <!-- BIỂU ĐỒ 4: PHÂN BỐ ĐẦU - ĐUÔI (0 ĐẾN 9) -->
         <div class="chart-card">
           <div class="chart-card-header">
             <div class="chart-card-title-group">
-              <h3>4. Phân Bố Đầu Lô & Đuôi Lô (0 đến 9)</h3>
-              <div class="chart-card-subtitle">Số lượng con số về theo từng Đầu và Đuôi</div>
+              <h3>4. Mật Độ Đầu Số &amp; Đuôi Số (5 Kỳ Gần Nhất)</h3>
+              <div class="chart-card-subtitle">Theo dõi sự phân bổ từ chữ số 0 đến 9</div>
             </div>
-            <span class="meta-info-badge">Nhóm Cột Đôi</span>
+            <span class="meta-info-badge">Đầu – Đuôi</span>
           </div>
           <div class="chart-canvas-box">
             <canvas id="chart-headtail-canvas"></canvas>
           </div>
           <div class="chart-footer-insight">
-            <i class="fa-solid fa-bullseye" style="color:var(--gold-400);"></i>
-            <span>Đầu Vàng (Đầu lô), Cột Xanh (Đuôi lô). Cảnh báo các đầu có 0 con là "Đầu câm".</span>
+            <i class="fa-solid fa-grip-vertical" style="color:var(--gold-400);"></i>
+            <span>Cột Vàng cam: Đầu số &bull; Cột Ngọc bích: Đuôi số</span>
           </div>
         </div>
-
       </div>
 
-      <!-- 4. MA TRẬN 3 LÀN CHU KỲ & BẢNG BẠC NHỚ -->
-      <div class="dashboard-charts-grid" style="margin-bottom:0;">
-        
-        <!-- Ma Trận 3 Làn -->
-        <div class="quant-card" style="margin-bottom:0;">
+      <!-- 3. Phân Làn Chu Kỳ & Bảng Cặp Đôi Bạc Nhớ -->
+      <div class="dashboard-charts-grid">
+        <div class="quant-card">
           <div class="card-header-bar">
             <div class="card-title-group">
-              <h3 style="font-family:var(--font-display); font-size:18px; color:var(--text-primary);">Ma Trận 3 Làn Chu Kỳ Điểm Rơi</h3>
+              <h3>Phân Làn Nhịp Độ Xuất Hiện</h3>
             </div>
-            <span class="meta-info-badge">Phân Làn Tự Động</span>
+            <span class="meta-info-badge">3 nhóm trạng thái</span>
           </div>
-          <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="ripeness-lanes-stack">
             <div class="ripeness-lane lane-prime">
-              <div class="lane-title"><i class="fa-solid fa-circle-check"></i> Vùng Chín Muồi (Dễ Nổ Nhất)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Các con số chuẩn nhịp chu kỳ trung bình:</div>
+              <div class="lane-title"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Vùng Chín Muồi (Quanh chu kỳ TB)</div>
+              <div class="lane-sub">Khoảng nghỉ hiện tại đạt 0.8x – 1.35x chu kỳ lịch sử:</div>
               <div class="lane-chips-box">${primeChipsHtml}</div>
             </div>
             <div class="ripeness-lane lane-hot">
-              <div class="lane-title"><i class="fa-solid fa-fire"></i> Nhịp Bùng Nổ (Đang Về Nhiều)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Các con số có đà xuất hiện liên tục:</div>
+              <div class="lane-title"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Nhịp Về Đều (Đà tần suất cao)</div>
+              <div class="lane-sub">Các con số xuất hiện từ 3 lần trở lên trong cửa sổ gần đây:</div>
               <div class="lane-chips-box">${hotChipsHtml}</div>
             </div>
             <div class="ripeness-lane lane-cold">
-              <div class="lane-title"><i class="fa-solid fa-triangle-exclamation"></i> Vùng Nguy Hiểm (Gan Lâu Ngày)</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Nguy cơ bị giam số dài ngày, tránh ôm:</div>
+              <div class="lane-title"><i class="fa-solid fa-snowflake" aria-hidden="true"></i> Nhóm Gan Lâu Ngày (Cần thận trọng)</div>
+              <div class="lane-sub">Đang vắng mặt dài kỳ (từ 12 kỳ trở lên):</div>
               <div class="lane-chips-box">${coldChipsHtml}</div>
             </div>
           </div>
         </div>
 
-        <!-- Khai Phá Bạc Nhớ Cặp Đôi -->
-        <div class="quant-card" style="margin-bottom:0;">
+        <div class="quant-card">
           <div class="card-header-bar">
             <div class="card-title-group">
-              <h3 style="font-family:var(--font-display); font-size:18px; color:var(--text-primary);">Cặp Đôi Bạc Nhớ Hay Đi Kèm Nhau</h3>
+              <h3>Cặp Đôi Bạc Nhớ Hay Đi Kèm Nhau</h3>
             </div>
-            <span class="meta-info-badge" style="color:var(--emerald-600); border-color:rgba(16,185,129,0.3); background:var(--emerald-50);">Tương Quan Cao</span>
+            <span class="meta-info-badge">Đồng xuất hiện</span>
           </div>
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
-            Khi số bên trái xuất hiện, xác suất số bên phải cùng nổ tăng vọt:
+          <p style="font-size:13px; color:var(--text-secondary); margin: 0 0 12px 0;">
+            Các cặp số có tần suất về cùng nhau cao nhất trong lịch sử mở thưởng của đài:
           </p>
-          <div>
+          <div class="bac-nho-list">
             ${liftPairsHtml}
           </div>
         </div>
-
       </div>
     `;
 
-    // 4. KHỞI TẠO CÁC BIỂU ĐỒ CHART.JS
-    setTimeout(() => {
-      // Biểu đồ 1: Tần suất Top 15
-      const ctxFreq = document.getElementById('chart-freq-canvas');
-      if (ctxFreq && window.Chart) {
-        this.freqChartInstance = new Chart(ctxFreq, {
+    // Vẽ 4 biểu đồ Chart.js với màu sắc đồng bộ Sáng / Tối (Chỉ vẽ khi container đang hiển thị thật)
+    if (this._dashChartTimer) {
+      clearTimeout(this._dashChartTimer);
+      this._dashChartTimer = null;
+    }
+
+    const isHiddenInBrowser = typeof document !== 'undefined' && Boolean(document.defaultView) && container.offsetParent === null;
+    if (isHiddenInBrowser) {
+      this._dashChartsDeferred = { data, isVietlott, containerId };
+      return;
+    }
+    this._dashChartsDeferred = null;
+
+    this._dashChartTimer = setTimeout(() => {
+      const t = this.getChartTheme();
+
+      const ctxFreq = typeof document !== 'undefined' ? document.getElementById('chart-freq-canvas') : null;
+      if (ctxFreq && typeof window !== 'undefined' && window.Chart) {
+        this.destroyCanvasChart(ctxFreq);
+        this.freqChartInstance = new window.Chart(ctxFreq, {
           type: 'bar',
           data: {
             labels: top15Labels,
             datasets: [{
               label: 'Số lần về',
               data: top15Counts,
-              backgroundColor: top15Labels.map((_, i) => i < 3 ? 'rgba(217, 119, 6, 0.85)' : 'rgba(37, 99, 235, 0.35)'),
-              borderColor: top15Labels.map((_, i) => i < 3 ? '#D97706' : '#2563EB'),
-              borderWidth: 1,
-              borderRadius: 6
+              backgroundColor: top15Labels.map((_, i) => i < 3 ? t.amber : t.jade),
+              borderRadius: 5,
+              borderWidth: 0
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 260 },
             plugins: {
               legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (c) => ` Xuất hiện: ${c.parsed.y} lần`
-                }
-              }
+              tooltip: { callbacks: { label: (c) => ` Xuất hiện: ${c.parsed.y} lần` } }
             },
             scales: {
-              x: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono', weight: 'bold' } }
-              },
-              y: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono' }, stepSize: 1 },
-                beginAtZero: true
-              }
+              x: { grid: { display: false }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', weight: 'bold', size: 11 } } },
+              y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', size: 11 }, stepSize: 1 }, beginAtZero: true }
             }
           }
         });
       }
 
-      // Biểu đồ 2: Nhịp cầu & Chu kỳ
-      const ctxTrend = document.getElementById('chart-trend-canvas');
-      if (ctxTrend && window.Chart) {
-        this.trendChartInstance = new Chart(ctxTrend, {
+      const ctxTrend = typeof document !== 'undefined' ? document.getElementById('chart-trend-canvas') : null;
+      if (ctxTrend && typeof window !== 'undefined' && window.Chart) {
+        this.destroyCanvasChart(ctxTrend);
+        this.trendChartInstance = new window.Chart(ctxTrend, {
           type: 'line',
           data: {
             labels: top15Labels,
             datasets: [
               {
-                label: 'Số kỳ chưa về (Hiện tại)',
+                label: 'Kỳ chưa về hiện tại',
                 data: top15Gaps,
-                borderColor: '#2563EB',
-                backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                borderWidth: 2.5,
+                borderColor: t.jade,
+                backgroundColor: t.jadeSoft,
+                borderWidth: 2.2,
                 fill: true,
-                tension: 0.35,
-                pointBackgroundColor: '#2563EB',
-                pointRadius: 4
+                tension: 0.32,
+                pointBackgroundColor: t.jade,
+                pointRadius: 3.5
               },
               {
-                label: 'Chu kỳ trung bình (Kỳ vọng)',
+                label: 'Chu kỳ trung bình',
                 data: top15Cycles,
-                borderColor: '#D97706',
+                borderColor: t.amber,
                 borderDash: [5, 4],
                 borderWidth: 2,
                 fill: false,
                 tension: 0.3,
-                pointBackgroundColor: '#D97706',
+                pointBackgroundColor: t.amber,
                 pointRadius: 3
               }
             ]
@@ -1068,174 +1116,173 @@ export const UIController = {
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 260 },
             plugins: {
               legend: {
                 display: true,
-                labels: { color: '#334155', font: { size: 11, family: 'Be Vietnam Pro', weight: '600' } }
+                labels: { color: t.legend, boxWidth: 12, font: { size: 11, family: 'Be Vietnam Pro', weight: '600' } }
               },
-              tooltip: {
-                callbacks: {
-                  label: (c) => ` ${c.dataset.label}: ${c.parsed.y} kỳ`
-                }
-              }
+              tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.y} kỳ` } }
             },
             scales: {
-              x: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono', weight: 'bold' } }
-              },
-              y: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono' } },
-                beginAtZero: true
-              }
+              x: { grid: { display: false }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', weight: 'bold', size: 11 } } },
+              y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', size: 11 } }, beginAtZero: true }
             }
           }
         });
       }
 
-      // Biểu đồ 3a: Donut Chẵn / Lẻ
-      const ctxParity = document.getElementById('chart-donut-parity-canvas');
-      if (ctxParity && window.Chart) {
-        this.parityChartInstance = new Chart(ctxParity, {
+      const ctxParity = typeof document !== 'undefined' ? document.getElementById('chart-donut-parity-canvas') : null;
+      if (ctxParity && typeof window !== 'undefined' && window.Chart) {
+        this.destroyCanvasChart(ctxParity);
+        this.parityChartInstance = new window.Chart(ctxParity, {
           type: 'doughnut',
           data: {
-            labels: ['Chẵn', 'Lẻ'],
+            labels: ['Số chẵn', 'Số lẻ'],
             datasets: [{
               data: [evenPct, oddPct],
-              backgroundColor: ['#2B5770', '#9A6B24'],
-              borderColor: '#FFFFFF',
-              borderWidth: 2,
-              hoverOffset: 4
+              backgroundColor: [t.indigo, t.neutralSlice],
+              borderColor: t.cardBg,
+              borderWidth: 3,
+              hoverOffset: 3
             }]
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            layout: {
-              padding: { top: 4, bottom: 14, left: 6, right: 6 }
-            },
+            maintainAspectRatio: true,
+            aspectRatio: 1,
+            animation: { duration: 260 },
+            cutout: '70%',
+            layout: { padding: 2 },
             plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  color: '#5C625A',
-                  boxWidth: 12,
-                  padding: 12,
-                  font: { size: 11, family: 'Be Vietnam Pro', weight: '600' }
-                }
-              }
+              legend: { display: false }
             }
           }
         });
       }
 
-      // Biểu đồ 3b: Donut Tài / Xỉu
-      const ctxHighLow = document.getElementById('chart-donut-highlow-canvas');
-      if (ctxHighLow && window.Chart) {
-        this.highlowChartInstance = new Chart(ctxHighLow, {
+      const ctxHighLow = typeof document !== 'undefined' ? document.getElementById('chart-donut-highlow-canvas') : null;
+      if (ctxHighLow && typeof window !== 'undefined' && window.Chart) {
+        this.destroyCanvasChart(ctxHighLow);
+        this.highlowChartInstance = new window.Chart(ctxHighLow, {
           type: 'doughnut',
           data: {
             labels: ['Tài (Lớn)', 'Xỉu (Nhỏ)'],
             datasets: [{
               data: [highPct, lowPct],
-              backgroundColor: ['#1E6B52', '#7E847C'],
-              borderColor: '#FFFFFF',
-              borderWidth: 2,
-              hoverOffset: 4
+              backgroundColor: [t.jade, t.neutralSlice],
+              borderColor: t.cardBg,
+              borderWidth: 3,
+              hoverOffset: 3
             }]
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            layout: {
-              padding: { top: 4, bottom: 14, left: 6, right: 6 }
-            },
+            maintainAspectRatio: true,
+            aspectRatio: 1,
+            animation: { duration: 260 },
+            cutout: '70%',
+            layout: { padding: 2 },
             plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  color: '#334155',
-                  boxWidth: 12,
-                  padding: 12,
-                  font: { size: 11, family: 'Be Vietnam Pro', weight: '600' }
-                }
-              }
+              legend: { display: false }
             }
           }
         });
       }
 
-      // Biểu đồ 4: Phân Bố Đầu Lô & Đuôi Lô 0-9
-      const ctxHeadTail = document.getElementById('chart-headtail-canvas');
-      if (ctxHeadTail && window.Chart) {
-        this.headtailChartInstance = new Chart(ctxHeadTail, {
+      const ctxHeadTail = typeof document !== 'undefined' ? document.getElementById('chart-headtail-canvas') : null;
+      if (ctxHeadTail && typeof window !== 'undefined' && window.Chart) {
+        this.destroyCanvasChart(ctxHeadTail);
+        this.headtailChartInstance = new window.Chart(ctxHeadTail, {
           type: 'bar',
           data: {
             labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
             datasets: [
               {
-                label: 'Đầu Lô',
+                label: 'Đầu lô',
                 data: headCounts,
-                backgroundColor: 'rgba(217, 119, 6, 0.85)',
-                borderColor: '#D97706',
-                borderWidth: 1,
-                borderRadius: 4
+                backgroundColor: t.amber,
+                borderRadius: 4,
+                borderWidth: 0
               },
               {
-                label: 'Đuôi Lô',
+                label: 'Đuôi lô',
                 data: tailCounts,
-                backgroundColor: 'rgba(5, 150, 105, 0.8)',
-                borderColor: '#059669',
-                borderWidth: 1,
-                borderRadius: 4
+                backgroundColor: t.jade,
+                borderRadius: 4,
+                borderWidth: 0
               }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 260 },
             plugins: {
               legend: {
                 display: true,
-                labels: { color: '#334155', font: { size: 11, family: 'Be Vietnam Pro', weight: 'bold' } }
+                labels: { color: t.legend, boxWidth: 12, font: { size: 11, family: 'Be Vietnam Pro', weight: '600' } }
               },
-              tooltip: {
-                callbacks: {
-                  label: (c) => ` ${c.dataset.label} ${c.label}: ${c.parsed.y} lần về`
-                }
-              }
+              tooltip: { callbacks: { label: (c) => ` ${c.dataset.label} ${c.label}: ${c.parsed.y} lần` } }
             },
             scales: {
-              x: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono', weight: 'bold' } }
-              },
-              y: {
-                grid: { color: '#E2E8F0' },
-                ticks: { color: '#475569', font: { family: 'JetBrains Mono' }, stepSize: 1 },
-                beginAtZero: true
-              }
+              x: { grid: { display: false }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', weight: 'bold', size: 11 } } },
+              y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { family: 'JetBrains Mono', size: 11 }, stepSize: 1 }, beginAtZero: true }
             }
           }
         });
       }
-    }, 50);
+    }, 40);
   },
 
   /**
-   * 5. Kết xuất Kết Quả Dò Số (Backtest Results)
+   * 5. Kết xuất Kết Quả Dò Số & Đối Soát 1 Kỳ (Backtest Results)
    */
-  renderBacktestResult(result, isVietlott, containerId = 'backtest-result-container') {
+  renderBacktestResult(result, isVietlott, containerId = 'backtest-result-container', contextInfo = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     if (!result || !result.success) {
+      const targetDate = (contextInfo && contextInfo.targetDate) || (result && result.targetDate) || '';
+      const stationSlug = (contextInfo && contextInfo.stationOrGame) || (result && result.stationOrGame) || '';
+      const readableName = stationSlug ? this.formatStationOrGame(stationSlug) : 'đài mở thưởng này';
+      const scheduleText = stationSlug ? this.getScheduleDescription(stationSlug, isVietlott) : '';
+
+      let dayLabel = '';
+      if (targetDate && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+        const [yy, mm, dd] = targetDate.split('-').map(Number);
+        const dt = new Date(yy, mm - 1, dd);
+        const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+        if (!isNaN(dt.getTime())) {
+          dayLabel = ` (${dayNames[dt.getDay()]}, ${String(dd).padStart(2, '0')}/${String(mm).padStart(2, '0')}/${yy})`;
+        }
+      }
+
+      const rangeHint = (contextInfo && contextInfo.oldestDate && contextInfo.latestDate)
+        ? `Kho dữ liệu xác thực trên máy của <strong>${readableName}</strong> hiện lưu trữ từ ngày <strong>${contextInfo.oldestDate}</strong> đến <strong>${contextInfo.latestDate}</strong>.`
+        : 'Bạn có thể chọn nhanh một kỳ mở thưởng hợp lệ có sẵn trong danh sách bên trên để đối soát tức thì.';
+
+      const isInsufficientPrior = result && typeof result.message === 'string' && result.message.toLowerCase().includes('huấn luyện');
+      const titleText = isInsufficientPrior
+        ? `Kỳ Mở Thưởng Sớm Nhất Của ${readableName}`
+        : `Chưa Có Bảng Mở Thưởng${dayLabel || (targetDate ? ` Ngày ${targetDate}` : '')}`;
+
+      const bodyText = isInsufficientPrior
+        ? `Ngày <strong>${targetDate}</strong> là kỳ đầu tiên trong kho lưu trữ nên không có kỳ quá khứ trước đó để huấn luyện mô hình (đảm bảo nguyên tắc 0% Lookahead Bias). ${rangeHint}`
+        : `Không tìm thấy bảng kết quả của <strong>${readableName}</strong> vào ngày đã chọn. Ngày này có thể rơi vào thứ đài không mở thưởng hoặc nằm ngoài phạm vi lưu trữ hiện tại. ${rangeHint}`;
+
       container.innerHTML = `
-        <div class="quant-card" style="text-align: center; padding: 30px; color: #F87171;">
-          <p>${(result && result.message) || 'Không có dữ liệu đối chiếu.'}</p>
+        <div class="quant-card empty-state-editorial">
+          <div class="empty-state-icon-ring" aria-hidden="true">
+            <i class="fa-regular fa-calendar-xmark"></i>
+          </div>
+          <h3>${titleText}</h3>
+          ${scheduleText ? `<div class="empty-state-schedule-pill"><i class="fa-regular fa-clock" style="color: var(--accent);" aria-hidden="true"></i> <span>Lịch mở thưởng định kỳ của <strong>${readableName}</strong>: <strong>${scheduleText}</strong></span></div>` : ''}
+          <p>${bodyText}</p>
+          <button type="button" class="btn-primary" onclick="const c=document.getElementById('backtest-custom-date');if(c)c.value='';const s=document.getElementById('backtest-date-select');if(s&&s.options.length>0){s.selectedIndex=0;s.dispatchEvent(new Event('change'));}">
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+            <span>Dò ngay kỳ mở thưởng gần nhất</span>
+          </button>
         </div>
       `;
       return;
@@ -1243,68 +1290,103 @@ export const UIController = {
 
     const summary = result.summary;
     const actualDraw = result.actualDraw;
+    const readableStation = this.formatStationOrGame(result.stationOrGame);
 
     let actualDisplay = '';
     if (isVietlott) {
-      actualDisplay = (actualDraw.winningNumbers || []).map(b => 
+      actualDisplay = (actualDraw.winningNumbers || []).map(b =>
         `<div class="lotto-ball gold">${String(b).padStart(2, '0')}</div>`
       ).join('');
     } else {
-      actualDisplay = (actualDraw.lottoPairs || []).map(p => 
-        `<span class="lotto-chip">${p}</span>`
-      ).join(' ');
+      const spFull = actualDraw.specialPrize || (actualDraw.prizes && actualDraw.prizes.special ? actualDraw.prizes.special[0] : '');
+      const spTail = spFull && String(spFull).length >= 2 ? String(spFull).slice(-2) : '';
+      actualDisplay = (actualDraw.lottoPairs || []).map((p, idx) => {
+        const isSpecChip = idx === (actualDraw.lottoPairs.length - 1) && p === spTail;
+        return `<span class="actual-round-chip ${isSpecChip ? 'is-special' : ''}" title="${isSpecChip ? '2 số cuối Giải Đặc Biệt' : '2 số cuối Lô tô'}">${p}</span>`;
+      }).join('');
     }
 
+    const trainStart = result.trainingDateRange && (result.trainingDateRange.from || result.trainingDateRange.start);
+    const trainEnd = result.trainingDateRange && (result.trainingDateRange.to || result.trainingDateRange.end);
+    const rangeLabel = (trainStart && trainStart !== 'N/A' && trainEnd && trainEnd !== 'N/A')
+      ? ` &bull; Giai đoạn từ ${trainStart} đến ${trainEnd}`
+      : '';
+
+    const totalAlgoCount = Array.isArray(result.algoResults) ? result.algoResults.length : 8;
+    const validAlgoCount = Array.isArray(result.algoResults) ? result.algoResults.filter(r => r.status === 'ok').length : totalAlgoCount;
+    const avgFootnote = validAlgoCount === totalAlgoCount
+      ? `Trung bình cộng trên cả ${totalAlgoCount} mô hình`
+      : `Trung bình trên ${validAlgoCount}/${totalAlgoCount} mô hình hợp lệ`;
+
     const summaryKpisHtml = `
-      <div class="kpi-summary-grid" style="margin-bottom: 20px;">
+      <div class="kpi-summary-grid-3">
         <div class="kpi-stat-card kpi-gold">
-          <div class="kpi-header-row"><span class="kpi-label">Mô Hình Dẫn Đầu Kỳ Này</span><i class="fa-solid fa-crown kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="font-size:18px; color:var(--gold-300);">${summary.bestAlgo}</div></div>
-          <div class="kpi-footnote">Hiệu quả cao nhất riêng kỳ ${result.targetDate}</div>
+          <div class="kpi-header-row"><span class="kpi-label">Mô hình dẫn đầu kỳ này</span><i class="fa-solid fa-crown kpi-icon"></i></div>
+          <div class="kpi-value-row"><div class="kpi-value" style="font-size:18.5px; font-family:var(--font-sans); font-weight:700;">${summary.bestAlgo}</div></div>
+          <div class="kpi-footnote">Đạt độ khớp cao nhất riêng kỳ ${result.targetDate}</div>
         </div>
         <div class="kpi-stat-card kpi-emerald">
-          <div class="kpi-header-row"><span class="kpi-label">Tỷ Lệ Khớp Kỳ Này</span><i class="fa-solid fa-bullseye kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="color:var(--emerald-400);">${summary.bestHitRate}%</div></div>
-          <div class="kpi-footnote">Tỷ lệ số dự đoán khớp kết quả mở thưởng</div>
+          <div class="kpi-header-row"><span class="kpi-label">Tỷ lệ khớp cao nhất</span><i class="fa-solid fa-bullseye kpi-icon"></i></div>
+          <div class="kpi-value-row"><div class="kpi-value kpi-val-emerald" style="font-size:28px;">${summary.bestHitRate}%</div></div>
+          <div class="kpi-footnote">Tỷ lệ số dự báo trùng kết quả thực tế</div>
         </div>
-        <div class="kpi-stat-card kpi-blue">
-          <div class="kpi-header-row"><span class="kpi-label">Tỷ Lệ Khớp Trung Bình</span><i class="fa-solid fa-chart-simple kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="color:var(--blue-400);">${summary.averageHitRate}%</div></div>
-          <div class="kpi-footnote">Tính trung bình trên 8 mô hình ở kỳ này</div>
-        </div>
-        <div class="kpi-stat-card kpi-purple">
-          <div class="kpi-header-row"><span class="kpi-label">Dữ Liệu Huấn Luyện</span><i class="fa-solid fa-shield-halved kpi-icon"></i></div>
-          <div class="kpi-value-row"><div class="kpi-value" style="font-size:19px;">${result.trainingDataCount} Kỳ</div></div>
-          <div class="kpi-footnote">Từ ${result.historyAvailableCount || result.trainingDataCount} kỳ có sẵn • 0% Lookahead bias</div>
+        <div class="kpi-stat-card kpi-teal">
+          <div class="kpi-header-row"><span class="kpi-label">Tỷ lệ khớp trung bình</span><i class="fa-solid fa-chart-simple kpi-icon"></i></div>
+          <div class="kpi-value-row"><div class="kpi-value" style="font-size:28px; color:var(--accent);">${summary.averageHitRate}%</div></div>
+          <div class="kpi-footnote">${avgFootnote}</div>
         </div>
       </div>
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; padding: 8px 12px; background: var(--bg-subtle); border: 1px solid var(--line-subtle); border-radius: var(--r-sm);">
-        <i class="fa-solid fa-database" style="color: var(--blue-500); margin-right: 6px;"></i>
-        <strong>Chính sách huấn luyện:</strong> ${result.windowPolicy || 'Toàn bộ lịch sử hợp lệ trước ngày dò'} 
-        ${result.trainingDateRange?.from && result.trainingDateRange.from !== 'N/A' ? `(Từ ngày ${result.trainingDateRange.from} đến ${result.trainingDateRange.to})` : ''} 
-        — Chỉ đánh giá riêng cho kỳ ngày ${result.targetDate}, không thay thế bảng xếp hạng Walk-Forward dài hạn.
+
+      <div class="backtest-meta-banner">
+        <div>
+          <i class="fa-solid fa-database" style="color: var(--accent); margin-right: 6px;"></i>
+          <strong>Tập mẫu huấn luyện trước giờ quay:</strong> ${result.trainingDataCount} kỳ hợp lệ${rangeLabel}
+        </div>
+        <div class="tabular-numbers" style="font-size: 12px; color: var(--text-muted);">
+          Kỳ đối chiếu: <strong>${result.targetDate}</strong> &bull; 0% Lookahead Bias
+        </div>
       </div>
     `;
 
     const rowsHtml = result.algoResults.map(item => {
+      if (item.status && item.status !== 'ok') {
+        return `
+          <tr>
+            <td class="algo-name-cell" data-label="Mô hình định lượng">${item.algoName}</td>
+            <td class="pred-chips-cell" data-label="Bộ số dự báo"><span class="meta-info-badge">Chưa đủ kỳ huấn luyện</span></td>
+            <td class="tabular-numbers hit-count-cell" data-label="Số con trúng" style="text-align: center; color: var(--text-muted);"><span>—</span></td>
+            <td class="tabular-numbers hit-rate-cell" data-label="Tỷ lệ khớp" style="text-align: center; color: var(--text-muted);"><span>—</span></td>
+          </tr>
+        `;
+      }
       const predBadges = item.predictions.map(p => {
         const isHit = item.hitDetails.some(h => String(h.num) === String(p));
         const isSpec = item.hitDetails.some(h => String(h.num) === String(p) && h.isSpecial);
         let cls = 'lotto-chip';
         if (isSpec) cls += ' special-hit';
         else if (isHit) cls += ' hit';
+        else cls += ' miss';
         return `<span class="${cls}">${isVietlott ? String(p).padStart(2, '0') : p}</span>`;
-      }).join(' ');
+      }).join('');
 
-      const hitRateColor = item.hitRate >= 40 ? 'color: var(--emerald-400); font-weight: 700;' : (item.hitRate > 0 ? 'color: var(--blue-400);' : 'color: var(--text-muted);');
+      const hitRateStyle = item.hitRate >= 40
+        ? 'color: var(--status-success-text);'
+        : (item.hitRate > 0 ? 'color: var(--accent);' : 'color: var(--text-muted);');
+      const barPct = Math.min(100, Math.max(0, Number(item.hitRate) || 0));
 
       return `
         <tr>
-          <td style="font-weight: 700; color: var(--text-primary);">${item.algoName}</td>
-          <td>${predBadges}</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${item.hitCount} / ${item.totalPredicted} ${!isVietlott && item.totalOccurrences > item.hitCount ? `(${item.totalOccurrences} nháy)` : ''}</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); ${hitRateColor}">${item.hitRate}%</td>
-          <td style="font-size: 12px; color: var(--text-secondary); max-width: 320px;">${item.explanation}</td>
+          <td class="algo-name-cell" data-label="Mô hình định lượng">${item.algoName}</td>
+          <td class="pred-chips-cell" data-label="Bộ số dự báo">${predBadges}</td>
+          <td class="tabular-numbers hit-count-cell" data-label="Số con trúng" style="text-align: center;">
+            <span>${item.hitCount} / ${item.totalPredicted}${!isVietlott && item.totalOccurrences > item.hitCount ? `<span class="hit-extra">(${item.totalOccurrences} nháy)</span>` : ''}</span>
+          </td>
+          <td class="tabular-numbers hit-rate-cell" data-label="Tỷ lệ khớp" style="text-align: center; ${hitRateStyle}">
+            <div class="hit-rate-cell-wrap">
+              <span>${item.hitRate}%</span>
+              <div class="hit-rate-bar-track" aria-hidden="true"><div class="hit-rate-bar-fill" style="width:${barPct}%;"></div></div>
+            </div>
+          </td>
         </tr>
       `;
     }).join('');
@@ -1312,15 +1394,15 @@ export const UIController = {
     container.innerHTML = `
       ${summaryKpisHtml}
 
-      <div class="quant-card" style="margin-bottom: 24px;">
+      <div class="quant-card" style="margin-bottom: 20px;">
         <div class="card-header-bar">
           <div class="card-title-group">
             <h2>Kết Quả Mở Thưởng Thực Tế Ngày ${result.targetDate}</h2>
           </div>
-          <span class="meta-info-badge">${result.stationOrGame}</span>
+          <span class="meta-info-badge">${readableStation}</span>
         </div>
-        <div style="background: var(--bg-subtle); padding: 18px; border-radius: var(--r-sm); border: 1px solid var(--line-subtle);">
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <div class="actual-results-box">
+          <div class="actual-chips-grid">
             ${actualDisplay}
           </div>
         </div>
@@ -1329,20 +1411,19 @@ export const UIController = {
       <div class="quant-card">
         <div class="card-header-bar">
           <div class="card-title-group">
-            <h2>Bảng Đối Soát Dự Đoán & Đánh Giá Độ Chính Xác</h2>
+            <h2>Bảng Đối Soát Độ Chính Xác Từng Mô Hình</h2>
           </div>
-          <span class="meta-info-badge">Xếp theo % trúng thực tế</span>
+          <span class="meta-info-badge">Xanh: Trúng lô &bull; Vàng: Trúng ĐB</span>
         </div>
 
         <div style="overflow-x: auto;">
           <table class="backtest-results-table">
             <thead>
               <tr>
-                <th>Thuật Toán</th>
-                <th>Dự Đoán (Xanh: Trúng, Vàng: Đặc Biệt)</th>
-                <th>Số Con Trúng</th>
-                <th>Tỷ Lệ Trúng (%)</th>
-                <th>Ghi Chú Động Cơ</th>
+                <th style="width: 30%;">Mô hình định lượng</th>
+                <th style="width: 42%;">Bộ số dự báo trước giờ quay</th>
+                <th style="width: 14%; text-align: center;">Số con trúng</th>
+                <th style="width: 14%; text-align: center;">Tỷ lệ khớp</th>
               </tr>
             </thead>
             <tbody>
@@ -1355,7 +1436,7 @@ export const UIController = {
   },
 
   /**
-   * 6. Kết xuất Bảng Xếp Hạng Thuật Toán (Leaderboard)
+   * 6. Kết xuất Bảng Xếp Hạng Hiệu Suất 8 Thuật Toán (Không trùng tiêu đề kép)
    */
   renderLeaderboard(batchResult, containerId = 'leaderboard-container') {
     const container = document.getElementById(containerId);
@@ -1363,11 +1444,11 @@ export const UIController = {
 
     if (!batchResult || batchResult.status === 'insufficient-data' || !batchResult.leaderboard || batchResult.leaderboard.length === 0 || batchResult.drawsTestedCount === 0) {
       container.innerHTML = `
-        <div class="quant-card" style="text-align: center; padding: 48px 24px;">
-          <div style="font-size: 36px; margin-bottom: 12px; color: var(--gold-500);"><i class="fa-solid fa-chart-line"></i></div>
-          <h3 style="color: var(--text-primary); margin-bottom: 8px;">Chưa Đủ Dữ Liệu Đánh Giá Bảng Xếp Hạng</h3>
-          <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; font-size: 13.5px; line-height: 1.6;">
-            Cần tối thiểu các kỳ quay hợp lệ trong quá khứ để thực hiện kiểm định Walk-Forward và xếp hạng các thuật toán một cách công bằng. Không có mô hình nào được gán Top 1 giả mạo khi thiếu mẫu.
+        <div class="quant-card" style="text-align: center; padding: 40px 24px;">
+          <div style="font-size: 30px; margin-bottom: 10px; color: var(--accent-amber);"><i class="fa-solid fa-chart-line"></i></div>
+          <h3 style="margin-bottom: 6px;">Chưa Đủ Dữ Liệu Đánh Giá Xếp Hạng Nhiều Kỳ</h3>
+          <p style="color: var(--text-secondary); max-width: 560px; margin: 0 auto; font-size: 13.5px;">
+            Cần tối thiểu các kỳ mở thưởng quá khứ hợp lệ để chạy kiểm định Walk-Forward công bằng. Hệ thống không gán hạng giả khi thiếu dữ liệu.
           </p>
         </div>
       `;
@@ -1375,89 +1456,101 @@ export const UIController = {
     }
 
     const top1 = batchResult.leaderboard[0];
-    const baselineHitRate = (batchResult.baseline && typeof batchResult.baseline.avgHitRate === 'number') 
-      ? batchResult.baseline.avgHitRate 
+    const baselineHitRate = (batchResult.baseline && typeof batchResult.baseline.avgHitRate === 'number')
+      ? batchResult.baseline.avgHitRate
       : 0;
 
     const top1SummaryHtml = `
-      <div class="top1-summary-banner" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05)); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: var(--r-md); padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #FFF; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
-              <i class="fa-solid fa-crown" style="margin-right: 4px;"></i> TOP 1 LEADERBOARD
-            </span>
-            <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">
-              ${top1.name}
-            </h3>
+      <div class="top1-summary-banner">
+        <div class="top1-banner-top">
+          <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span class="top1-crown-pill" data-rank-badge="TOP 1 LEADERBOARD"><i class="fa-solid fa-crown" aria-hidden="true"></i> Quán quân ${batchResult.drawsTestedCount} kỳ</span>
+            <h3 class="top1-algo-title">${top1.name}</h3>
           </div>
-          <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; flex-wrap: wrap;">
-            <span>Tỷ Lệ Trúng TB (Primary Metric): <strong style="color: var(--emerald-600); font-family: var(--font-mono); font-size: 16px;">${top1.avgHitRate}%</strong></span>
-            <span style="color: var(--line-medium);">|</span>
-            <span>Chênh Lệch So Với Baseline: <strong style="color: ${top1.baselineDiff >= 0 ? 'var(--blue-500)' : 'var(--rose-500)'}; font-family: var(--font-mono); font-size: 15px;">${top1.baselineDiff >= 0 ? '+' : ''}${top1.baselineDiff}%</strong></span>
-            <span style="color: var(--line-medium);">|</span>
-            <span style="color: var(--text-secondary);"><i class="fa-solid fa-clock-rotate-left"></i> Kiểm định: <strong>${batchResult.drawsTestedCount} kỳ quay thực tế</strong></span>
+          <div class="top1-metrics-inline">
+            <span>Trúng TB: <strong style="color: var(--accent-emerald); font-size: 15px;">${top1.avgHitRate}%</strong></span>
+            <span class="metric-sep" aria-hidden="true">&bull;</span>
+            <span>So với ngẫu nhiên: <strong style="color: ${top1.baselineDiff >= 0 ? 'var(--accent)' : 'var(--danger)'};">${top1.baselineDiff >= 0 ? '+' : ''}${top1.baselineDiff}%</strong></span>
+            <span class="metric-sep" aria-hidden="true">&bull;</span>
+            <span>Chuẩn ngẫu nhiên: <strong>${baselineHitRate}%</strong> (${batchResult.drawsTestedCount} kỳ)</span>
           </div>
         </div>
-        <div style="margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; border-top: 1px dashed rgba(245, 158, 11, 0.25); padding-top: 8px;">
-          ✦ Xếp hạng xác định dựa trên tỷ lệ trúng trung bình (Primary Metric) kiểm định ngoài mẫu (Walk-Forward Validation) chống rò rỉ thời gian 0%. Random baseline trung bình: <strong>${baselineHitRate}%</strong>.
+        <div class="top1-banner-note">
+          Đánh giá ngoài mẫu liên tiếp (Walk-Forward Validation) trên ${batchResult.drawsTestedCount} kỳ mở thưởng gần nhất, đối chiếu trực tiếp với kỳ vọng ngẫu nhiên (Random Baseline).
         </div>
       </div>
     `;
 
+    const maxAvgRate = Math.max(25, ...batchResult.leaderboard.map(x => Number(x.avgHitRate) || 0));
     const rowsHtml = batchResult.leaderboard.map((item, idx) => {
-      let rankClass = 'rank-other';
-      let rankBadgeText = `${item.rank || idx + 1}`;
-      let rowHighlightStyle = '';
-      if (idx === 0) {
-        rankClass = 'rank-1';
-        rankBadgeText = '👑 TOP 1';
-        rowHighlightStyle = 'background: rgba(245, 158, 11, 0.05); font-weight: 600;';
-      } else if (idx === 1) {
-        rankClass = 'rank-2';
-      } else if (idx === 2) {
-        rankClass = 'rank-3';
+      const rankNum = item.rank || (idx + 1);
+      const hasFolds = item.foldsSucceeded === undefined || item.foldsSucceeded > 0;
+      let rankBadgeHtml = `<span class="rank-badge">#${rankNum}</span>`;
+      let rowCls = '';
+      if (idx === 0 && hasFolds) {
+        rankBadgeHtml = `<span class="rank-badge rank-1">🥇 Hạng 1</span>`;
+        rowCls = 'row-rank-1';
+      } else if (idx === 1 && hasFolds) {
+        rankBadgeHtml = `<span class="rank-badge">🥈 Hạng 2</span>`;
+      } else if (idx === 2 && hasFolds) {
+        rankBadgeHtml = `<span class="rank-badge">🥉 Hạng 3</span>`;
+      }
+
+      if (!hasFolds) {
+        return `
+          <tr>
+            <td class="lb-rank-cell" data-label="Xếp hạng">${rankBadgeHtml}</td>
+            <td class="lb-name-cell" data-label="Mô hình thuật toán" style="font-weight: 700;">${item.name}</td>
+            <td class="tabular-numbers lb-avg-cell" data-label="Tỷ lệ trúng TB" style="color: var(--text-muted);"><span>—</span></td>
+            <td class="tabular-numbers lb-diff-cell" data-label="So với chuẩn" style="color: var(--text-muted);"><span>—</span></td>
+            <td class="tabular-numbers lb-best-cell" data-label="Kỷ lục 1 kỳ" style="color: var(--text-muted);"><span>—</span></td>
+            <td class="tabular-numbers lb-hits-cell" data-label="Tổng con trúng" style="color: var(--text-muted);"><span>0 (chưa đủ kỳ)</span></td>
+            <td class="tabular-numbers lb-spec-cell" data-label="Trúng ĐB" style="color: var(--text-muted);"><span>0 lần</span></td>
+            <td class="lb-status-cell" data-label="Đánh giá"><span class="status-badge badge-neutral">Chưa đủ mẫu</span></td>
+          </tr>
+        `;
       }
 
       const diffSign = item.baselineDiff >= 0 ? '+' : '';
-      const diffColor = item.baselineDiff >= 0 ? 'var(--blue-500)' : 'var(--rose-500)';
+      const diffColor = item.baselineDiff >= 0 ? 'var(--accent-emerald)' : 'var(--danger)';
+      const avgBarWidth = Math.min(100, Math.round(((Number(item.avgHitRate) || 0) / maxAvgRate) * 100));
 
       return `
-        <tr style="${rowHighlightStyle}">
-          <td><span class="rank-badge ${rankClass}">${rankBadgeText}</span></td>
-          <td style="font-weight: 700; color: var(--text-primary);">${item.name}</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); font-weight: 700; color: var(--emerald-600);">${item.avgHitRate}%</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); font-weight: 700; color: ${diffColor};">${diffSign}${item.baselineDiff}%</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); color: var(--gold-600);">${item.bestHitRate}%</td>
-          <td class="tabular-numbers" style="font-family: var(--font-mono); color: var(--text-primary);">${item.totalHits} (${item.totalOccurrences} nháy)</td>
-          <td class="tabular-numbers" style="font-family: var(--font-sans); font-size: 12.5px;">${item.exceedsBaseline ? '<span style="color:var(--emerald-600); font-weight:700; background:#ECFDF5; padding:2px 8px; border-radius:4px; border:1px solid #A7F3D0;">✓ Vượt chuẩn</span>' : '<span style="color:var(--text-muted); background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">Ngang chuẩn</span>'}</td>
+        <tr class="${rowCls}">
+          <td class="lb-rank-cell" data-label="Xếp hạng">${rankBadgeHtml}</td>
+          <td class="lb-name-cell" data-label="Mô hình thuật toán" style="font-weight: 700;">${item.name}</td>
+          <td class="tabular-numbers lb-avg-cell" data-label="Tỷ lệ trúng TB" style="font-weight: 700; color: var(--accent-emerald);">
+            <div class="hit-rate-cell-wrap" style="align-items: flex-start;">
+              <span>${item.avgHitRate}%</span>
+              <div class="hit-rate-bar-track" aria-hidden="true"><div class="hit-rate-bar-fill" style="width:${avgBarWidth}%;"></div></div>
+            </div>
+          </td>
+          <td class="tabular-numbers lb-diff-cell" data-label="So với chuẩn" style="font-weight: 700; color: ${diffColor};"><span>${diffSign}${item.baselineDiff}%</span></td>
+          <td class="tabular-numbers lb-best-cell" data-label="Kỷ lục 1 kỳ" style="color: var(--accent-amber); font-weight: 700;"><span>${item.bestHitRate}%</span></td>
+          <td class="tabular-numbers lb-hits-cell" data-label="Tổng con trúng"><span>${item.totalHits} (${item.totalOccurrences} nháy)</span></td>
+          <td class="tabular-numbers lb-spec-cell" data-label="Trúng ĐB"><span>${item.specialMatches || 0} lần</span></td>
+          <td class="lb-status-cell" data-label="Đánh giá">${item.exceedsBaseline
+            ? '<span class="status-badge badge-success">✓ Vượt trội</span>'
+            : '<span class="status-badge badge-neutral">Dưới chuẩn</span>'}</td>
         </tr>
       `;
     }).join('');
 
     container.innerHTML = `
       <div class="quant-card">
-        <div class="card-header-bar">
-          <div class="card-title-group">
-            <h2>Bảng Xếp Hạng Hiệu Suất 8 Thuật Toán</h2>
-            <span class="meta-info-badge">Kiểm định qua ${batchResult.drawsTestedCount} kỳ quay</span>
-          </div>
-          <span class="meta-info-badge">Walk-Forward Validation • Random Baseline: ${baselineHitRate}%</span>
-        </div>
-
         ${top1SummaryHtml}
-
         <div style="overflow-x: auto;">
           <table class="leaderboard-table">
             <thead>
               <tr>
-                <th style="width: 80px;">Hạng</th>
-                <th>Thuật Toán</th>
-                <th title="Tỷ lệ trúng trung bình ngoài mẫu qua các kỳ kiểm định (Primary Metric)">Tỷ Lệ Trúng TB (%)</th>
-                <th title="Chênh lệch so với Random Baseline thực tế cùng kỳ">So Với Baseline (%)</th>
-                <th title="Kỷ lục tỷ lệ trúng cao nhất trong 1 kỳ quay">Kỷ Lục Cao Nhất (%)</th>
-                <th title="Tổng số con trúng và số lần xuất hiện">Tổng Số Con Trúng</th>
-                <th title="Số lần bắt trúng giải đặc biệt">Trúng Giải Đặc Biệt</th>
-                <th title="Đánh giá hiệu suất so với chuẩn ngẫu nhiên cùng kỳ">Hiệu Suất Baseline</th>
+                <th style="width: 96px;">Xếp hạng</th>
+                <th>Mô hình thuật toán</th>
+                <th>Tỷ lệ trúng TB</th>
+                <th>So với chuẩn</th>
+                <th>Kỷ lục 1 kỳ</th>
+                <th>Tổng con trúng</th>
+                <th>Trúng ĐB</th>
+                <th>Đánh giá</th>
               </tr>
             </thead>
             <tbody>
@@ -1470,13 +1563,16 @@ export const UIController = {
   },
 
   /**
-   * 11. Modal Tự Động Cào Dữ Liệu Minh Ngọc & Tái Dự Đoán
+   * 7. Modal Đồng Bộ Dữ Liệu (Hỗ trợ đóng bằng Escape / Backdrop & trả Focus)
    */
+  _crawlCloseable: false,
+
   showCrawlModal() {
     const overlay = document.getElementById('crawl-modal-overlay');
     if (!overlay) return;
+    this._crawlCloseable = false;
     overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    if (document.body && document.body.style) document.body.style.overflow = 'hidden';
 
     const barFill = document.getElementById('crawl-progress-bar-fill');
     const percentEl = document.getElementById('crawl-progress-percent');
@@ -1489,15 +1585,19 @@ export const UIController = {
 
     if (barFill) barFill.style.width = '5%';
     if (percentEl) percentEl.innerText = '5%';
-    if (stepEl) stepEl.innerText = 'Bắt đầu kết nối Minh Ngọc...';
-    if (logsEl) logsEl.innerHTML = `<div class="term-line info">[${new Date().toLocaleTimeString()}] Bắt đầu tiến trình tự động cào toàn bộ dữ liệu...</div>`;
+    if (stepEl) stepEl.innerText = 'Đang kết nối nguồn dữ liệu...';
+    if (logsEl) logsEl.innerHTML = `<div class="term-line info"><span class="term-time">[${new Date().toLocaleTimeString()}]</span> Khởi động tiến trình đồng bộ kho lịch sử...</div>`;
     if (summary) summary.style.display = 'none';
     if (btnAction) btnAction.style.display = 'none';
-    if (btnClose) btnClose.style.display = 'none';
-    if (pulse) pulse.innerHTML = '<span class="pulse-dot"></span> Đang cào trực tiếp';
+    if (btnClose) btnClose.style.display = 'inline-flex';
+    if (pulse) pulse.innerHTML = '<span class="pulse-dot"></span> Đang xử lý';
+    this._crawlCloseable = true;
+    if (btnClose && typeof btnClose.focus === 'function') {
+      setTimeout(() => { try { btnClose.focus(); } catch (e) {} }, 30);
+    }
   },
 
-  updateCrawlProgress({ percent, step, totalSteps, title, detail }) {
+  updateCrawlProgress({ percent, title, detail }) {
     const barFill = document.getElementById('crawl-progress-bar-fill');
     const percentEl = document.getElementById('crawl-progress-percent');
     const stepEl = document.getElementById('crawl-progress-step-text');
@@ -1505,7 +1605,7 @@ export const UIController = {
 
     if (barFill) barFill.style.width = `${percent}%`;
     if (percentEl) percentEl.innerText = `${percent}%`;
-    if (stepEl) stepEl.innerText = title;
+    if (stepEl && title) stepEl.innerText = title;
 
     if (logsEl && detail) {
       const line = document.createElement('div');
@@ -1517,6 +1617,7 @@ export const UIController = {
   },
 
   finishCrawlModal(stats) {
+    this._crawlCloseable = true;
     const barFill = document.getElementById('crawl-progress-bar-fill');
     const percentEl = document.getElementById('crawl-progress-percent');
     const stepEl = document.getElementById('crawl-progress-step-text');
@@ -1529,31 +1630,41 @@ export const UIController = {
 
     if (barFill) barFill.style.width = '100%';
     if (percentEl) percentEl.innerText = '100%';
-    if (stepEl) stepEl.innerText = 'Tái dự đoán 8 thuật toán hoàn tất!';
-    if (pulse) pulse.innerHTML = '<span style="color: #10B981; font-weight: 700;">✓ Hoàn thành 100%</span>';
+    if (stepEl) stepEl.innerText = 'Hoàn tất đồng bộ và cập nhật 8 mô hình!';
+    if (pulse) pulse.innerHTML = '<span style="color: #34D399; font-weight: 700;">✓ Đã hoàn thành</span>';
 
-    if (smXSMN) smXSMN.innerText = `${stats.totalXSMN} Kỳ`;
-    if (smVietlott) smVietlott.innerText = `${stats.totalMega + stats.totalPower} Kỳ`;
+    if (smXSMN && stats) smXSMN.innerText = `${stats.totalXSMN} Kỳ`;
+    if (smVietlott && stats) smVietlott.innerText = `${stats.totalMega + stats.totalPower} Kỳ`;
 
     if (summary) summary.style.display = 'block';
-    if (btnAction) btnAction.style.display = 'flex';
-    if (btnClose) btnClose.style.display = 'block';
+    if (btnAction) {
+      btnAction.style.display = 'inline-flex';
+      if (typeof btnAction.focus === 'function') {
+        setTimeout(() => { try { btnAction.focus(); } catch (e) {} }, 30);
+      }
+    }
+    if (btnClose) btnClose.style.display = 'inline-flex';
   },
 
   hideCrawlModal() {
     const overlay = document.getElementById('crawl-modal-overlay');
     if (overlay) overlay.style.display = 'none';
-    document.body.style.overflow = '';
+    if (document.body && document.body.style) document.body.style.overflow = '';
+    const triggerBtn = document.getElementById('btn-crawl-full');
+    if (triggerBtn && typeof triggerBtn.focus === 'function') {
+      try { triggerBtn.focus(); } catch (e) {}
+    }
   },
 
   updateDataVolumeBadge(stats) {
+    if (!stats) return;
     const badge = document.getElementById('total-draws-count-badge');
     if (badge) {
-      badge.innerText = `16–32 kỳ/đài (21 Đài) • 100% Vietlott (${stats.totalCount} kỳ)`;
+      badge.innerText = `21 Đài XSMN • Vietlott (${stats.totalCount} kỳ xác thực)`;
     }
     const statusText = document.getElementById('crawler-status-text');
     if (statusText) {
-      statusText.innerText = `Đã chuẩn hóa ${stats.totalCount} kỳ quay thực tế`;
+      statusText.innerText = `Đã chuẩn hóa ${stats.totalCount} kỳ mở thưởng`;
     }
   }
 };

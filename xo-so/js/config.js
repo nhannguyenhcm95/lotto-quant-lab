@@ -132,7 +132,7 @@ export const LOTTO_CONFIG = {
       category: "Phân tích Chu kỳ",
       formula: "Ripeness = CurrentGap / AvgCycle",
       summary: "Phát hiện số nóng (Hot) và số chín muồi chạm ngưỡng chu kỳ cực đại (Max Gan).",
-      defaultWeight: 0.12
+      defaultWeight: 0.14
     },
     {
       id: "moving-average",
@@ -142,7 +142,7 @@ export const LOTTO_CONFIG = {
       category: "Chuỗi Thời gian",
       formula: "EMA_t = α * X_t + (1 - α) * EMA_{t-1}",
       summary: "Đo lường xu hướng biến động và tính chất chu kỳ định kỳ theo thứ trong tuần.",
-      defaultWeight: 0.10
+      defaultWeight: 0.13
     },
     {
       id: "clustering",
@@ -150,9 +150,9 @@ export const LOTTO_CONFIG = {
       code: "ALG-06",
       icon: "fa-cubes",
       category: "Phân tích Cấu trúc",
-      formula: "Score(x) = f(Parity, High/Low, Mean Distance, Freq)",
-      summary: "Đánh giá cấu trúc phân bổ chẵn/lẻ, tài/xỉu và xu hướng hồi quy về trung bình.",
-      defaultWeight: 0.10
+      formula: "Score(x) = f(Freq, Recency, Momentum, K-Means)",
+      summary: "Phân cụm K-Means trên không gian đặc trưng tần suất, độ trễ và xung lượng.",
+      defaultWeight: 0.12
     },
     {
       id: "association-rules",
@@ -162,7 +162,7 @@ export const LOTTO_CONFIG = {
       category: "Khai phá Dữ liệu",
       formula: "Lift(A → B) = P(A ∩ B) / [P(A) * P(B)]",
       summary: "Khai phá quy luật chuyển tiếp theo chu kỳ giữa các con số qua các kỳ mở thưởng.",
-      defaultWeight: 0.10
+      defaultWeight: 0.13
     },
     {
       id: "ensemble",
@@ -231,17 +231,17 @@ export const LOTTO_CONFIG = {
       }
     }
 
-    // Khởi tạo ngày với giờ trưa 12:00 để triệt tiêu hoàn toàn rủi ro timezone shift
-    const cur = new Date(year, month, day, 12, 0, 0);
+    // Khởi tạo ngày theo chuẩn UTC thuần túy để miễn nhiễm 100% với mọi múi giờ & DST
+    const cur = new Date(Date.UTC(year, month, day, 0, 0, 0));
 
     // Duyệt tiến tối đa 14 ngày để tìm ngày quay hợp lệ kế tiếp
     for (let step = 1; step <= 14; step++) {
-      cur.setDate(cur.getDate() + 1);
-      const dow = cur.getDay();
+      cur.setUTCDate(cur.getUTCDate() + 1);
+      const dow = cur.getUTCDay();
       if (validDays.includes(dow)) {
-        const yStr = cur.getFullYear();
-        const mStr = String(cur.getMonth() + 1).padStart(2, '0');
-        const dStr = String(cur.getDate()).padStart(2, '0');
+        const yStr = cur.getUTCFullYear();
+        const mStr = String(cur.getUTCMonth() + 1).padStart(2, '0');
+        const dStr = String(cur.getUTCDate()).padStart(2, '0');
         return {
           date: `${yStr}-${mStr}-${dStr}`,
           dayOfWeek: dow

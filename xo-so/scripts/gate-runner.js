@@ -131,6 +131,17 @@ function fetchUrl(url) {
 }
 
 function findBrowserBinary() {
+  const candidates = findBrowserCandidates();
+  for (const bin of candidates) {
+    if (fs.existsSync(bin)) return bin;
+  }
+  return null;
+}
+
+// Danh sách trình duyệt theo thứ tự ưu tiên, đã lọc theo máy hiện tại.
+// Gate H dùng danh sách này để thử trình duyệt kế tiếp khi bản đầu không
+// xuất được ảnh chụp (một số bản Chrome headless treo ở chế độ virtual-time).
+function findBrowserCandidates() {
   const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\Admin\\AppData\\Local';
   const programFiles = process.env['ProgramFiles'] || 'C:\\Program Files';
   const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
@@ -148,10 +159,237 @@ function findBrowserBinary() {
     '/usr/bin/chromium-browser'
   ];
 
-  for (const bin of candidates) {
-    if (fs.existsSync(bin)) return bin;
+  return candidates.filter((bin) => fs.existsSync(bin));
+}
+
+// ============================================================================
+// CHỤP ẢNH VIEWPORT QUA CHROME DEVTOOLS PROTOCOL
+// ============================================================================
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Mở một phiên CDP trên WebSocket của target trang.
+ * WebSocket là API có sẵn của Node từ bản 22 (trình duyệt chạy cổng này dùng
+ * Node 24), nên không cần thêm thư viện nào.
+ */
+function createCdpSession(wsUrl) {
+  const ws = new WebSocket(wsUrl);
+  const pending = new Map();
+  let msgId = 0;
+
+  const opened = new Promise((resolve, reject) => {
+    ws.onopen = () => resolve();
+    ws.onerror = () => reject(new Error('Không mở được WebSocket CDP'));
+  });
+
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch (e) { return; }
+    if (!msg.id || !pending.has(msg.id)) return;
+    const task = pending.get(msg.id);
+    pending.delete(msg.id);
+    if (msg.error) task.reject(new Error(msg.error.message || JSON.stringify(msg.error)));
+    else task.resolve(msg.result);
+  };
+
+  return {
+    opened,
+    send(method, params) {
+      const id = ++msgId;
+      ws.send(JSON.stringify({ id, method, params: params || {} }));
+      return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+    },
+    close() {
+      try { ws.close(); } catch (e) {}
+    }
+  };
+}
+
+/**
+ * Chụp ảnh một khổ màn hình bằng cách điều khiển trang qua CDP.
+ *
+ * Cờ một lần `--screenshot=<tệp>` của Chrome (headless=new) treo vô hạn ở khổ
+ * hẹp trên Windows: tiến trình sống mãi, không ghi tệp, không in lỗi, khiến
+ * cổng kiểm thử chết theo sau 90 giây. Cùng trang đó, cùng khổ, điều khiển qua
+ * CDP rồi tự chụp lại xong trong vài giây. Cách này còn đo được innerWidth thật
+ * để chứng minh media query đã áp đúng, thay vì tin vào tham số dòng lệnh.
+ */
+async function captureViewportCdp(bin, { width, height, outPath, url, userDataDir }) {
+  const deadline = Date.now() + 45000;
+  const child = spawn(bin, [
+    '--headless=new',
+    '--disable-gpu',
+    '--no-sandbox',
+    '--hide-scrollbars',
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-sync',
+    '--disable-default-apps',
+    '--no-first-run',
+    '--no-default-browser-check',
+    // Cổng 0 để Chrome tự cấp cổng rồi ghi vào DevToolsActivePort, tránh đụng
+    // cổng của một trình duyệt khác đang chạy trên máy.
+    '--remote-debugging-port=0',
+    // Chặn mọi tên miền bên ngoài: trang phải tự dựng đầy đủ từ tài nguyên
+    // trong kho. Nếu không, ảnh chụp sẽ là một trang thiếu CSS/JS.
+    '--host-resolver-rules=MAP * 127.0.0.1:1,EXCLUDE localhost',
+    `--user-data-dir=${userDataDir}`,
+    `--window-size=${width},${height}`,
+    'about:blank'
+  ]);
+  let stderr = '';
+  child.stderr?.on('data', (d) => { stderr += d.toString(); });
+  let session = null;
+
+  try {
+    // 1. Chờ Chrome mở cổng DevTools và ghi số cổng ra tệp.
+    const portFile = path.join(userDataDir, 'DevToolsActivePort');
+    let port = 0;
+    while (Date.now() < deadline) {
+      if (fs.existsSync(portFile)) {
+        const head = fs.readFileSync(portFile, 'utf-8').split(/\r?\n/)[0].trim();
+        if (/^\d+$/.test(head)) { port = Number(head); break; }
+      }
+      await sleep(100);
+    }
+    if (!port) return { ok: false, reason: 'Chrome không mở cổng DevTools' };
+
+    // 2. Nối vào target trang đầu tiên.
+    let page = null;
+    while (Date.now() < deadline && !page) {
+      try {
+        const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+        page = list.find((t) => t.type === 'page');
+      } catch (e) { /* cổng vừa mở, endpoint chưa sẵn sàng */ }
+      if (!page) await sleep(150);
+    }
+    if (!page) return { ok: false, reason: 'Không thấy target trang nào để điều khiển' };
+
+    session = createCdpSession(page.webSocketDebuggerUrl);
+    await Promise.race([
+      session.opened,
+      sleep(Math.max(0, deadline - Date.now())).then(() => { throw new Error('WebSocket CDP quá hạn'); })
+    ]);
+
+    await session.send('Page.enable');
+    await session.send('Runtime.enable');
+    // Đặt khổ bằng emulation thay vì dựa vào kích thước cửa sổ thật.
+    await session.send('Emulation.setDeviceMetricsOverride', {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: false
+    });
+    // Chrome headless mặc định báo prefers-reduced-motion: reduce, nếu để vậy
+    // thì ảnh chụp là bản không chuyển động, không đại diện cho người dùng thật.
+    await session.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }]
+    });
+
+    await session.send('Page.navigate', { url });
+
+    // 3. Chờ DOM xong, font xong, hiệu ứng vào trang chạy hết rồi mới đo.
+    let ready = false;
+    while (Date.now() < deadline && !ready) {
+      const st = await session.send('Runtime.evaluate', { expression: 'document.readyState', returnByValue: true });
+      ready = Boolean(st && st.result && st.result.value === 'complete');
+      if (!ready) await sleep(120);
+    }
+    if (!ready) return { ok: false, reason: 'Trang không tải xong trước hạn' };
+
+    await session.send('Runtime.evaluate', {
+      expression:
+        'Promise.race([' +
+        'document.fonts.ready.then(() => "ready"),' +
+        'new Promise((r) => setTimeout(() => r("timeout"), 5000))' +
+        '])',
+      awaitPromise: true,
+      returnByValue: true
+    });
+    // Chụp ở trạng thái cuối, không phải một khung hình giữa lúc chuyển động.
+    await sleep(1200);
+
+    const measured = await session.send('Runtime.evaluate', {
+      expression:
+        'JSON.stringify({' +
+        'innerWidth: window.innerWidth,' +
+        'innerHeight: window.innerHeight,' +
+        'scrollWidth: document.documentElement.scrollWidth,' +
+        'scrollHeight: document.documentElement.scrollHeight,' +
+        'fonts: document.fonts.status' +
+        '})',
+      returnByValue: true
+    });
+
+    const shot = await session.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    if (!shot || !shot.data) return { ok: false, reason: 'CDP không trả về dữ liệu ảnh' };
+    fs.writeFileSync(outPath, Buffer.from(shot.data, 'base64'));
+
+    let metrics = null;
+    try { metrics = JSON.parse(measured.result.value); } catch (e) {}
+    return { ok: true, metrics };
+  } catch (err) {
+    const detail = err && err.message ? err.message : String(err);
+    const noise = stderr.trim().split('\n')[0] || '';
+    return { ok: false, reason: `${detail}${noise ? ` | ${noise.slice(0, 80)}` : ''}` };
+  } finally {
+    if (session) session.close();
+    try { child.kill('SIGKILL'); } catch (e) {}
+    // Đợi tiến trình thoát hẳn rồi mới trả quyền cho lượt sau, tránh việc
+    // trình duyệt cũ còn giữ thư mục hồ sơ và làm chậm lượt kế tiếp.
+    await sleep(300);
   }
-  return null;
+}
+
+/**
+ * Đường chụp một lần cũ, chỉ còn dùng khi runtime không có WebSocket toàn cục
+ * (Node < 22). Không trả về số đo nên các assertion về khổ thật sẽ bị bỏ qua.
+ */
+function captureViewportOneShot(bin, { width, height, outPath, url, userDataDir }) {
+  return new Promise((resolve) => {
+    const child = spawn(bin, [
+      '--headless=new',
+      '--disable-gpu',
+      '--no-sandbox',
+      '--hide-scrollbars',
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-sync',
+      '--disable-default-apps',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--virtual-time-budget=1500',
+      '--host-resolver-rules=MAP * 127.0.0.1:1,EXCLUDE localhost',
+      `--user-data-dir=${userDataDir}`,
+      `--window-size=${width},${height}`,
+      `--screenshot=${outPath}`,
+      url
+    ]);
+    let stderr = '';
+    let settled = false;
+    const finish = (payload) => {
+      if (settled) return;
+      settled = true;
+      resolve(payload);
+    };
+    child.stderr?.on('data', (d) => { stderr += d.toString(); });
+    child.on('close', (code) => {
+      const wrote = fs.existsSync(outPath) && fs.statSync(outPath).size > 0;
+      finish(wrote ? { ok: true, metrics: null } : { ok: false, reason: `mã thoát ${code}: ${stderr.trim().split('\n')[0] || 'không rõ lý do'}` });
+    });
+    child.on('error', (err) => finish({ ok: false, reason: String(err) }));
+    setTimeout(() => {
+      try { child.kill('SIGKILL'); } catch (e) {}
+      finish({ ok: false, reason: 'quá 45s không xuất được ảnh' });
+    }, 45000);
+  });
+}
+
+// Xuất để có thể kiểm tra riêng đường chụp ảnh mà không phải chạy cả chuỗi 9 cổng.
+export function captureViewport(bin, options) {
+  if (typeof WebSocket !== 'function') return captureViewportOneShot(bin, options);
+  return captureViewportCdp(bin, options);
 }
 
 // ============================================================================
@@ -698,12 +936,12 @@ export class SingleRunCoordinator {
   // GATE H: BROWSER E2E INTERACTION, VIEWPORTS & RESPONSIVE
   // -------------------------------------------------------------
   async runGateH(gateResult) {
-    const browserBin = findBrowserBinary();
-    if (!browserBin) {
+    const browserCandidates = findBrowserCandidates();
+    if (!browserCandidates.length) {
       this.error('Không tìm thấy trình duyệt (Chrome/Edge/Chromium). Cổng Gate H bị BLOCKED theo quy định.');
       throw new Error('BLOCKED: Thiếu browser executable trên hệ thống');
     }
-    this.log(`  -> Tìm thấy trình duyệt: ${browserBin}`);
+    this.log(`  -> Trình duyệt khả dụng: ${browserCandidates.map((bin) => path.basename(bin)).join(', ')}`);
 
     const testPort = 8900 + Math.floor(Math.random() * 100);
     const baseUrl = `http://localhost:${testPort}`;
@@ -724,48 +962,57 @@ export class SingleRunCoordinator {
         { name: 'mobile', width: 360, height: 800, file: 'mobile-360x800.png' }
       ];
 
-      function captureScreenshot(args) {
-        return new Promise((resolve) => {
-          const child = spawn(browserBin, args);
-          let stderr = '';
-          child.stderr?.on('data', d => { stderr += d.toString(); });
-          child.on('close', code => resolve({ code, stderr }));
-          child.on('error', err => resolve({ code: -1, stderr: String(err) }));
-          setTimeout(() => {
-            try { child.kill(); } catch (e) {}
-            resolve({ code: -1, stderr: 'Timeout 90s' });
-          }, 90000);
-        });
-      }
-
       for (const vp of viewports) {
         const outPath = path.join(this.screenshotsDir, vp.file);
-        const vpProfile = path.join(os.tmpdir(), `lotto-fix8-${vp.name}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`);
         this.log(`  -> Chụp ảnh viewport ${vp.name} (${vp.width}x${vp.height})...`);
-        try {
-          await captureScreenshot([
-            '--headless=new',
-            '--disable-gpu',
-            '--no-sandbox',
-            '--hide-scrollbars',
-            '--disable-extensions',
-            '--disable-background-networking',
-            '--disable-sync',
-            '--disable-default-apps',
-            '--no-first-run',
-            '--no-default-browser-check',
-            '--virtual-time-budget=1500',
-            `--user-data-dir=${vpProfile}`,
-            `--window-size=${vp.width},${vp.height}`,
-            `--screenshot=${outPath}`,
-            `${baseUrl}/index.html`
-          ]);
+        let capturedBy = null;
+        let lastProblem = 'không rõ lý do';
 
-          this.assert(fs.existsSync(outPath), `Tệp ảnh chụp tồn tại: reports/fix8/runs/${this.runId}/screenshots/${vp.file}`, gateResult);
-          const fileSize = fs.statSync(outPath).size;
-          this.assert(fileSize > 15000, `Screenshot ${vp.name} (${vp.width}x${vp.height}) có kích thước hợp lệ (${(fileSize / 1024).toFixed(1)} KB)`, gateResult);
-        } finally {
-          try { fs.rmSync(vpProfile, { recursive: true, force: true }); } catch (e) {}
+        for (const bin of browserCandidates) {
+          const vpProfile = path.join(os.tmpdir(), `lotto-gateh-${vp.name}-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`);
+          try {
+            try { fs.rmSync(outPath, { force: true }); } catch (e) {}
+            const attempt = await captureViewport(bin, {
+              width: vp.width,
+              height: vp.height,
+              outPath,
+              url: `${baseUrl}/index.html`,
+              userDataDir: vpProfile
+            });
+
+            if (attempt.ok && fs.existsSync(outPath) && fs.statSync(outPath).size > 0) {
+              capturedBy = bin;
+              vp.metrics = attempt.metrics || null;
+              if (vp.metrics) {
+                this.log(`     ${path.basename(bin)}: khổ đo được ${vp.metrics.innerWidth}x${vp.metrics.innerHeight}px, font ${vp.metrics.fonts}`);
+              }
+              break;
+            }
+
+            lastProblem = attempt.reason || 'không rõ lý do';
+            this.log(`     ! ${path.basename(bin)} không xuất được ảnh (${lastProblem.slice(0, 100)}), thử trình duyệt kế tiếp...`);
+          } finally {
+            try { fs.rmSync(vpProfile, { recursive: true, force: true }); } catch (e) {}
+          }
+        }
+
+        const shotLabel = capturedBy === null
+          ? `Trình duyệt xuất được ảnh chụp viewport ${vp.name} (lỗi: ${lastProblem.slice(0, 120)})`
+          : `Trình duyệt xuất được ảnh chụp viewport ${vp.name}`;
+        this.assert(capturedBy !== null, shotLabel, gateResult);
+        this.assert(fs.existsSync(outPath), `Tệp ảnh chụp tồn tại: ${path.relative(rootDir, outPath)}`, gateResult);
+        const fileSize = fs.statSync(outPath).size;
+        this.assert(fileSize > 15000, `Screenshot ${vp.name} (${vp.width}x${vp.height}) có kích thước hợp lệ (${(fileSize / 1024).toFixed(1)} KB)`, gateResult);
+
+        // Số đo thật của khổ: chứng minh ảnh chụp đúng là giao diện ở bề rộng
+        // này, không phải một cửa sổ bị hệ điều hành co lại giữa đường.
+        if (vp.metrics) {
+          this.assert(vp.metrics.innerWidth === vp.width,
+            `Viewport ${vp.name} áp đúng bề rộng ${vp.width}px (đo được ${vp.metrics.innerWidth}px)`, gateResult);
+          this.assert(vp.metrics.scrollWidth <= vp.metrics.innerWidth + 1,
+            `Trang không tràn ngang ở khổ ${vp.name} (scrollWidth ${vp.metrics.scrollWidth}px trong viewport ${vp.metrics.innerWidth}px)`, gateResult);
+        } else {
+          this.log('     (bỏ qua kiểm tra số đo: runtime không có WebSocket, đã dùng đường chụp một lần)');
         }
       }
 

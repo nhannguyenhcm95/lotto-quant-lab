@@ -142,10 +142,8 @@ export function getDrawEventSet(draw, options = {}) {
     throw err;
   }
 
-  const isVietlott = options.isVietlott !== undefined 
-    ? Boolean(options.isVietlott)
-    : (draw.gameType === 'mega-6-45' || draw.gameType === 'power-6-55');
-  const totalBalls = options.totalBalls || (draw.gameType === 'power-6-55' ? 55 : 45);
+  const isVietlott = resolveIsVietlott(options, draw);
+  const totalBalls = resolveTotalBalls(options, draw, isVietlott);
 
   if (isVietlott) {
     if (!Array.isArray(draw.winningNumbers) || draw.winningNumbers.length !== 6) {
@@ -203,10 +201,8 @@ export function getDrawEventCounts(draw, options = {}) {
     throw err;
   }
 
-  const isVietlott = options.isVietlott !== undefined 
-    ? Boolean(options.isVietlott) 
-    : (draw.gameType === 'mega-6-45' || draw.gameType === 'power-6-55');
-  const totalBalls = options.totalBalls || (draw.gameType === 'power-6-55' ? 55 : 45);
+  const isVietlott = resolveIsVietlott(options, draw);
+  const totalBalls = resolveTotalBalls(options, draw, isVietlott);
   const counts = new Map();
 
   if (isVietlott) {
@@ -275,7 +271,7 @@ export function validateAndSortHistory(historyData, options = {}) {
   const isVietlott = options.isVietlott !== undefined 
     ? Boolean(options.isVietlott) 
     : undefined;
-  const totalBalls = options.totalBalls || 45;
+  const fallbackTotalBalls = resolveTotalBalls(options, historyData, isVietlott);
 
   // Clone để không mutate input gốc và validate từng bản ghi
   const cloned = historyData.map((d, idx) => {
@@ -296,6 +292,9 @@ export function validateAndSortHistory(historyData, options = {}) {
     const drawIsVietlott = isVietlott !== undefined 
       ? isVietlott 
       : (d.gameType === 'mega-6-45' || d.gameType === 'power-6-55' || Array.isArray(d.winningNumbers));
+    const drawTotalBalls = options.totalBalls
+      ? fallbackTotalBalls
+      : resolveTotalBalls(options, d, drawIsVietlott);
 
     if (drawIsVietlott) {
       if (!Array.isArray(d.winningNumbers) || d.winningNumbers.length !== 6) {
@@ -306,7 +305,7 @@ export function validateAndSortHistory(historyData, options = {}) {
       const ballSet = new Set();
       const normBalls = [];
       for (const b of d.winningNumbers) {
-        const norm = normalizeVietlottBall(b, totalBalls);
+        const norm = normalizeVietlottBall(b, drawTotalBalls);
         if (ballSet.has(norm)) {
           const err = new RangeError(`Draw at index ${idx} (${d.drawId || d.date}) contains duplicate ball: ${norm}`);
           err.code = 'DUPLICATE_NUMBER';
@@ -318,7 +317,7 @@ export function validateAndSortHistory(historyData, options = {}) {
 
       // Kiểm tra bonusNumber nếu có
       if (d.bonusNumber !== undefined && d.bonusNumber !== null) {
-        const bonusNorm = normalizeVietlottBall(d.bonusNumber, totalBalls);
+        const bonusNorm = normalizeVietlottBall(d.bonusNumber, drawTotalBalls);
         if (ballSet.has(bonusNorm)) {
           const err = new RangeError(`Draw at index ${idx} (${d.drawId || d.date}) bonusNumber duplicates winning numbers: ${bonusNorm}`);
           err.code = 'DUPLICATE_NUMBER';
@@ -374,12 +373,66 @@ export function validateAndSortHistory(historyData, options = {}) {
 }
 
 /**
+ * Xác định cờ isVietlott nhất quán cho mọi thuật toán:
+ *  - Ưu tiên giá trị tường minh options.isVietlott nếu được truyền vào.
+ *  - Nếu không truyền, tự động suy diễn an toàn từ cấu trúc bản ghi lịch sử đầu tiên.
+ */
+export function resolveIsVietlott(options = {}, historySample = null) {
+  if (options && options.isVietlott !== undefined) {
+    return Boolean(options.isVietlott);
+  }
+  if (options && (options.stationOrGame === 'mega-6-45' || options.stationOrGame === 'power-6-55' || options.gameType === 'mega-6-45' || options.gameType === 'power-6-55')) {
+    return true;
+  }
+  const first = Array.isArray(historySample) && historySample.length > 0 ? historySample[0] : historySample;
+  if (first && typeof first === 'object') {
+    if (first.gameType === 'mega-6-45' || first.gameType === 'power-6-55' || Array.isArray(first.winningNumbers)) {
+      return true;
+    }
+    if (Array.isArray(first.lottoPairs) || (first.prizes && typeof first.prizes === 'object')) {
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * Xác định kích thước tập bóng (totalBalls) nhất quán cho Mega 6/45 (45), Power 6/55 (55) và XSMN (100)
+ * ngay cả khi caller không truyền tường minh options.totalBalls.
+ */
+export function resolveTotalBalls(options = {}, historySample = null, resolvedIsVietlott = undefined) {
+  if (options && options.totalBalls !== undefined && options.totalBalls !== null && options.totalBalls !== 0) {
+    return Number(options.totalBalls);
+  }
+  const isVietlott = resolvedIsVietlott !== undefined
+    ? Boolean(resolvedIsVietlott)
+    : resolveIsVietlott(options, historySample);
+  if (!isVietlott) {
+    return 100;
+  }
+  const scopeHint = options && (options.stationOrGame || options.gameType || options.stationId);
+  if (scopeHint === 'power-6-55') return 55;
+  if (scopeHint === 'mega-6-45') return 45;
+
+  const samples = Array.isArray(historySample) ? historySample : (historySample ? [historySample] : []);
+  for (let i = 0; i < samples.length; i++) {
+    const d = samples[i];
+    if (d && typeof d === 'object') {
+      if (d.gameType === 'power-6-55') return 55;
+      if (d.gameType === 'mega-6-45') return 45;
+      if (d.bonusNumber !== undefined && d.bonusNumber !== null) return 55;
+    }
+  }
+  return 45;
+}
+
+/**
  * Chuẩn hóa lịch sử hoàn chỉnh kèm theo eventSet và eventCounts cho từng draw
  */
 export function normalizeHistory(historyData, options = {}) {
   const sorted = validateAndSortHistory(historyData, options);
-  const isVietlott = Boolean(options.isVietlott);
-  const totalBalls = options.totalBalls || (isVietlott ? 45 : 100);
+  const isVietlott = resolveIsVietlott(options, sorted);
+  const totalBalls = resolveTotalBalls(options, sorted, isVietlott);
 
   return sorted.map(d => {
     const eventSet = getDrawEventSet(d, { isVietlott, totalBalls });
@@ -395,9 +448,9 @@ export function normalizeHistory(historyData, options = {}) {
 /**
  * Tạo Universe tập các candidate chuẩn cho từng game (trả về mảng có kèm metadata .min, .max, .size, .members)
  */
-export function getUniverse(options = {}) {
-  const isVietlott = Boolean(options.isVietlott);
-  const totalBalls = options.totalBalls || (isVietlott ? 45 : 100);
+export function getUniverse(options = {}, historySample = null) {
+  const isVietlott = resolveIsVietlott(options, historySample);
+  const totalBalls = resolveTotalBalls(options, historySample, isVietlott);
 
   const universe = [];
   if (isVietlott) {
@@ -426,6 +479,8 @@ export const InputNormalizer = {
   normalizeLottoPair,
   compareCanonical,
   compareCanonicalNumbers: compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls,
   getDrawEventSet,
   getDrawEventCounts,
   validateAndSortHistory,

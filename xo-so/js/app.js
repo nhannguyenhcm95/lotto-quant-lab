@@ -10,14 +10,17 @@ import { FrequencyGapAlgorithm } from './algorithms/frequency-gap.js';
 import { ClusteringAlgorithm } from './algorithms/clustering.js';
 import { AssociationRulesAlgorithm } from './algorithms/association-rules.js';
 import { BacktestEngine } from './backtest-engine.js';
-import { UIController } from './ui-controller.js?v=6.1';
+import { UIController } from './ui-controller.js?v=8.4';
 
 class LottoQuantApp {
   constructor() {
     this.currentMode = 'xsmn'; // 'xsmn' | 'vietlott'
     this.currentStation = 'tphcm';
     this.currentVietlottGame = 'mega-6-45';
-    this.activeTab = 'live'; // 'live' | 'predict' | 'backtest' | 'leaderboard' | 'docs'
+    this.activeTab = 'predict'; // 'predict' | 'backtest' | 'dashboard' | 'docs'
+    this._backtestReqId = 0;
+    this._bgVerifyTimer = null;
+    this._dashboardDirty = false;
 
     // Hỗ trợ tham số URL: ?station=an-giang hoặc ?mode=vietlott
     try {
@@ -31,33 +34,47 @@ class LottoQuantApp {
   async init() {
     console.log(`[${LOTTO_CONFIG.APP_NAME}] Đang khởi động hệ thống v${LOTTO_CONFIG.VERSION}...`);
 
-    // 1. Nạp dữ liệu cơ sở & đối soát tệp hạt giống mới nhất
+    // 1. Nạp dữ liệu cơ sở từ hạt giống cục bộ (không cần mạng)
     await DataService.init();
 
-    // 2. TỰ ĐỘNG ĐỒNG BỘ REAL-TIME TỪ MINH NGỌC NGAY KHI MỞ TRANG (Người dùng không cần bấm gì)
-    try {
-      await DataService.syncLiveMinhNgoc();
-    } catch (e) {
-      console.warn('Đồng bộ ban đầu tiếp tục với cache tươi:', e);
-    }
+    // 2. Vẽ giao diện ngay bằng dữ liệu đã có trong máy
     this.updateStatusIndicator();
     UIController.updateDataVolumeBadge(DataService.getTotalStats());
 
     // 3. Khởi tạo dropdowns và cấu hình
     this.populateStationDropdown();
     this.setupEventListeners();
+    this.setupThemeToggle();
 
-    // 4. Hiển thị dữ liệu mặc định mới nhất
+    // 4. Nạp sẵn danh sách ngày cho bộ chọn dò số (không chạy trùng timer)
+    this.populateBacktestDates(false);
+
+    // 5. Hiển thị dữ liệu mặc định mới nhất ngay lập tức
     this.refreshCurrentView();
-
-    // 5. Nạp sẵn danh sách ngày cho bộ chọn dò số
-    this.populateBacktestDates();
 
     // 6. Kiểm tra hash điều hướng trực tiếp
     this.checkInitialHash();
 
     // 7. Kích hoạt chu kỳ tự động cập nhật ngầm liên tục mỗi 30 giây (hoàn toàn tự động)
     this.startRealtimeSync();
+
+    // 8. Đồng bộ Minh Ngọc chạy nền: mạng chậm hay API lỗi cũng không giữ trang trắng,
+    //    số mới về sau sẽ tự vẽ lại mà người dùng không phải chờ.
+    this._initialSync = this.syncInBackground();
+  }
+
+  // Lần đồng bộ đầu tiên, chạy sau khi giao diện đã hiện.
+  async syncInBackground() {
+    try {
+      const res = await DataService.syncLiveMinhNgoc();
+      this.updateStatusIndicator();
+      if (res && res.updatedCount > 0) {
+        this.populateBacktestDates(false);
+        this.refreshCurrentView();
+      }
+    } catch (e) {
+      console.warn('Đồng bộ ban đầu tiếp tục với cache tươi:', e);
+    }
   }
 
   startRealtimeSync() {
@@ -67,7 +84,7 @@ class LottoQuantApp {
         const res = await DataService.syncLiveMinhNgoc();
         this.updateStatusIndicator();
         if (res && res.updatedCount > 0) {
-          this.populateBacktestDates();
+          this.populateBacktestDates(false);
           this.refreshCurrentView();
         }
       } catch (err) {
@@ -79,12 +96,7 @@ class LottoQuantApp {
   checkInitialHash() {
     const hash = window.location.hash.replace('#', '');
     if (hash && ['live', 'predict', 'dashboard', 'backtest', 'leaderboard', 'docs'].includes(hash)) {
-      const tabBtn = document.querySelector(`.nav-tab-btn[data-tab="${hash}"]`);
-      if (tabBtn) {
-        document.querySelectorAll('.nav-tab-btn').forEach(t => t.classList.remove('active'));
-        tabBtn.classList.add('active');
-        this.switchTab(hash);
-      }
+      this.switchTab(hash, false);
     }
   }
 
@@ -124,8 +136,9 @@ class LottoQuantApp {
         const btn = document.createElement('button');
         const isActive = st.id === this.currentStation;
         btn.type = 'button';
+        btn.dataset.stationId = st.id;
         btn.className = `today-fast-pill-btn ${isActive ? 'active' : ''}`;
-        btn.innerHTML = `<span class="station-today-dot"></span> <span>${st.name}</span>`;
+        btn.innerHTML = `<span>${st.name}</span>`;
         btn.addEventListener('click', () => {
           this.currentStation = st.id;
           if (select) select.value = st.id;
@@ -134,7 +147,7 @@ class LottoQuantApp {
           document.querySelectorAll('.station-pill-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.stationId === st.id);
           });
-          this.populateBacktestDates();
+          this.populateBacktestDates(false);
           this.refreshCurrentView();
         });
         todayFastPills.appendChild(btn);
@@ -142,7 +155,7 @@ class LottoQuantApp {
     }
 
     if (todayHighlight) {
-      todayHighlight.innerHTML = `Hôm Nay (${dayNames[todayDay]}):`;
+      todayHighlight.innerHTML = `Đài hôm nay (${dayNames[todayDay]}):`;
     }
 
     if (pillsContainer) {
@@ -151,12 +164,13 @@ class LottoQuantApp {
         const btn = document.createElement('button');
         const isToday = todayStationIds.includes(st.id);
         const isActive = st.id === this.currentStation;
+        btn.type = 'button';
         btn.className = `station-pill-btn ${isActive ? 'active' : ''} ${isToday ? 'today-live' : ''}`;
         btn.dataset.stationId = st.id;
         btn.innerHTML = `
           ${isToday ? '<span class="station-today-dot"></span>' : ''}
           <span>${st.name}</span>
-          ${isToday ? '<span style="font-size: 10px; background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); padding: 1px 5px; border-radius: 4px; font-weight: 700;">Hôm nay</span>' : ''}
+          ${isToday ? '<span class="station-pill-today-tag">Hôm nay</span>' : ''}
         `;
 
         btn.addEventListener('click', () => {
@@ -165,9 +179,9 @@ class LottoQuantApp {
           document.querySelectorAll('.station-pill-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           document.querySelectorAll('.today-fast-pill-btn').forEach(b => {
-            b.classList.toggle('active', b.textContent.includes(st.name));
+            b.classList.toggle('active', b.dataset.stationId === st.id);
           });
-          this.populateBacktestDates();
+          this.populateBacktestDates(false);
           this.refreshCurrentView();
         });
 
@@ -184,10 +198,16 @@ class LottoQuantApp {
     const vietlottFilterWrapper = document.getElementById('vietlott-filter-wrapper');
     const xsmnStationsBar = document.getElementById('xsmn-stations-bar');
 
+    const syncModeAria = (mode) => {
+      if (btnXsmn) btnXsmn.setAttribute('aria-pressed', mode === 'xsmn' ? 'true' : 'false');
+      if (btnVietlott) btnVietlott.setAttribute('aria-pressed', mode === 'vietlott' ? 'true' : 'false');
+    };
+
     if (btnXsmn && btnVietlott) {
       if (this.currentMode === 'vietlott') {
         btnVietlott.classList.add('active');
         btnXsmn.classList.remove('active');
+        syncModeAria('vietlott');
         if (stationFilterWrapper) stationFilterWrapper.style.display = 'none';
         if (xsmnStationsBar) xsmnStationsBar.style.display = 'none';
         if (vietlottFilterWrapper) vietlottFilterWrapper.style.display = 'flex';
@@ -196,6 +216,7 @@ class LottoQuantApp {
       } else {
         btnXsmn.classList.add('active');
         btnVietlott.classList.remove('active');
+        syncModeAria('xsmn');
         if (stationFilterWrapper) stationFilterWrapper.style.display = 'flex';
         if (xsmnStationsBar) xsmnStationsBar.style.display = 'none';
         if (vietlottFilterWrapper) vietlottFilterWrapper.style.display = 'none';
@@ -205,10 +226,11 @@ class LottoQuantApp {
         this.currentMode = 'xsmn';
         btnXsmn.classList.add('active');
         btnVietlott.classList.remove('active');
+        syncModeAria('xsmn');
         if (stationFilterWrapper) stationFilterWrapper.style.display = 'flex';
         if (xsmnStationsBar) xsmnStationsBar.style.display = 'none';
         if (vietlottFilterWrapper) vietlottFilterWrapper.style.display = 'none';
-        this.populateBacktestDates();
+        this.populateBacktestDates(false);
         this.refreshCurrentView();
       });
 
@@ -216,17 +238,18 @@ class LottoQuantApp {
         this.currentMode = 'vietlott';
         btnVietlott.classList.add('active');
         btnXsmn.classList.remove('active');
+        syncModeAria('vietlott');
         if (stationFilterWrapper) stationFilterWrapper.style.display = 'none';
         if (xsmnStationsBar) xsmnStationsBar.style.display = 'none';
         if (vietlottFilterWrapper) vietlottFilterWrapper.style.display = 'flex';
         const vietlottSelect = document.getElementById('vietlott-select');
         if (vietlottSelect) vietlottSelect.value = this.currentVietlottGame;
-        this.populateBacktestDates();
+        this.populateBacktestDates(false);
         this.refreshCurrentView();
       });
     }
 
-    // 2. Thay đổi đài XSMN
+    // 2. Thay đổi đài XSMN & Nút mở nhanh 21 đài
     const stationSelect = document.getElementById('station-select');
     if (stationSelect) {
       stationSelect.addEventListener('change', (e) => {
@@ -234,8 +257,21 @@ class LottoQuantApp {
         document.querySelectorAll('.station-pill-btn').forEach(b => {
           b.classList.toggle('active', b.dataset.stationId === this.currentStation);
         });
-        this.populateBacktestDates();
+        document.querySelectorAll('.today-fast-pill-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.stationId === this.currentStation);
+        });
+        this.populateBacktestDates(false);
         this.refreshCurrentView();
+      });
+    }
+
+    const btnToggleAllStations = document.getElementById('btn-toggle-all-stations');
+    if (btnToggleAllStations && xsmnStationsBar) {
+      btnToggleAllStations.addEventListener('click', () => {
+        const isHidden = xsmnStationsBar.style.display === 'none' || !xsmnStationsBar.style.display;
+        xsmnStationsBar.style.display = isHidden ? 'block' : 'none';
+        btnToggleAllStations.classList.toggle('active', isHidden);
+        btnToggleAllStations.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
       });
     }
 
@@ -250,8 +286,10 @@ class LottoQuantApp {
       if (quickMega && quickPower) {
         quickMega.classList.toggle('active', game === 'mega-6-45');
         quickPower.classList.toggle('active', game === 'power-6-55');
+        quickMega.setAttribute('aria-pressed', game === 'mega-6-45' ? 'true' : 'false');
+        quickPower.setAttribute('aria-pressed', game === 'power-6-55' ? 'true' : 'false');
       }
-      this.populateBacktestDates();
+      this.populateBacktestDates(false);
       this.refreshCurrentView();
     };
 
@@ -266,15 +304,26 @@ class LottoQuantApp {
       vietlottSelect.addEventListener('change', (e) => setVietlottGame(e.target.value));
     }
 
-    // 4. Chuyển đổi các Tab chính (Navigation Tabs)
-    const navTabs = document.querySelectorAll('.nav-tab-btn');
-    navTabs.forEach(tab => {
+    // 4. Chuyển đổi các Tab chính (WAI-ARIA Tablist + Điều hướng phím mũi tên)
+    const navTabs = Array.from(document.querySelectorAll('.nav-tab-btn'));
+    navTabs.forEach((tab, idx) => {
       tab.addEventListener('click', () => {
-        navTabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
         const targetPanel = tab.getAttribute('data-tab');
-        window.location.hash = targetPanel;
-        this.switchTab(targetPanel);
+        this.switchTab(targetPanel, false);
+      });
+
+      tab.addEventListener('keydown', (e) => {
+        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+        e.preventDefault();
+        let nextIdx = idx;
+        if (e.key === 'ArrowRight') nextIdx = (idx + 1) % navTabs.length;
+        else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + navTabs.length) % navTabs.length;
+        else if (e.key === 'Home') nextIdx = 0;
+        else if (e.key === 'End') nextIdx = navTabs.length - 1;
+        const targetTab = navTabs[nextIdx];
+        if (targetTab) {
+          this.switchTab(targetTab.getAttribute('data-tab'), true);
+        }
       });
     });
 
@@ -287,7 +336,7 @@ class LottoQuantApp {
         await DataService.syncLiveMinhNgoc();
         this.updateStatusIndicator();
         UIController.updateDataVolumeBadge(DataService.getTotalStats());
-        this.populateBacktestDates();
+        this.populateBacktestDates(false);
         this.refreshCurrentView();
         btnSync.disabled = false;
         btnSync.innerHTML = '<i class="fa fa-arrows-rotate"></i> Cập nhật';
@@ -302,17 +351,33 @@ class LottoQuantApp {
       });
     }
 
+    const modalOverlay = document.getElementById('crawl-modal-overlay');
     const btnCloseModal = document.getElementById('btn-close-crawl-modal');
     if (btnCloseModal) {
       btnCloseModal.addEventListener('click', () => {
         UIController.hideCrawlModal();
       });
     }
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay && btnCloseModal && btnCloseModal.style.display !== 'none') {
+          UIController.hideCrawlModal();
+        }
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalOverlay && modalOverlay.style.display !== 'none') {
+        if (!btnCloseModal || btnCloseModal.style.display !== 'none' || UIController._crawlCloseable) {
+          UIController.hideCrawlModal();
+        }
+      }
+    });
 
     const btnModalAction = document.getElementById('btn-crawl-modal-action');
     if (btnModalAction) {
       btnModalAction.addEventListener('click', () => {
         UIController.hideCrawlModal();
+        this.switchTab('predict');
         const target = document.getElementById('panel-live') || document.querySelector('.hero-prediction-card');
         if (target) target.scrollIntoView({ behavior: 'smooth' });
       });
@@ -353,6 +418,65 @@ class LottoQuantApp {
     window.lottoApp = this;
   }
 
+  setupThemeToggle() {
+    const themeBtn = document.getElementById('btn-theme-toggle');
+    let savedTheme = 'light';
+    let hasUrlTheme = false;
+    try {
+      const urlTheme = new URLSearchParams(window.location.search).get('theme');
+      if (urlTheme === 'dark' || urlTheme === 'light') {
+        savedTheme = urlTheme;
+        hasUrlTheme = true;
+      } else {
+        const stored = localStorage.getItem('lotto-theme');
+        if (stored === 'dark' || stored === 'light') {
+          savedTheme = stored;
+        }
+      }
+    } catch (e) {}
+
+    const applyTheme = (theme, rerenderCharts = false, persist = true) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.body.classList.remove('light-theme');
+        if (themeBtn) {
+          themeBtn.innerHTML = '<i class="fa-solid fa-sun" aria-hidden="true"></i> <span id="theme-toggle-text">Nền sáng</span>';
+          themeBtn.title = 'Chuyển sang Giao diện Sáng (Giấy Kem Ấm)';
+        }
+      } else {
+        document.body.classList.remove('dark-theme');
+        document.body.classList.add('light-theme');
+        if (themeBtn) {
+          themeBtn.innerHTML = '<i class="fa-solid fa-moon" aria-hidden="true"></i> <span id="theme-toggle-text">Nền tối</span>';
+          themeBtn.title = 'Chuyển sang Giao diện Tối (Đêm Trầm Hổ Phách)';
+        }
+      }
+      if (persist) {
+        try {
+          localStorage.setItem('lotto-theme', theme);
+        } catch (e) {}
+      }
+
+      if (rerenderCharts) {
+        if (UIController.lastProbScores) {
+          UIController.renderProbabilityChart(UIController.lastProbScores, UIController.lastProbIsVietlott);
+        }
+        this.renderDashboard();
+      }
+    };
+
+    applyTheme(savedTheme, false, !hasUrlTheme);
+
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme, true, true);
+      });
+    }
+  }
+
   // Tự động cào toàn bộ dữ liệu từ Minh Ngọc và tái huấn luyện 8 mô hình dự đoán AI
   async triggerFullCrawlAndRepredict() {
     UIController.showCrawlModal();
@@ -364,7 +488,7 @@ class LottoQuantApp {
       // Cập nhật lại toàn bộ chỉ số và thông tin
       this.updateStatusIndicator();
       UIController.updateDataVolumeBadge(DataService.getTotalStats());
-      this.populateBacktestDates();
+      this.populateBacktestDates(false);
 
       // DÙNG CÁC THUẬT TOÁN ĐỂ DỰ ĐOÁN LẠI TRÊN DỮ LIỆU MỚI NHẤT
       this.refreshCurrentView();
@@ -382,28 +506,52 @@ class LottoQuantApp {
     }
   }
 
-  switchTab(tabId) {
-    this.activeTab = tabId;
+  switchTab(tabId, focusTab = false) {
+    let resolvedId = tabId;
+    if (tabId === 'live') resolvedId = 'predict';
+    if (tabId === 'leaderboard') resolvedId = 'backtest';
+
+    this.activeTab = resolvedId;
     document.querySelectorAll('.tab-view-panel').forEach(panel => {
       panel.classList.remove('active');
     });
-    const activePanel = document.getElementById(`panel-${tabId}`);
+
+    const activePanel = document.getElementById(`panel-${resolvedId}`) || document.getElementById(`panel-${tabId}`);
     if (activePanel) {
       activePanel.classList.add('active');
     }
 
-    // Đồng bộ trạng thái active trên thanh navigation tabs
+    // Đồng bộ trạng thái active & WAI-ARIA trên thanh navigation tabs
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      const t = btn.getAttribute('data-tab');
+      const isActive = t === resolvedId || t === tabId;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.setAttribute('tabindex', isActive ? '0' : '-1');
+      if (isActive && focusTab && typeof btn.focus === 'function') {
+        try { btn.focus(); } catch (e) {}
+      }
     });
-    try { window.location.hash = tabId; } catch (e) {}
+    try { window.location.hash = resolvedId; } catch (e) {}
 
-    if (tabId === 'predict') {
+    if (resolvedId === 'predict') {
       this.runAndRenderPredictions();
-    } else if (tabId === 'dashboard') {
-      this.renderDashboard();
-    } else if (tabId === 'leaderboard') {
-      this.executeLeaderboard();
+    } else if (resolvedId === 'dashboard') {
+      requestAnimationFrame(() => {
+        if (UIController.lastProbScores) {
+          UIController.renderProbabilityChart(UIController.lastProbScores, UIController.lastProbIsVietlott);
+        }
+        this.renderDashboard();
+      });
+    } else if (resolvedId === 'backtest') {
+      if (this._leaderboardDirty || !this.lastLeaderboardResult) {
+        this._leaderboardDirty = false;
+        this.executeLeaderboard();
+      }
+      if (this._backtestDirty) {
+        this._backtestDirty = false;
+        this.executeBacktest();
+      }
     }
   }
 
@@ -438,7 +586,12 @@ class LottoQuantApp {
     const targetInfo = this.calculateNextDrawInfo(this.currentMode, gameOrStation, latestDraw);
 
     // Tính mã vân tay ổn định (Fingerprint) của toàn bộ tập dữ liệu lịch sử được dùng
-    const summaryStr = history.map(d => `${d.date}_${d.drawId || ''}_${Array.isArray(d.winningNumbers) ? d.winningNumbers.join('-') : (d.specialPrize || '')}`).join('|');
+    const summaryStr = history.map(d => {
+      const payload = Array.isArray(d.winningNumbers)
+        ? d.winningNumbers.join('-')
+        : (Array.isArray(d.lottoPairs) ? `${d.specialPrize || ''}:${d.lottoPairs.join('-')}` : (d.specialPrize || ''));
+      return `${d.date}_${d.drawId || ''}_${payload}`;
+    }).join('|');
     let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
     for (let i = 0; i < summaryStr.length; i++) {
       const ch = summaryStr.charCodeAt(i);
@@ -460,7 +613,7 @@ class LottoQuantApp {
 
     const totalBalls = isVietlott 
       ? LOTTO_CONFIG.VIETLOTT_GAMES[this.currentVietlottGame].totalBalls 
-      : 99;
+      : 100;
     const topN = isVietlott ? 6 : 5;
 
     // Seed xác định theo key để đảm bảo 100% tái lập
@@ -483,11 +636,18 @@ class LottoQuantApp {
 
     // Chuẩn hóa và sort tăng dần một lần duy nhất ở canonical layer
     let canonicalPredictions = rawResult.predictions || [];
+    let canonicalExplanation = rawResult.explanation;
     if (isVietlott) {
       canonicalPredictions = canonicalPredictions
         .map(n => Number(n))
         .filter(n => !isNaN(n) && Number.isInteger(n) && n >= 1 && n <= totalBalls);
       canonicalPredictions = Array.from(new Set(canonicalPredictions)).sort((a, b) => a - b);
+      if (rawResult.status === 'ok' && canonicalPredictions.length > 0) {
+        const paddedList = canonicalPredictions.map(n => String(n).padStart(2, '0')).join(', ');
+        const validCnt = rawResult.totalAlgorithmsUsed || rawResult.metrics?.totalAlgorithmsUsed || 7;
+        const consPct = rawResult.metrics?.consensusRatio || '0%';
+        canonicalExplanation = `Mô hình Ensemble tích hợp ${validCnt} thuật toán định lượng theo phương pháp Percentile-Rank Aggregation. Bộ số hội tụ theo thứ tự tăng dần: ${paddedList} với tỷ lệ đồng thuận đạt ${consPct}.`;
+      }
     } else {
       canonicalPredictions = canonicalPredictions.map(n => String(n).padStart(2, '0'));
     }
@@ -506,7 +666,8 @@ class LottoQuantApp {
       predictions: canonicalPredictions,
       rawResult: {
         ...rawResult,
-        predictions: canonicalPredictions
+        predictions: canonicalPredictions,
+        explanation: canonicalExplanation
       }
     };
 
@@ -525,22 +686,39 @@ class LottoQuantApp {
     const canonical = this.getOrComputeCanonicalPrediction();
     const targetInfo = canonical.targetInfo;
 
-    // Hero Prediction Card nhận chung kết quả từ canonical
+    // 1. Vẽ ngay lập tức Phiếu Dự Báo & Bảng Kết Quả (< 20ms, không nghẽn luồng chính)
     UIController.renderLiveResult(latestDraw, isVietlott, 'live-result-container', canonical.rawResult, targetInfo);
     this.updateKPISummary(history, latestDraw, isVietlott);
-
-    // Hiển thị liền mạch toàn bộ các section trên 1 trang cuộn (Single-Page All-in-One)
     this.runAndRenderPredictions();
     this.renderDashboard();
 
-    // Tự động nạp bảng xếp hạng và chuẩn bị dò số kỳ gần nhất
-    setTimeout(() => {
-      this.executeLeaderboard();
-      const backtestSelect = document.getElementById('backtest-date-select');
-      if (backtestSelect && backtestSelect.value) {
-        this.executeBacktest();
+    // 2. Điều phối tính toán BXH 20 kỳ & Đối soát có khử dội (debounce) để chuyển đài siêu mượt
+    this._leaderboardDirty = true;
+    this._backtestDirty = true;
+    if (this._bgVerifyTimer) {
+      clearTimeout(this._bgVerifyTimer);
+      this._bgVerifyTimer = null;
+    }
+
+    const delayMs = this.activeTab === 'backtest' ? 20 : 180;
+    this._bgVerifyTimer = setTimeout(() => {
+      this._bgVerifyTimer = null;
+      const runHeavyVerify = () => {
+        this._leaderboardDirty = false;
+        this.executeLeaderboard();
+        const backtestSelect = document.getElementById('backtest-date-select');
+        const customDate = document.getElementById('backtest-custom-date');
+        if ((customDate && customDate.value) || (backtestSelect && backtestSelect.value)) {
+          this._backtestDirty = false;
+          this.executeBacktest();
+        }
+      };
+      if (this.activeTab !== 'backtest' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(runHeavyVerify, { timeout: 600 });
+      } else {
+        runHeavyVerify();
       }
-    }, 60);
+    }, delayMs);
   }
 
   updateKPISummary(history, latestDraw, isVietlott) {
@@ -657,7 +835,7 @@ class LottoQuantApp {
 
     const totalBalls = isVietlott 
       ? LOTTO_CONFIG.VIETLOTT_GAMES[this.currentVietlottGame].totalBalls 
-      : 99;
+      : 100;
 
     const freqRes = FrequencyGapAlgorithm.predict(history, { isVietlott, totalBalls, topN: 10 });
     const clusterRes = ClusteringAlgorithm.predict(history, { isVietlott, totalBalls, topN: 6 });
@@ -673,58 +851,27 @@ class LottoQuantApp {
 
   calculateNextDrawInfo(mode, stationOrGame, latestDraw) {
     if (!latestDraw) return null;
-    const latestDate = new Date(latestDraw.date);
     const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const isVietlott = mode === 'vietlott';
+    const nextInfo = LOTTO_CONFIG.getNextDrawDate(latestDraw.date, stationOrGame, isVietlott);
 
-    if (mode === 'vietlott') {
+    if (isVietlott) {
       const config = LOTTO_CONFIG.VIETLOTT_GAMES[stationOrGame] || {};
-      const drawDays = config.drawDays || [2, 4, 6];
-      let nextDate = new Date(latestDate);
-      for (let i = 1; i <= 7; i++) {
-        const testDate = new Date(latestDate);
-        testDate.setDate(latestDate.getDate() + i);
-        if (drawDays.includes(testDate.getDay())) {
-          nextDate = testDate;
-          break;
-        }
-      }
-      const yyyy = nextDate.getFullYear();
-      const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
-      const dd = String(nextDate.getDate()).padStart(2, '0');
       return {
         gameOrStationName: config.name || 'Vietlott',
         latestDate: latestDraw.date,
-        nextDate: `${yyyy}-${mm}-${dd}`,
-        nextDayName: dayNames[nextDate.getDay()],
+        nextDate: nextInfo.date,
+        nextDayName: dayNames[nextInfo.dayOfWeek] || 'Kỳ tới',
         nextDrawTime: '18h15'
       };
     } else {
       const station = LOTTO_CONFIG.ALL_STATIONS.find(s => s.id === stationOrGame);
       const stationName = station ? station.name : stationOrGame;
-      const drawDays = [];
-      Object.keys(LOTTO_CONFIG.XSMN_SCHEDULE).forEach(day => {
-        const stations = LOTTO_CONFIG.XSMN_SCHEDULE[day];
-        if (stations.some(s => s.id === stationOrGame)) {
-          drawDays.push(parseInt(day));
-        }
-      });
-      let nextDate = new Date(latestDate);
-      for (let i = 1; i <= 7; i++) {
-        const testDate = new Date(latestDate);
-        testDate.setDate(latestDate.getDate() + i);
-        if (drawDays.length === 0 || drawDays.includes(testDate.getDay())) {
-          nextDate = testDate;
-          break;
-        }
-      }
-      const yyyy = nextDate.getFullYear();
-      const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
-      const dd = String(nextDate.getDate()).padStart(2, '0');
       return {
         gameOrStationName: `Đài ${stationName}`,
         latestDate: latestDraw.date,
-        nextDate: `${yyyy}-${mm}-${dd}`,
-        nextDayName: dayNames[nextDate.getDay()],
+        nextDate: nextInfo.date,
+        nextDayName: dayNames[nextInfo.dayOfWeek] || 'Kỳ tới',
         nextDrawTime: '16h15'
       };
     }
@@ -753,7 +900,7 @@ class LottoQuantApp {
     UIController.renderProbabilityChart(result.scores, isVietlott, 'prob-chart-canvas');
   }
 
-  populateBacktestDates() {
+  populateBacktestDates(autoExecute = true) {
     const dateSelect = document.getElementById('backtest-date-select');
     if (!dateSelect) return;
 
@@ -769,7 +916,7 @@ class LottoQuantApp {
 
     // Lọc các ngày trong quá khứ có ít nhất 1 kỳ quay trước đó để huấn luyện mô hình
     const testableDates = dates.filter(d => {
-      const priorCount = fullHistory.filter(h => new Date(h.date) < new Date(d)).length;
+      const priorCount = fullHistory.filter(h => h && typeof h.date === 'string' && h.date < d).length;
       return priorCount >= 1;
     });
 
@@ -788,11 +935,38 @@ class LottoQuantApp {
       dateSelect.appendChild(opt);
     });
 
-    // Tự động chạy dò số cho ngày đầu tiên trong danh sách
-    setTimeout(() => this.executeBacktest(), 100);
+    if (autoExecute) {
+      setTimeout(() => this.executeBacktest(), 60);
+    }
+  }
+
+  isScheduledDrawWeekday(mode, stationOrGame, dateStr) {
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return true;
+    const [yy, mm, dd] = dateStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(yy, mm - 1, dd));
+    if (isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== dateStr) return false;
+    const weekday = dt.getUTCDay();
+
+    if (mode === 'vietlott') {
+      const cfg = LOTTO_CONFIG.VIETLOTT_GAMES[stationOrGame];
+      if (cfg && Array.isArray(cfg.drawDays) && cfg.drawDays.length > 0) {
+        return cfg.drawDays.includes(weekday);
+      }
+      return true;
+    }
+
+    const scheduledDays = [];
+    Object.keys(LOTTO_CONFIG.XSMN_SCHEDULE || {}).forEach(dayKey => {
+      const list = LOTTO_CONFIG.XSMN_SCHEDULE[dayKey] || [];
+      if (list.some(s => s.id === stationOrGame)) {
+        scheduledDays.push(Number(dayKey));
+      }
+    });
+    return scheduledDays.length === 0 || scheduledDays.includes(weekday);
   }
 
   async executeBacktest() {
+    const reqId = ++this._backtestReqId;
     const customDateInput = document.getElementById('backtest-custom-date');
     const dateSelect = document.getElementById('backtest-date-select');
     const resultContainer = document.getElementById('backtest-result-container');
@@ -809,18 +983,19 @@ class LottoQuantApp {
     // 1. Kiểm tra xem ngày này đã có trong bộ nhớ chưa
     let existingDraw = DataService.getDrawByDate(this.currentMode, stationOrGame, targetDate);
 
-    // 2. Nếu chưa có, tự động cào từ kho Minh Ngọc theo ngày đó
-    if (!existingDraw) {
+    // 2. Nếu chưa có và ngày đó đúng thứ mở thưởng định kỳ của đài, mới kết nối kho lưu trữ Minh Ngọc
+    if (!existingDraw && this.isScheduledDrawWeekday(this.currentMode, stationOrGame, targetDate)) {
       if (resultContainer) {
         resultContainer.innerHTML = `
-          <div class="quant-card" style="text-align: center; padding: 36px;">
-            <i class="fa fa-spinner fa-spin" style="font-size: 28px; color: var(--blue-500); margin-bottom: 12px;"></i>
-            <div style="font-weight: 700; color: var(--text-primary); font-size: 16px;">Đang cào dữ liệu ngày ${targetDate} từ kho lưu trữ Minh Ngọc...</div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Hệ thống đang kết nối cơ sở dữ liệu mở thưởng lịch sử để đối chiếu kết quả cho bạn.</div>
+          <div class="quant-card" style="text-align: center; padding: 34px 24px;">
+            <i class="fa fa-spinner fa-spin" style="font-size: 26px; color: var(--accent); margin-bottom: 12px;"></i>
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 16px;">Đang tra cứu kỳ mở thưởng ngày ${targetDate} từ kho lưu trữ...</div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Hệ thống đang đối chiếu lịch sử mở thưởng chính thức cho bạn.</div>
           </div>
         `;
       }
       existingDraw = await DataService.getDrawByDateWithFallback(this.currentMode, stationOrGame, targetDate);
+      if (reqId !== this._backtestReqId) return; // Bỏ kết quả cũ nếu người dùng đã chuyển đài/ngày khác
     }
 
     // Lấy toàn bộ lịch sử có sẵn (0 = all) để huấn luyện minh bạch
@@ -830,16 +1005,24 @@ class LottoQuantApp {
 
     const totalBalls = isVietlott 
       ? LOTTO_CONFIG.VIETLOTT_GAMES[this.currentVietlottGame].totalBalls 
-      : 99;
+      : 100;
 
     const result = BacktestEngine.runSingleDateBacktest(fullHistory, targetDate, {
       isVietlott,
-      stationOrGame: isVietlott ? this.currentVietlottGame : this.currentStation,
+      stationOrGame,
       totalBalls,
       topN: isVietlott ? 6 : 5
     });
 
-    UIController.renderBacktestResult(result, isVietlott, 'backtest-result-container');
+    const latestDate = fullHistory.length > 0 ? fullHistory[0].date : null;
+    const oldestDate = fullHistory.length > 0 ? fullHistory[fullHistory.length - 1].date : null;
+
+    UIController.renderBacktestResult(result, isVietlott, 'backtest-result-container', {
+      targetDate,
+      stationOrGame,
+      latestDate,
+      oldestDate
+    });
   }
 
   executeLeaderboard() {
@@ -850,7 +1033,7 @@ class LottoQuantApp {
 
     const totalBalls = isVietlott 
       ? LOTTO_CONFIG.VIETLOTT_GAMES[this.currentVietlottGame].totalBalls 
-      : 99;
+      : 100;
 
     const batchResult = BacktestEngine.runBatchBacktest(fullHistory, {
       isVietlott,

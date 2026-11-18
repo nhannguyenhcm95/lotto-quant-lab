@@ -390,7 +390,7 @@ class DataServiceManager {
       }
     });
 
-    this.data.xsmn = existing.sort((a, b) => new Date(b.date) - new Date(a.date));
+    this.data.xsmn = existing.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     return addedCount;
   }
 
@@ -666,7 +666,7 @@ class DataServiceManager {
     });
 
     // Sắp xếp giảm dần theo ngày (mới nhất lên trước)
-    this.data.vietlott[gameType] = existing.sort((a, b) => new Date(b.date) - new Date(a.date));
+    this.data.vietlott[gameType] = existing.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     return addedCount;
   }
 
@@ -781,14 +781,14 @@ class DataServiceManager {
       filtered = filtered.filter(d => d.stationId === stationId);
     }
     // Sắp xếp ngày giảm dần (kỳ mới nhất lên đầu)
-    const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...filtered].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     return limit ? sorted.slice(0, limit) : sorted;
   }
 
   // Lấy danh sách kỳ quay Vietlott theo loại (mặc định lấy toàn bộ 100% lịch sử từ #00001)
   getVietlottDraws(gameType = 'mega-6-45', limit = 5000) {
     const list = this.data.vietlott[gameType] || [];
-    const sorted = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...list].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     return limit ? sorted.slice(0, limit) : sorted;
   }
 
@@ -836,15 +836,25 @@ class DataServiceManager {
 
     if (type === 'xsmn') {
       const station = stationOrGame || 'tphcm';
+      const matchesRequested = (d) =>
+        Boolean(d) &&
+        (d.date === dateStr || d.drawDateRaw === dFormatted) &&
+        (station === 'all' || !d.stationId || d.stationId === station);
+
       // 1. Thử gọi API local Serverless
       try {
-        const res = await fetch(`/api/crawl-xsmn?station=${station}&date=${dFormatted}`);
+        const res = await fetch(`/api/crawl-xsmn?station=${station}&date=${dFormatted}`, {
+          signal: AbortSignal.timeout(2500)
+        });
         if (res.ok) {
           const result = await res.json();
           if (result.data && result.data.length > 0) {
-            this.mergeXSMNData(result.data);
-            this.saveToStorage();
-            return result.data.find(d => d.date === dateStr || d.drawDateRaw === dFormatted) || result.data[0];
+            const matched = result.data.find(matchesRequested);
+            if (matched) {
+              this.mergeXSMNData([matched]);
+              this.saveToStorage();
+              return matched;
+            }
           }
         }
       } catch (e) {}
@@ -863,15 +873,16 @@ class DataServiceManager {
       try {
         const directRes = await fetch(targetUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(3000)
         });
         if (directRes.ok) {
           const html = await directRes.text();
           const draws = this.parseXSMNFromHTML(html);
-          if (draws.length > 0) {
-            this.mergeXSMNData(draws);
+          const matched = draws.find(matchesRequested);
+          if (matched) {
+            this.mergeXSMNData([matched]);
             this.saveToStorage();
-            return draws.find(d => d.date === dateStr || d.drawDateRaw === dFormatted) || draws[0];
+            return matched;
           }
         }
       } catch (de) {}
@@ -884,14 +895,15 @@ class DataServiceManager {
 
       for (const pUrl of proxyUrls) {
         try {
-          const pRes = await fetch(pUrl, { signal: AbortSignal.timeout(6000) });
+          const pRes = await fetch(pUrl, { signal: AbortSignal.timeout(3500) });
           if (pRes.ok) {
             const html = await pRes.text();
             const draws = this.parseXSMNFromHTML(html);
-            if (draws.length > 0) {
-              this.mergeXSMNData(draws);
+            const matched = draws.find(matchesRequested);
+            if (matched) {
+              this.mergeXSMNData([matched]);
               this.saveToStorage();
-              return draws.find(d => d.date === dateStr || d.drawDateRaw === dFormatted) || draws[0];
+              return matched;
             }
           }
         } catch (pe) {}
@@ -904,16 +916,18 @@ class DataServiceManager {
       try {
         const directRes = await fetch(targetUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(3000)
         });
         if (directRes.ok) {
           const html = await directRes.text();
           const parsedV = this.parseVietlottFromHTML(html);
-          if (parsedV.mega && parsedV.mega.length) this.mergeVietlottData('mega-6-45', parsedV.mega);
-          if (parsedV.power && parsedV.power.length) this.mergeVietlottData('power-6-55', parsedV.power);
-          this.saveToStorage();
           const list = parsedV[stationOrGame === 'power-6-55' ? 'power' : 'mega'] || [];
-          return list.find(d => d.date === dateStr) || list[0];
+          const matched = list.find(d => d && d.date === dateStr);
+          if (matched) {
+            this.mergeVietlottData(stationOrGame === 'power-6-55' ? 'power-6-55' : 'mega-6-45', [matched]);
+            this.saveToStorage();
+            return matched;
+          }
         }
       } catch (de) {}
 
@@ -925,15 +939,17 @@ class DataServiceManager {
 
       for (const pUrl of proxyUrls) {
         try {
-          const pRes = await fetch(pUrl, { signal: AbortSignal.timeout(6000) });
+          const pRes = await fetch(pUrl, { signal: AbortSignal.timeout(3500) });
           if (pRes.ok) {
             const html = await pRes.text();
             const parsedV = this.parseVietlottFromHTML(html);
-            if (parsedV.mega && parsedV.mega.length) this.mergeVietlottData('mega-6-45', parsedV.mega);
-            if (parsedV.power && parsedV.power.length) this.mergeVietlottData('power-6-55', parsedV.power);
-            this.saveToStorage();
             const list = parsedV[stationOrGame === 'power-6-55' ? 'power' : 'mega'] || [];
-            return list.find(d => d.date === dateStr) || list[0];
+            const matched = list.find(d => d && d.date === dateStr);
+            if (matched) {
+              this.mergeVietlottData(stationOrGame === 'power-6-55' ? 'power-6-55' : 'mega-6-45', [matched]);
+              this.saveToStorage();
+              return matched;
+            }
           }
         } catch (pe) {}
       }

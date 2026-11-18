@@ -7,7 +7,14 @@
  *  - Tách bạch hai thống kê: same-draw co-occurrence và cross-draw sequential transition.
  */
 
-import { validateAndSortHistory, getDrawEventSet, getUniverse } from './input-normalizer.js';
+import {
+  validateAndSortHistory,
+  getDrawEventSet,
+  getUniverse,
+  compareCanonical,
+  resolveIsVietlott,
+  resolveTotalBalls
+} from './input-normalizer.js';
 
 export const AssociationRulesAlgorithm = {
   id: "association-rules",
@@ -48,9 +55,13 @@ export const AssociationRulesAlgorithm = {
       };
     }
 
-    const isVietlott = options.isVietlott !== false;
+    const isVietlott = resolveIsVietlott(options, sortedHistory);
+    const totalBalls = resolveTotalBalls(options, sortedHistory, isVietlott);
     const topN = options.topN || (isVietlott ? 6 : 5);
-    const universe = getUniverse({ isVietlott, totalBalls: options.totalBalls });
+    const universe = getUniverse({ ...options, isVietlott, totalBalls }, sortedHistory);
+    const pickBalls = isVietlott ? (options.pickBalls || 6) : 18;
+    const priorP = isVietlott ? (pickBalls / universe.length) : (1 - Math.pow(1 - 1 / 100, 18));
+    const kappa = 2.0;
 
     // 1. Khởi tạo cấu trúc thống kê
     const singleCounts = {};
@@ -65,7 +76,7 @@ export const AssociationRulesAlgorithm = {
 
     // 2. Thống kê cùng kỳ (Same-Draw Co-occurrence)
     for (let t = 0; t < nDraws; t++) {
-      const eventSet = getDrawEventSet(sortedHistory[t], { isVietlott, totalBalls: options.totalBalls });
+      const eventSet = getDrawEventSet(sortedHistory[t], { isVietlott, totalBalls });
       for (const a of eventSet) {
         if (singleCounts[a] !== undefined) {
           singleCounts[a]++;
@@ -85,8 +96,8 @@ export const AssociationRulesAlgorithm = {
     const newerSideCounts = {};
 
     for (let i = 0; i < nDraws - 1; i++) {
-      const newerSet = getDrawEventSet(sortedHistory[i], { isVietlott, totalBalls: options.totalBalls });
-      const olderSet = getDrawEventSet(sortedHistory[i + 1], { isVietlott, totalBalls: options.totalBalls });
+      const newerSet = getDrawEventSet(sortedHistory[i], { isVietlott, totalBalls });
+      const olderSet = getDrawEventSet(sortedHistory[i + 1], { isVietlott, totalBalls });
 
       for (const b of newerSet) {
         newerSideCounts[b] = (newerSideCounts[b] || 0) + 1;
@@ -101,70 +112,79 @@ export const AssociationRulesAlgorithm = {
     }
 
     // 4. Lấy các số ở kỳ mới nhất (index 0) làm Antecedents (Tiền đề hiện tại)
-    const latestEventSet = getDrawEventSet(sortedHistory[0], { isVietlott, totalBalls: options.totalBalls });
+    const latestEventSet = getDrawEventSet(sortedHistory[0], { isVietlott, totalBalls });
     const antecedents = latestEventSet.filter(num => universe.includes(num));
 
-    // 5. Tính điểm xếp hạng kết hợp (Combined Ranking Score)
+    // 5. Tính điểm xếp hạng kết hợp có làm trơn Bayes chống nổ Lift mẫu nhỏ (Combined Smoothed Ranking Score)
     const scores = {};
     const candidateDetails = [];
 
     for (const b of universe) {
       const pB = (singleCounts[b] || 0) / nDraws;
-      const pBNewer = (newerSideCounts[b] || 0) / eligibleTransitions;
+      const smoothedPB = ((singleCounts[b] || 0) + kappa * priorP) / (nDraws + kappa);
+      const smoothedPBNewer = ((newerSideCounts[b] || 0) + kappa * priorP) / (eligibleTransitions + kappa);
 
-      let totalSequentialLift = 0;
-      let totalCooccurrenceLift = 0;
+      let weightedSeqLiftSum = 0;
+      let seqWeightTotal = 0;
+      let weightedCooccurLiftSum = 0;
+      let cooccurWeightTotal = 0;
       let matchedSequentialRules = 0;
       let matchedCooccurRules = 0;
 
       for (const a of antecedents) {
         const edgesA = olderSideCounts[a] || 0;
         const seqEdgeAB = (sequentialTransition[a] && sequentialTransition[a][b]) || 0;
-        if (edgesA > 0 && seqEdgeAB > 0) {
-          const confidence = seqEdgeAB / edgesA;
-          const lift = pBNewer > 0 ? (confidence / pBNewer) : (confidence * 2);
-          totalSequentialLift += lift;
-          matchedSequentialRules++;
-        }
+        if (seqEdgeAB > 0) matchedSequentialRules++;
 
-        const cooccurAB = (pairCooccurrence[a] && pairCooccurrence[a][b]) || 0;
-        const countA = singleCounts[a] || 0;
-        if (countA > 0 && cooccurAB > 0 && pB > 0) {
-          const cooccurConf = cooccurAB / countA;
-          const cooccurLift = cooccurConf / pB;
-          totalCooccurrenceLift += cooccurLift;
-          matchedCooccurRules++;
+        const smoothedSeqConf = (seqEdgeAB + kappa * smoothedPBNewer) / (edgesA + kappa);
+        const smoothedSeqLift = smoothedPBNewer > 0 ? (smoothedSeqConf / smoothedPBNewer) : 1.0;
+        const seqW = edgesA + 1;
+        weightedSeqLiftSum += smoothedSeqLift * seqW;
+        seqWeightTotal += seqW;
+
+        if (a !== b) {
+          const cooccurAB = (pairCooccurrence[a] && pairCooccurrence[a][b]) || 0;
+          const countA = singleCounts[a] || 0;
+          if (cooccurAB > 0) matchedCooccurRules++;
+
+          const smoothedCoConf = (cooccurAB + kappa * smoothedPB) / (countA + kappa);
+          const smoothedCoLift = smoothedPB > 0 ? (smoothedCoConf / smoothedPB) : 1.0;
+          const coW = countA + 1;
+          weightedCooccurLiftSum += smoothedCoLift * coW;
+          cooccurWeightTotal += coW;
         }
       }
 
-      // Điểm chuẩn hóa cho từng khía cạnh
-      const avgSeqLift = matchedSequentialRules > 0 ? (totalSequentialLift / matchedSequentialRules) : 0;
-      const avgCooccurLift = matchedCooccurRules > 0 ? (totalCooccurrenceLift / matchedCooccurRules) : 0;
+      const avgSeqLift = seqWeightTotal > 0 ? (weightedSeqLiftSum / seqWeightTotal) : 1.0;
+      const avgCooccurLift = cooccurWeightTotal > 0 ? (weightedCooccurLiftSum / cooccurWeightTotal) : 1.0;
 
-      // Điểm tổng hợp heuristic (thang 0-100)
-      const baseFreqScore = pB * 100;
+      const baseFreqScore = smoothedPB * 100;
       const seqBonus = Math.min(avgSeqLift * 20, 60);
       const cooccurBonus = Math.min(avgCooccurLift * 15, 40);
 
-      const finalScore = Math.round((baseFreqScore * 0.3 + seqBonus * 0.4 + cooccurBonus * 0.3) * 10) / 10;
+      const rawFinalScore = baseFreqScore * 0.30 + seqBonus * 0.45 + cooccurBonus * 0.25;
+      const finalScore = Math.round(rawFinalScore * 10) / 10;
       scores[b] = finalScore;
 
       candidateDetails.push({
         num: b,
         finalScore,
+        rawFinalScore,
         matchedSequentialRules,
         avgSequentialLift: Math.round(avgSeqLift * 100) / 100,
+        rawSeqLift: avgSeqLift,
         matchedCooccurRules,
         avgCooccurLift: Math.round(avgCooccurLift * 100) / 100,
         empiricalRate: Math.round(pB * 1000) / 1000
       });
     }
 
-    // Sắp xếp ứng viên giảm dần theo điểm số
+    // Sắp xếp ứng viên giảm dần theo điểm số, phá hòa bằng điểm thực rồi theo chuẩn canonical
     candidateDetails.sort((a, b) => {
       if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
-      if (b.avgSequentialLift !== a.avgSequentialLift) return b.avgSequentialLift - a.avgSequentialLift;
-      return String(a.num).localeCompare(String(b.num));
+      if (b.rawFinalScore !== a.rawFinalScore) return b.rawFinalScore - a.rawFinalScore;
+      if (b.rawSeqLift !== a.rawSeqLift) return b.rawSeqLift - a.rawSeqLift;
+      return compareCanonical(a.num, b.num);
     });
 
     const frequentPairs = [];
@@ -172,9 +192,9 @@ export const AssociationRulesAlgorithm = {
     for (const a of Object.keys(pairCooccurrence)) {
       for (const b of Object.keys(pairCooccurrence[a])) {
         const count = pairCooccurrence[a][b];
-        const minK = String(a).localeCompare(String(b)) < 0 ? a : b;
+        const minK = compareCanonical(a, b) <= 0 ? a : b;
         const maxK = minK === a ? b : a;
-        const pairKey = `${minK}_${maxK}`;
+        const pairKey = `${String(minK).padStart(2, '0')}_${String(maxK).padStart(2, '0')}`;
         if (!seenPairKeys.has(pairKey)) {
           seenPairKeys.add(pairKey);
           const pA = (singleCounts[minK] || 0) / nDraws;
@@ -197,7 +217,7 @@ export const AssociationRulesAlgorithm = {
         }
       }
     }
-    frequentPairs.sort((x, y) => y.coOccurrenceCount - x.coOccurrenceCount || x.pair.localeCompare(y.pair));
+    frequentPairs.sort((x, y) => y.coOccurrenceCount - x.coOccurrenceCount || y.lift - x.lift || x.pair.localeCompare(y.pair));
 
     const topCandidates = candidateDetails.slice(0, topN).map(c => c.num);
 
